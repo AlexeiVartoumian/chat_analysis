@@ -20,12 +20,8 @@ CREATE TABLE messages(
 
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 
--- POINTLESS!
--- CREATE TABLE concepts(
---     word TEXT PRIMARY KEY
--- );
 
-CREATE TYPE analysis_role AS ENUM('human' , 'assistant' , 'full');
+CREATE TYPE analysis_role AS ENUM('human' , 'assistant' , 'full'); --refactor
 
 CREATE TABLE chat_concepts(
     chat_id UUID NOT NULL REFERENCES chats(chat_id) ON DELETE CASCADE,

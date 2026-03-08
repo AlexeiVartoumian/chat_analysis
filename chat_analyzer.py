@@ -28,9 +28,9 @@ class ChatAnalyzer():
         }
         #need separate vectorizer for each doctype since diff wordlength 
         self.vectorizers = {
-        "full": (TfidfVectorizer(), CountVectorizer()),
-        "human":        (TfidfVectorizer(), CountVectorizer()),
-        "assistant":    (TfidfVectorizer(), CountVectorizer())
+        "full":  (TfidfVectorizer(stop_words='english'), CountVectorizer(stop_words='english')),
+        "human":        (TfidfVectorizer(stop_words='english'), CountVectorizer(stop_words='english')),
+        "assistant":     (TfidfVectorizer(stop_words='english'), CountVectorizer(stop_words='english'))
     }
         self.texts = {"human": [],
         "assistant": [],

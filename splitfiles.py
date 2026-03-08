@@ -9,7 +9,7 @@ input_file = "conversations.json"
 
 path = os.getcwd()
 
-outputpath = os.path.join(path , "haha")
+outputpath = os.path.join(path , "chats")
 myfileSize = os.path.join(path , input_file)
 
 print(os.path.getsize(myfileSize))
