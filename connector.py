@@ -47,6 +47,34 @@ def insert_message(conn, messages):
         """, [ (m["message_id"], m["chat_id"], m["role"], m["content"], m["created_at"])
                for m in messages ] ) 
 
+# code_block_index int NOT NULL,
+#     message_id UUID NOT NULL REFERENCES messages(message_id) ON DELETE CASCADE ,
+#     language TEXT,
+#     content TEXT NOT NULL,
+#     created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+#     PRIMARY KEY(code_block_index , message_id)
+def insert_code_blocks(conn , code_blocks):
+
+    with conn.cursor() as cur:
+        
+        execute_values(cur , """
+        INSERT INTO code_blocks (code_block_index , message_id, language , content , created_at  )
+        VALUES %s
+        ON CONFLICT (code_block_index , message_id) DO NOTHING
+""" , [ (code_block["block_index"],code_block["message_uuid"] ,code_block["language"] ,code_block["content"] ,code_block["created_at"] ) 
+       for code_block in code_blocks  ])
+
+def insert_message_embeddings(conn , message_embeddings):
+
+    with conn.cursor() as cur:
+        
+        execute_values(cur , """
+        INSERT INTO message_embeddings ( message_id, embedding , embedded_text , created_at  )
+        VALUES %s
+        ON CONFLICT (message_id) DO NOTHING
+""" , [ ( message["message_uuid"] ,message["embedding"] ,message["embedded_text"] ,message["created_at"] ) 
+       for message in message_embeddings  ])
+        
 def insert_chat_concepts(conn, rows):
     with conn.cursor() as cur:
         execute_values(cur, """
