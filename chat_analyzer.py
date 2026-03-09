@@ -2,6 +2,15 @@ import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 import typing 
+import re
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
+
+OPEN_API_KEY = os.environ.get("OPEN_API_KEY")
+client = OpenAI(api_key=OPEN_API_KEY)
 
 
 
@@ -36,7 +45,9 @@ class ChatAnalyzer():
         "assistant": [],
         "full": []}
         self.results = {}
-        
+
+        self.assistant_code_blocks =[]
+        self.embeddable_text= []
 
     """
     restructures the conversation into snippets where snippets consist two items.
@@ -51,14 +62,7 @@ class ChatAnalyzer():
                 parsed_document["name"] = data[j]["name"]
                 parsed_document["uuid"] = data[j]["uuid"]
                 parsed_document["created_at"] = data[j]["created_at"]
-                # snippet = {}                
-                # for k in range(len(data[j]["chat_messages"])):
-                #     snippet[data[j]["chat_messages"][k]["sender"]] = data[j]["chat_messages"][k]["text"]
-                #     if k % 2 == 1:
-                #         snippet["created_at"]= data[j]["chat_messages"][k]["created_at"]
-                #         parsed_document[k//2] = snippet
-                #         snippet = {}
-
+           
                 for k , message in enumerate(data[j]["chat_messages"]):
                     parsed_document[k] = {
                         "sender": message["sender"],
@@ -69,6 +73,7 @@ class ChatAnalyzer():
         self.parsed_document = parsed_document
 
         
+        
         return self.parsed_document
     
     def get_parsed_doc(self):
@@ -78,9 +83,10 @@ class ChatAnalyzer():
         full_text = ""
         human = ""
         assistant = ""
+        #print(self.parsed_document)
         for metadata , val in self.parsed_document.items():
             
-
+            
             #chat snippets are stored by order they came in 
             if isinstance(metadata , int): 
                            
@@ -92,11 +98,34 @@ class ChatAnalyzer():
                     
                 if val["sender"] == "assistant":
                     assistant += " " + text
-              
+
+                    #sneaking it in
+                    self.extract_code_blocks(text ,  val["created_at"] , val["uuid"] )
+                   
+                    embedded_text = self.extract_embeddable_text(text)
+                    
+                    vector_embedding_api_call = client.embeddings.create(
+                    input = embedded_text, 
+                    model = "text-embedding-3-small"
+                    )
+                    self.embeddable_text.append ({
+                        "message_uuid" : val["uuid"] ,
+                        "embedding" : vector_embedding_api_call.data[0].embedding,
+                        "embedded_text" : embedded_text ,
+                        "created_at" : val["created_at"]
+                    })
+
+                    
+         
         self.texts["human"].append( human.strip())
         self.texts["full"].append(full_text.strip())
         self.texts["assistant"].append(assistant.strip())
         
+
+        #print(self.get_embeddable_text(assistant))
+
+        
+
         return self.texts
     
     def analyze(self, doctype="full"):
@@ -124,13 +153,46 @@ class ChatAnalyzer():
                 
         } 
 
+    def extract_code_blocks(self , text ,created_at, uuid ):
+        #only assitant code snippets for now will be called directly in the extract document type a little bit of coupling
 
-# mychat = ChatAnalyzer("chat-1.json")
+        pattern = r'```(\w+)?\n([\s\S]*?)```'
 
-# mychat.parse_conversation()
-# mychat.extract_document_type()
+        m = re.findall(pattern , text)
 
-# print(mychat.get_parsed_doc())
+
+        if m :  
+            for index , (language , content) in enumerate(m):
+                self.assistant_code_blocks .append( {
+                    "block_index" : index ,
+                    "language": language or None, 
+                    "content" : content.strip(),
+                    "created_at": created_at,
+                    "message_uuid": uuid
+                })
+        
+
+    def get_code_blocks(self):
+        return self.assistant_code_blocks
+    
+    def extract_embeddable_text(self, text):
+        """
+        may have to think about chunking this somehow where there is more than one concept in a chat . 
+        """
+        cleaned = re.sub(r'```[\s\S]*?```', '', text)
+        cleaned = re.sub(r'`[^`]*`', '', cleaned)
+        cleaned = ' '.join(cleaned.split())
+        return cleaned.strip()
+
+    def get_embeddable_text(self):
+        return self.embeddable_text
+
+mychat = ChatAnalyzer("chat-3.json")
+
+mychat.parse_conversation()
+mychat.extract_document_type()
+
+#print(mychat.extract_code_blocks())
 
 # tfidresp , results , count = mychat.analyze()
 

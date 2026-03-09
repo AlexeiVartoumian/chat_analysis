@@ -27,6 +27,8 @@ for file in path :
         continue
 
     analyzed = mychat.analyze_all()
+    code_blocks = mychat.get_code_blocks()
+    message_embeddings = mychat.get_embeddable_text()
     with get_connection() as conn:
 
         words = list(mychat.analyze()[0].vocabulary_.keys())
@@ -46,7 +48,8 @@ for file in path :
         print(document["uuid"] , document["name"] , document["created_at"])
         insert_chat(conn , document["uuid"] , document["name"] , document["created_at"])
         insert_message(conn , messages)
-
+        insert_code_blocks(conn , code_blocks)
+        insert_message_embeddings(conn , message_embeddings)
         #chat_id, word, role, frequency, tf_idf_score
         rows = build_chat_concept_rows(document["uuid"] ,analyzed)
         entire_conversation = insert_chat_concepts(conn , rows )

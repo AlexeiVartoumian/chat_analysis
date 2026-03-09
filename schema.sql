@@ -12,7 +12,7 @@ CREATE TYPE message_role AS ENUM('human' , 'assistant');
 
 CREATE TABLE messages(
     message_id UUID PRIMARY KEY,
-    chat_id UUID NOT NULL REFERENCES Chats(chat_id) ON DELETE CASCADE,
+    chat_id UUID NOT NULL REFERENCES chats(chat_id) ON DELETE CASCADE,
     role message_role NOT NULL, 
     content TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT NOW()
@@ -32,14 +32,24 @@ CREATE TABLE chat_concepts(
     PRIMARY KEY(chat_id , word , role) -- to uniquely identify row
 );
 
+
+CREATE TABLE code_blocks(
+    code_block_index int NOT NULL,
+    message_id UUID NOT NULL REFERENCES messages(message_id) ON DELETE CASCADE ,
+    language TEXT,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    PRIMARY KEY(code_block_index , message_id)
+)
+
 CREATE INDEX idx_chat_concepts_word ON chat_concepts(word);
 CREATE INDEX idx_chat_concepts_chat_id ON chat_concepts(chat_id);
 CREATE INDEX idx_chat_concepts_chat_role ON chat_concepts(chat_id, role);
 
 
 -- CREATE TABLE embeddings(
---     message_id TEXT PRIMARY KEY REFERENCES messages(message_id) ON DELETE CASCADE,
---     VECTOR VECTOR(1536)
+--     message_id UUID PRIMARY KEY REFERENCES messages(message_id) ON DELETE CASCADE,
+--     embedding VECTOR(1536)
 -- );
 
 
