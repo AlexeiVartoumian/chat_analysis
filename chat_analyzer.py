@@ -25,7 +25,11 @@ problems with this code ..
 1.7 no use of dataclasses
 """
 
+SENDER_HUMAN = "human"
+SENDER_ASSISTANT = "assistant"
+SENDER_FULL = "full"
 
+SENDERS = (SENDER_HUMAN , SENDER_ASSISTANT , SENDER_FULL)
 @dataclass
 class Message:
     sender:str
@@ -33,20 +37,21 @@ class Message:
     created_at: str
     uuid : str
 
-@dataclass
-class ConversationText:
-    pass
-
-@dataclass
-class AnalysisResult:
-    pass
 
 @dataclass
 class ConversationTexts:
-    pass
+    """ extracted text by json type """
+    human : str = ""
+    assistant : str = ""
+    full : str = ""
 
 @dataclass
 class Codeblock:
+    pass
+
+
+@dataclass
+class AnalysisResult:
     pass
 
 @dataclass
@@ -95,6 +100,26 @@ def parse_conversation_file(path: str | Path  ) -> dict:
     
     return parsed_document
 
+def extract_document_type( messages : list[Message] ) -> ConversationTexts:
+        """parse the message list to extract text by sender"""
+
+        parts = {
+            SENDER_FULL : [],
+            SENDER_HUMAN :[],
+            SENDER_ASSISTANT: []
+        }
+
+        for message in messages:
+            parts[SENDER_FULL].append(message.text) # full convo append whatever happens
+
+            if message.sender in (SENDER_HUMAN , SENDER_ASSISTANT):
+                parts[message.sender].append(message.text)
+
+        return ConversationTexts(
+            human  = " ".join(parts[SENDER_HUMAN]).strip(),
+            assistant= " ".join(parts[SENDER_ASSISTANT]).strip(),
+            full = " ".join(parts[SENDER_FULL]).strip()
+        )    
 
 class ChatAnalyzer():
 
