@@ -2,58 +2,49 @@ from chat_analyzer import ChatAnalyzer
 from connector import *
 import os
 from pathlib import Path
+from openai import OpenAI
+import logging
+load_dotenv()
 
+OPEN_API_KEY = os.environ.get("OPEN_API_KEY")
+embedding_client = OpenAI(api_key=OPEN_API_KEY)
+
+
+logging.basicConfig(
+    level = logging.INFO,
+    format="%(asctime)s  %(levelname)-8s  %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 cur_path = os.getcwd()
 
 folder_directory = os.path.join(cur_path , "chats")
 
 path = Path.glob(Path(folder_directory) , "*.json")
+
 for file in path :
     print(file)
+    print(file, type(file))
+    mychat = ChatAnalyzer(file , embedding_client=embedding_client)
 
-    mychat = ChatAnalyzer(file)
-    mychat.parse_conversation()
+    conversation, messages = mychat.parse_conversation()
+    texts = mychat.extract_texts(messages)
 
-    #chats are stored by ordered number
-    if 0 not in mychat.parse_conversation(): 
+    if not texts.full.strip() or not texts.assistant.strip() or not texts.human.strip():
+        logger.warning("Skipping %s — no text content", file.name)
         continue
+ 
 
-    document = mychat.get_parsed_doc()
-
-    texts = mychat.extract_document_type()
-    #chats could contain empty records for some reason ?
-    if len(texts["human"][0]) == 0 or len(texts["assistant"][0]) == 0:
-        print(texts["human"])
-        continue
-
-    analyzed = mychat.analyze_all()
-    code_blocks = mychat.get_code_blocks()
-    message_embeddings = mychat.get_embeddable_text()
+    analyzed = mychat.analyze_all(texts)
+    code_blocks = mychat.extract_code_blocks(messages)
+    message_embeddings = mychat.extract_embeddings(messages)
     with get_connection() as conn:
 
-        words = list(mychat.analyze()[0].vocabulary_.keys())
-        # insert_concept(conn , words)
-        
-    
-        messages = [
-        { "message_id" :  val["uuid"] ,
-            "chat_id" : document["uuid"],
-            "role" : val["sender"] ,
-            "content": val["text"],
-            "created_at": val["created_at"]
-            } 
-        for key , val in document.items()
-        if isinstance(key , int)
-        ]
-        print(document["uuid"] , document["name"] , document["created_at"])
-        insert_chat(conn , document["uuid"] , document["name"] , document["created_at"])
-        insert_message(conn , messages)
-        insert_code_blocks(conn , code_blocks)
-        insert_message_embeddings(conn , message_embeddings)
-        #chat_id, word, role, frequency, tf_idf_score
-        rows = build_chat_concept_rows(document["uuid"] ,analyzed)
-        entire_conversation = insert_chat_concepts(conn , rows )
 
-        # human_prompts = insert_chat_concept()
-        # assistant_prompts = insert_chat_concept()
+        insert_chat(conn, conversation)
+        insert_message(conn, conversation, messages)
+        insert_code_blocks(conn, code_blocks)
+        insert_message_embeddings(conn, message_embeddings)
+ 
+        rows = build_chat_concept_rows(conversation.uuid, analyzed)
+        insert_chat_concepts(conn, rows)
