@@ -6,7 +6,8 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from dataclasses import dataclass , field
-from pathlib import Path 
+from pathlib import Path
+from typing import Optional
 
 load_dotenv()
 
@@ -47,7 +48,13 @@ class ConversationTexts:
 
 @dataclass
 class Codeblock:
-    pass
+    """extracted Code block is present from given Assistant response"""
+
+    block_index : int
+    language : Optional[str]
+    content : str
+    created_at : str
+    message_uuid: str
 
 
 @dataclass
@@ -121,6 +128,38 @@ def extract_document_type( messages : list[Message] ) -> ConversationTexts:
             full = " ".join(parts[SENDER_FULL]).strip()
         )    
 
+def extract_code_blocks(messages: list[Message]) -> list[Codeblock] :
+    """ Iterate through Messages . then grep the code from assistant response"""
+    pattern = re.compile('```(\w+)?\n([\s\S]*?)```') # compile once use several times
+
+    blocks : list[Codeblock] = []
+
+    for message in messages:
+
+        if message.sender != SENDER_ASSISTANT:
+            continue
+        for index , (language , content) in enumerate(pattern.findall(message.text)):
+            blocks.append(
+                Codeblock(
+                    block_index= index,
+                    language= language or None ,
+                    content = content.strip(), 
+                    created_at = message.created_at,
+                    message_uuid=message.uuid
+                )
+            )
+    
+    return blocks
+
+def strip_code_from_text(text: str) -> str:
+    """ remove all code from assistant response to extract natural language response from assitant . 
+    to be embedded andused for semantic search"""
+    cleaned = re.sub(r'```[\s\S]*?```', '', text)
+    cleaned = re.sub(r'`[^`]*`', '', cleaned)
+    cleaned = ' '.join(cleaned.split())
+    return cleaned.strip()
+
+    
 class ChatAnalyzer():
 
 
