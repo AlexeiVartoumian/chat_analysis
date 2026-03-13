@@ -1,5 +1,6 @@
 from pgvector.psycopg2 import register_vector
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import execute_values
 from typing import Generator
 
@@ -18,6 +19,11 @@ CONNECTION_STRING = os.environ.get("CONNECTION_STRING")
 if not CONNECTION_STRING:
     raise RuntimeError("CONNECTION_STRING environment variable is not set")
 
+connection_pool =pool.SimpleConnectionPool(
+    minconn=1, 
+    maxconn=2,
+    dsn = CONNECTION_STRING
+)
 
 @contextmanager
 def get_connection() -> Generator:
@@ -30,8 +36,9 @@ def get_connection() -> Generator:
         conn.rollback()
         raise
     finally:
-        conn.close()
-
+        #conn.close()
+        connection_pool.putconn(conn)
+    
 def insert_chat(conn , conversation: Conversation) -> None:
 
      with conn.cursor() as cur:
