@@ -59,15 +59,15 @@ class Codeblock:
 
 @dataclass
 class AnalysisResult:
-    pass
+    tfidf_vectorizer : TfidfVectorizer
+    count_vectorizer : CountVectorizer
+    tf_idf_matrix : object
+    count_matrix : object
 
 @dataclass
 class EmbeddedMessage:
     pass
 
-@dataclass
-class AnalysisResult:
-    pass
 
 
 def parse_conversation_file(path: str | Path  ) -> dict:
@@ -108,7 +108,7 @@ def parse_conversation_file(path: str | Path  ) -> dict:
     return parsed_document
 
 def extract_document_type( messages : list[Message] ) -> ConversationTexts:
-        """parse the message list to extract text by sender"""
+        """parse message list to extract text by sender"""
 
         parts = {
             SENDER_FULL : [],
@@ -129,7 +129,7 @@ def extract_document_type( messages : list[Message] ) -> ConversationTexts:
         )    
 
 def extract_code_blocks(messages: list[Message]) -> list[Codeblock] :
-    """ Iterate through Messages . then grep the code from assistant response"""
+    """ Iterate through Messages . then grep for code from assistant response"""
     pattern = re.compile('```(\w+)?\n([\s\S]*?)```') # compile once use several times
 
     blocks : list[Codeblock] = []
@@ -148,8 +148,8 @@ def extract_code_blocks(messages: list[Message]) -> list[Codeblock] :
                     message_uuid=message.uuid
                 )
             )
-    
     return blocks
+
 
 def strip_code_from_text(text: str) -> str:
     """ remove all code from assistant response to extract natural language response from assitant . 
@@ -159,7 +159,28 @@ def strip_code_from_text(text: str) -> str:
     cleaned = ' '.join(cleaned.split())
     return cleaned.strip()
 
+def build_tfidf_vectorizer() -> TfidfVectorizer:
+    return  TfidfVectorizer(stop_words="english")
+
+def build_count_vectorizer() -> CountVectorizer:
+    return CountVectorizer(stop_words="english")
+
+def analyze_text(corpus: list[str]) -> AnalysisResult :
+
+    """fit given text to term frequency inverse document vectorizer"""
     
+    if not corpus or not any(corpus) :
+        raise ValueError("cannot analyze an empty string")
+    
+    tf_idf = build_tfidf_vectorizer()
+    count = build_count_vectorizer()
+
+    return AnalysisResult(
+        tfidf_vectorizer= tf_idf,
+        count_vectorizer= count ,
+        tf_idf_matrix= tf_idf.fit_transform(corpus),
+        count_matrix= count.fit_transform(corpus)
+    )
 class ChatAnalyzer():
 
 
