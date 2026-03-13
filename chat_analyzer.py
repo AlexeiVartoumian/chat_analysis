@@ -31,6 +31,7 @@ SENDER_ASSISTANT = "assistant"
 SENDER_FULL = "full"
 
 SENDERS = (SENDER_HUMAN , SENDER_ASSISTANT , SENDER_FULL)
+EMBEDDING_MODEL = "text-embedding-3-small"
 @dataclass
 class Message:
     sender:str
@@ -66,8 +67,10 @@ class AnalysisResult:
 
 @dataclass
 class EmbeddedMessage:
-    pass
-
+    message_uuid : str
+    embedding : list[float]
+    embedding_text : str
+    created_at : str
 
 
 def parse_conversation_file(path: str | Path  ) -> dict:
@@ -181,7 +184,34 @@ def analyze_text(corpus: list[str]) -> AnalysisResult :
         tf_idf_matrix= tf_idf.fit_transform(corpus),
         count_matrix= count.fit_transform(corpus)
     )
-class ChatAnalyzer():
+
+def embed_assistant_messages( messages: list[Message] , client: OpenAI, * ,model: str =EMBEDDING_MODEL ) -> list[EmbeddedMessage] :
+
+    embedded : list[EmbeddedMessage] = []
+
+    for message in messages:
+        if message.sender != SENDER_ASSISTANT :
+            continue
+
+        clean_text = strip_code_from_text(message.text)
+        if not clean_text:
+            continue
+
+    
+        response = client.embeddings.create(input=clean_text , model= model )
+
+        embedded.append(
+            EmbeddedMessage(
+                message_uuid = message.created_at,
+                embedding = response.data[0].embedding, 
+                embedding_text = message.text ,
+                created_at = message.created_at
+            )
+        )
+    
+    return embedded
+
+class ChatAnalyzerOld():
 
 
     """
