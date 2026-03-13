@@ -3,6 +3,7 @@ from connector import *
 import os
 from pathlib import Path
 
+
 cur_path = os.getcwd()
 
 folder_directory = os.path.join(cur_path , "chats")

@@ -1,9 +1,11 @@
+from pgvector.psycopg2 import register_vector
 import psycopg2
 from psycopg2.extras import execute_values
+
 from contextlib import contextmanager
 from dotenv import load_dotenv
 import os
-
+import numpy as np
 
 
 load_dotenv()
@@ -133,3 +135,32 @@ def build_chat_concept_rows(chat_id, analyzed):
 #                 SET frequency = EXCLUDED.frequency,
 #                     tf_idf_score = EXCLUDED.tf_idf_score
 #         """, (chat_id, word, role, frequency, tf_idf_score))
+
+
+
+def get_message(conn ):
+
+    with conn.cursor() as cur:
+        
+        cur.execute("""
+        SELECT * FROM message_embeddings
+""")
+        
+        for record in cur:
+            print(record)
+        
+
+def get_embeddings(conn , vector):
+
+    with conn.cursor() as cur:
+        register_vector(conn)
+        vector =np.array(vector)
+        cur.execute("""
+        SELECT 1 - (embedding <=> %s ) AS cosine_similarity , embedded_text FROM message_embeddings ORDER BY embedding <=> %s LIMIT 5
+""", (vector,vector))
+        
+        for record in cur :
+            print(record)
+
+# with get_connection() as conn:
+#     get_message(conn)

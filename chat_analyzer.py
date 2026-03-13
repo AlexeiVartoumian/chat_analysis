@@ -6,13 +6,53 @@ import re
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
+from dataclasses import dataclass
 
 load_dotenv()
 
 OPEN_API_KEY = os.environ.get("OPEN_API_KEY")
 client = OpenAI(api_key=OPEN_API_KEY)
 
+"""
+problems with this code ..
+1. too much going on 
+1.1 init class has too many variables 
+1.2 api key being used inside class prevents mock tests
+1.3 too many methonds on class
+1.4 functions calling other functions
+1.5 json parsing does not handle errors
+1.6 no use of Constants for entities such as human ,assitant
+1.7 no use of dataclasses
+"""
 
+
+@dataclass
+class Message:
+    pass 
+
+@dataclass
+class ConversationText:
+    pass
+
+@dataclass
+class AnalysisResult:
+    pass
+
+@dataclass
+class ConversationTexts:
+    pass
+
+@dataclass
+class Codeblock:
+    pass
+
+@dataclass
+class EmbeddedMessage:
+    pass
+
+@dataclass
+class AnalysisResult:
+    pass
 
 class ChatAnalyzer():
 
@@ -30,7 +70,7 @@ class ChatAnalyzer():
 
     Could in future reference other chats.   
     """
-    def __init__(self , path_to_chat ):
+    def __init__(self , path_to_chat  ):
 
         self.chat = path_to_chat
         self.parsed_document = {
@@ -137,13 +177,7 @@ class ChatAnalyzer():
         
         return tfidf, tfidf_matrix, count_matrix
   
-    # def analyze(self , doctype="conversation"):
-        
-        
 
-    #     self.results[doctype] = self.vectorizer.fit_transform(self.texts[doctype])
-        
-    #     return self.vectorizer , self.results[doctype]
     
     def analyze_all(self):
 
@@ -192,11 +226,6 @@ mychat = ChatAnalyzer("chat-3.json")
 mychat.parse_conversation()
 mychat.extract_document_type()
 
-#print(mychat.extract_code_blocks())
-
-# tfidresp , results , count = mychat.analyze()
-
-# print( list(mychat.analyze()[0].vocabulary_.keys() ), mychat.analyze()[1] )
 
 
 
