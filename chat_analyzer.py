@@ -1,12 +1,12 @@
 import json
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
-import typing 
 import re
 import os
 from dotenv import load_dotenv
 from openai import OpenAI
-from dataclasses import dataclass
+from dataclasses import dataclass , field
+from pathlib import Path 
 
 load_dotenv()
 
@@ -28,7 +28,10 @@ problems with this code ..
 
 @dataclass
 class Message:
-    pass 
+    sender:str
+    text:str 
+    created_at: str
+    uuid : str
 
 @dataclass
 class ConversationText:
@@ -53,6 +56,45 @@ class EmbeddedMessage:
 @dataclass
 class AnalysisResult:
     pass
+
+
+def parse_conversation_file(path: str | Path  ) -> dict:
+    """
+    This function accepts a path to JSon file and loads it to create a file object.
+    It then parses the data into the Message Dataclass
+    """
+    
+    parsed_document : list[Message] = []
+
+    path = Path(path)
+
+    if not path.exists():
+        raise FileNotFoundError(f"error finding the file")
+    
+    with path.open(encoding="utf-8") as file_handler:
+        data = json.load(file_handler)
+    
+    if not isinstance(data , list) or not data:
+        raise ValueError("Expected non empty array")
+    
+    conversation = data[0]
+
+    messages = conversation.get("chat_messages")
+
+    for  message in messages:
+        m = Message()
+        try:
+            m["sender"] = message["sender"]
+            m["text"] = message["text"]
+            m["created_at"] = message["created_at"]
+            m["uuid"] = message["uuid"]
+        except KeyError as e: 
+            raise ValueError(f"missing a required field {e}" ) from e
+        
+        parsed_document.append(m)
+    
+    return parsed_document
+
 
 class ChatAnalyzer():
 
@@ -97,8 +139,8 @@ class ChatAnalyzer():
         
         parsed_document = {}
         with open(self.chat ,"r" , encoding = "utf-8") as f:
-            data = json.load(f)
-            for j in range(len(data)):
+            data = json.load(f) # prob 1 what if dile not found ? 
+            for j in range(len(data)): #prob 2 what is expected document structure / what is documentations? 
                 parsed_document["name"] = data[j]["name"]
                 parsed_document["uuid"] = data[j]["uuid"]
                 parsed_document["created_at"] = data[j]["created_at"]
@@ -110,7 +152,7 @@ class ChatAnalyzer():
                         "created_at": message["created_at"],
                         "uuid" : message["uuid"]
                     }
-        self.parsed_document = parsed_document
+        self.parsed_document = parsed_document #parsed document dictionary could be a ordered list of class message 
 
         
         
