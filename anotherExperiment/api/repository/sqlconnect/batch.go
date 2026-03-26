@@ -61,7 +61,7 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Company_MetadataLoader(record)
 	case "JOBS":
 		return JobLoader(record)
-	case "JOBS_METADATA":
+	case "JOB_METADATA":
 		return Jobs_MetadataLoader(record)
 	case "JOB_DESCRIPTION":
 		return Jobs_DescriptionLoader(record)

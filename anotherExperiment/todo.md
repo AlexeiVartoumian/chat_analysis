@@ -10,3 +10,6 @@ breakdown :
 
 
 5. sanitize text inputs
+6. TODO : employee count is getting zeroes values when avaliable number exists . inverstigate.
+
+7. normalise data!

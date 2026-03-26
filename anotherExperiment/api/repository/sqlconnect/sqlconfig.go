@@ -45,6 +45,14 @@ func ConnectDb() (*sql.DB, error) {
 		panic(err)
 	}
 
+	_, err = db.Exec("SET client_encoding TO 'UTF8'")
+	if err != nil {
+		panic(err)
+	}
+	var encoding string
+	db.QueryRow("SHOW client_encoding").Scan(&encoding)
+	fmt.Println("Client encoding:", encoding)
+
 	fmt.Println("Connected to db")
 	return db, nil
 }

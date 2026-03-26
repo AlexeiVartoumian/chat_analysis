@@ -33,6 +33,6 @@ func main() {
 	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "JOBS")
 	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/company_data.csv", "COMPANY_METADATA")
 
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_metadata.csv", "JOBS_METADATA")
+	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_metadata.csv", "JOB_METADATA")
 	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_description.csv", "JOB_DESCRIPTION")
 }

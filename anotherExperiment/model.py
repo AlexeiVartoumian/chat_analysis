@@ -24,6 +24,7 @@ connection_pool =pool.SimpleConnectionPool(
 @contextmanager
 def get_connection() -> Generator:
     conn = psycopg2.connect(CONNECTION_STRING2)
+    conn.set_client_encoding('UTF8')
     try:
         yield conn
         conn.commit()
