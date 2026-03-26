@@ -29,10 +29,14 @@ func main() {
 	// if err != nil {
 	// 	log.Fatalln(err, "error starting the server")
 	// }
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "COMPANY")
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "JOBS")
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/company_data.csv", "COMPANY_METADATA")
+	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "COMPANY")
+	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "JOBS")
+	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/company_data.csv", "COMPANY_METADATA")
 
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_metadata.csv", "JOB_METADATA")
-	sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_description.csv", "JOB_DESCRIPTION")
+	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_metadata.csv", "JOB_METADATA")
+	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_description.csv", "JOB_DESCRIPTION")
+
+	//sqlconnect.BackfillEmbeddings()
+	sqlconnect.SearchSimilarJobs("cloud engineer AWS platform engineer infrastructure")
+
 }

@@ -13,5 +13,6 @@ require (
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/lib/pq v1.12.0 // indirect
+	github.com/pgvector/pgvector-go v0.3.0 // indirect
 	golang.org/x/sys v0.42.0 // indirect
 )
