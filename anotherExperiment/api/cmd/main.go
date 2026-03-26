@@ -37,6 +37,6 @@ func main() {
 	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_description.csv", "JOB_DESCRIPTION")
 
 	//sqlconnect.BackfillEmbeddings()
-	sqlconnect.SearchSimilarJobs("cloud engineer AWS platform engineer infrastructure")
+	sqlconnect.SearchSimilarJobs("react developer")
 
 }
