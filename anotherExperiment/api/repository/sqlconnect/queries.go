@@ -9,6 +9,18 @@ import (
 	"github.com/pgvector/pgvector-go"
 )
 
+type LastThreeDays struct {
+	Date_posted      string
+	Day_posted       string
+	Title            string
+	Company_name     string
+	Location         string
+	Salary           string
+	Applicants_count string
+	Apply_url        string
+	Job_url          string
+}
+
 func SearchSimilarJobs(query string) error {
 
 	db, err := ConnectDb()
@@ -18,7 +30,7 @@ func SearchSimilarJobs(query string) error {
 	}
 	defer db.Close()
 
-	embedding, err := GetEmbedding(query)
+	embedding, err := GetEmbedding(query) //api call
 
 	if err != nil {
 		return utils.ErrorHandler(err, "failed to embed query")
@@ -55,4 +67,56 @@ func SearchSimilarJobs(query string) error {
 	}
 
 	return nil
+}
+
+func LastThreeDaysJobs() ([]LastThreeDays, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	rows, err := db.Query(`
+SELECT
+		j.date_posted,
+		TRIM(TO_CHAR(j.date_posted, 'Day')) as day_posted,
+		j.title,
+		c.name as company_name,
+		j.location,
+		COALESCE(j.salary, 'Not Specified') as salary,
+		jm.applicants_count,
+		jm.company_apply_url,
+		j.job_url
+	FROM jobs j
+	JOIN company c ON j.company_id = c.company_id
+	JOIN job_metadata jm ON j.job_id = jm.job_id
+	WHERE j.date_posted >= CURRENT_DATE - INTERVAL '3 days'
+	AND jm.company_apply_url NOT LIKE 'https://www.linkedin%'
+	AND jm.applicants_count NOT LIKE '%Reposted%'
+	ORDER BY j.date_posted DESC;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "its funky")
+	}
+	defer rows.Close()
+
+	var output []LastThreeDays
+
+	for rows.Next() {
+		var Out LastThreeDays
+		//rows.Scan(&date_posted, &day_posted, &title, &company_name, &location, &salary, &applicants_count, &apply_url, &job_url)
+		// log.Printf("DatePosted: %s | %s | %s | %s | %s | %s | View: %s",
+		// 	date_posted, day_posted, title, company_name, location, applicants_count, apply_url)
+
+		rows.Scan(&Out.Date_posted, &Out.Day_posted,
+			&Out.Title, &Out.Company_name, &Out.Location, &Out.Salary,
+			&Out.Applicants_count, &Out.Apply_url, &Out.Job_url)
+		// log.Printf("DatePosted: %s | %s | %s | %s | %s | %s | View: %s",
+		// 	Out.date_posted, Out.day_posted, Out.title, Out.company_name, Out.location,
+		// 	Out.applicants_count, Out.apply_url)
+
+		output = append(output, Out)
+	}
+	return output, nil
 }

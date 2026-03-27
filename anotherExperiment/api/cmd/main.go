@@ -1,8 +1,10 @@
 package main
 
 import (
-	"api/repository/sqlconnect"
+	"api/router"
 	"fmt"
+	"log"
+	"net/http"
 )
 
 func main() {
@@ -13,22 +15,22 @@ func main() {
 
 	//fmt.Println(sqlconnect.GetJobById(1))
 
-	//port := "3000"
+	port := "3000"
 
-	// router := router.MainRouter()
+	router := router.MainRouter()
 
-	// server := &http.Server{
-	// 	Addr:    "localhost:" + port,
-	// 	Handler: router,
-	// }
+	server := &http.Server{
+		Addr:    "localhost:" + port,
+		Handler: router,
+	}
 
-	// fmt.Println("server is up and running on port", port)
+	fmt.Println("server is up and running on port", port)
 
-	// err := server.ListenAndServe()
+	err := server.ListenAndServe()
 
-	// if err != nil {
-	// 	log.Fatalln(err, "error starting the server")
-	// }
+	if err != nil {
+		log.Fatalln(err, "error starting the server")
+	}
 	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "COMPANY")
 	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "JOBS")
 	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/company_data.csv", "COMPANY_METADATA")
@@ -37,6 +39,8 @@ func main() {
 	// sqlconnect.CsvFile("C:/Users/wwwal/Downloads/job_description.csv", "JOB_DESCRIPTION")
 
 	//sqlconnect.BackfillEmbeddings()
-	sqlconnect.SearchSimilarJobs("react developer")
+
+	//api stuff
+	//sqlconnect.SearchSimilarJobs("react developer")
 
 }
