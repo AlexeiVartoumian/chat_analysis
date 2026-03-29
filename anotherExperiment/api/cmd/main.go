@@ -12,9 +12,6 @@ import (
 
 func main() {
 
-	//sqlconnect.CsvFile("C:/Users/wwwal/Downloads/processedJobs.csv", "JOBS")
-
-	//fmt.Println(sqlconnect.GetJobById(1))
 	fmt.Println("testing sql connection")
 
 	db, err := sqlconnect.ConnectDb()
@@ -36,7 +33,7 @@ func main() {
 	router := router.MainRouter(authMiddleware)
 
 	server := &http.Server{
-		Addr: "localhost:" + port,
+		Addr: "0.0.0.0:" + port,
 		//Addr:    "0.0.0.0:" + port,
 		Handler: router,
 	}

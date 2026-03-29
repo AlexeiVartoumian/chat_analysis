@@ -37,60 +37,6 @@ def get_connection() -> Generator:
         #print(type(conn))
         #connection_pool.putconn(conn)
     
-# TABLES = {}
-
-# def create_company_table(conn ) -> None:
-
-#      with conn.cursor() as cur:
-#         cur.execute(
-#             """
-#             CREATE TABLE IF NOT EXISTS COMPANY(
-#             company_id int PRIMARY KEY,
-#             name VARCHAR(60),
-#             logo varchar(512)
-#             );
-#             """
-#         )
-# data = (1 , "boo" , "haha")
-
-# def insert_into_company(conn, data):
-
-#     with conn.cursor() as cur :
-#         # execute_values(cur , 
-#         #     """INSERT INTO COMPANY(company_id ,name , logo)
-#         #     VALUES (%d , %s , %s);"""
-#         # ,data)
-#         cur.execute(  """INSERT INTO COMPANY(company_id ,name , logo)
-#             VALUES (%s , %s , %s);""" ,data)
-
-
-# with get_connection() as conn :
-
-#     create_company_table(conn)
-#     insert_into_company(conn , data)
-
-
-
-# TABLES['COMPANY'] = (
-#     "CREATE TABLE IF NOT EXISTS `COMPANY` ("
-#     " `company_id` BIGINT(11) NOT NULL," # extract company id
-#     " `name` varchar(64) NOT NULL,"
-#     " `logo` varchar(512),"
-#     " PRIMARY KEY (`company_id`)"
-#     ") ENGINE=InnoDB"
-# )
-
-
-# CREATE TABLE COMPANY (
-#     company_id int PRIMARY KEY,
-#     name TEXT,
-#     logo TEXT
-# )
-# CREATE TABLE chats(
-#     chat_id UUID  PRIMARY KEY,
-#     title   TEXT,
-#     created_at TIMESTAMP NOT NULL DEFAULT NOW()
-# );
 
 
 def create_tables(conn) -> None:
@@ -207,5 +153,15 @@ def _enum_exists(cur, enum_name: str) -> bool:
     )
     return cur.fetchone() is not None
 
+def enable_vector_extension():
+    
+    conn = psycopg2.connect(CONNECTION_STRING2)
+    cur = conn.cursor()
+    cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+    conn.commit()
+    cur.close()
+    conn.close()
+
+enable_vector_extension() 
 with get_connection() as conn :
     create_tables(conn)
