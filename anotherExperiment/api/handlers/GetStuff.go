@@ -4,6 +4,8 @@ import (
 	"api/auth"
 	"api/models"
 	"api/repository/sqlconnect"
+	"api/utils"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -51,6 +53,13 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	lordOfTheRings := store.ThereCanBeOnlyOne()
+
+	if lordOfTheRings != sql.ErrNoRows {
+		utils.ErrorHandler(lordOfTheRings, "arrg")
+		http.Error(w, "there can be only one", http.StatusBadRequest)
+		return
+	}
 	// Hash the key for storage
 	hashedKey, err := hasher.Hash(fullKey)
 	if err != nil {

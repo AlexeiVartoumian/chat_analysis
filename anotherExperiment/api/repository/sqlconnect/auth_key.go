@@ -187,3 +187,32 @@ func (s *PostgresStore) ListByUser(ctx context.Context, userID string) ([]*model
 
 	return keys, rows.Err()
 }
+
+func (s *PostgresStore) ThereCanBeOnlyOne() error {
+
+	query := `SELECT COUNT(*) FROM api_keys`
+
+	rows, err := s.db.Query(query)
+
+	if err != nil {
+		fmt.Println("err is something", err)
+		return nil
+	}
+	var count int
+	for rows.Next() {
+		err := rows.Scan(&count)
+
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Println("how many you have in db", err)
+	fmt.Println(count)
+
+	if count != 0 {
+		return nil
+	}
+
+	return sql.ErrNoRows
+
+}
