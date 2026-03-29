@@ -13,3 +13,5 @@ breakdown :
 6. TODO : employee count is getting zeroes values when avaliable number exists . inverstigate.
 
 7. normalise data!
+
+8. add user table for api keys to validate against 
