@@ -75,6 +75,18 @@ func main() {
 	}()
 	fmt.Println("server is up and running on port", port)
 
+	//need a http server at port 80 for letsencrypt + autocert
+	httpSrv := &http.Server{
+		Addr: ":80",
+		Handler: m.HTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+		})),
+	}
+	err = httpSrv.ListenAndServe()
+	if err != nil {
+		log.Fatalf("httpSrv.ListenAndServe() failed with %s", err)
+	}
+
 	//sqlconnect.BackfillEmbeddings()
 
 	//api stuff
