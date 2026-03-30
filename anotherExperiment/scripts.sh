@@ -15,15 +15,6 @@ sudo apt install -y docker-ce docker-ce-cli containerd.io
 sudo systemctl start docker
 sudo usermod -aG docker $USER
 newgrp docker
-
-
-docker run -d \
-  --name postgres \
-  -e POSTGRES_PASSWORD=yourpassword \
-  -e POSTGRES_DB=yourdb \
-  -p 5432:5432 \
-  pgvector/pgvector:pg16
-
 sudo apt install python3-pip -y
 sudo apt install python3.12-venv -y
 sudo python3 -m venv /venv
@@ -31,15 +22,33 @@ sudo python3 -m venv /venv
 source /venv/bin/activate
 sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3
 
+# docker run -d \
+#   --name postgres \
+#   -e POSTGRES_PASSWORD=yourpassword \
+#   -e POSTGRES_DB=yourdb \
+#   -p 5432:5432 \
+#   pgvector/pgvector:pg16
 git clone --single-branch --branch model-insert https://github.com/AlexeiVartoumian/chat_analysis.git
+sudo mv chat_analysis/anotherExperiment/ssmparam.py /home/ubuntu/ssmparam.py
+python3 ssmparam.py
+docker run -d \
+  --name postgres \
+  --env-file .env2 \
+  -p 5432:5432 \
+  pgvector/pgvector:pg16
+
+
+
+
+
 sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
 sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
-sudo mv chat_analysis/anotherExperiment/ssmparam.py /home/ubuntu/ssmparam.py
+
 sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
 my_ip=$(curl http://checkip.amazonaws.com)
 
 python3 hosted.py $my_ip
-python3 ssmparam.py
+
 python3 model.py
 sudo apt install golang-go -y
 git clone --single-branch --branch  cli-binary-code https://github.com/AlexeiVartoumian/chat_analysis.git
