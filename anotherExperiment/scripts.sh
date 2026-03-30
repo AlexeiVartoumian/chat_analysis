@@ -24,7 +24,7 @@ docker run -d \
   pgvector/pgvector:pg16
 
 sudo apt install python3-pip
-sudo apt install python3.12-venv
+sudo apt install python3.12-venv -y
 sudo python3 -m venv /venv
 source /venv/bin/activate
 sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy
