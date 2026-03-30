@@ -27,7 +27,7 @@ sudo apt install python3-pip
 sudo apt install python3.12-venv -y
 sudo python3 -m venv /venv
 source /venv/bin/activate
-sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy
+sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3
 
 #pip install psycopg2-binary pgvector python-dotenv numpy
 
