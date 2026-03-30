@@ -13,7 +13,7 @@ import (
 func ConnectDb() (*sql.DB, error) {
 
 	fmt.Println("Attemption connection to db")
-	err := godotenv.Load("../../.env")
+	err := godotenv.Load(".env")
 
 	if err != nil {
 		return nil, ErrorHandler(err, "env variables did not load ")
