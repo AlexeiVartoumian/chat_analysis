@@ -22,5 +22,5 @@ with open( curPath1 ,"w" , encoding="utf-8" ) as f :
 
 curPath2 =os.path.join(curPath , ".env2")
 with open( curPath2 ,"w" , encoding="utf-8" ) as f :
-        f.write(f'POSTGRES_DB="{keys["db_database"]}"\n')
-        f.write(f'POSTGRES_PASSWORD="{keys["db_password"]}"\n')
+        f.write(f'POSTGRES_DB={keys["db_database"]}\n')
+        f.write(f'POSTGRES_PASSWORD={keys["db_password"]}\n')
