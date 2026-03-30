@@ -15,3 +15,6 @@ breakdown :
 7. normalise data!
 
 8. add user table for api keys to validate against 
+
+9. add all the routes 
+10. add backfill embedding route
