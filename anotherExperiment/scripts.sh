@@ -8,6 +8,7 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 
 echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
 
+
 sudo apt update
 sudo apt install -y docker-ce docker-ce-cli containerd.io
 
@@ -34,6 +35,10 @@ git clone --single-branch --branch model-insert https://github.com/AlexeiVartoum
 sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
 sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
 sudo mv chat_analysis/anotherExperiment/ssmparam.py /home/ubuntu/ssmparam.py
+sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
+my_ip=$(curl http://checkip.amazonaws.com)
+
+python3 hosted.py $my_ip
 python3 ssmparam.py
 python3 model.py
 sudo apt install golang-go -y
