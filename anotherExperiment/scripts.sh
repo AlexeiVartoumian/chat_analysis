@@ -23,12 +23,28 @@ docker run -d \
   -p 5432:5432 \
   pgvector/pgvector:pg16
 
-sudo apt install python3-pip
+sudo apt install python3-pip -y
 sudo apt install python3.12-venv -y
 sudo python3 -m venv /venv
+
 source /venv/bin/activate
 sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3
 
-#pip install psycopg2-binary pgvector python-dotenv numpy
-
-
+git clone --single-branch --branch model-insert https://github.com/AlexeiVartoumian/chat_analysis.git
+sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
+sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
+sudo mv chat_analysis/anotherExperiment/ssmparam.py /home/ubuntu/ssmparam.py
+python3 ssmparam.py
+python3 model.py
+sudo apt install golang-go -y
+git clone --single-branch --branch  cli-binary-code https://github.com/AlexeiVartoumian/chat_analysis.git
+cd /home/ubuntu/chat_analysis/anotherExperiment/cli/
+sudo GOOS=linux GOARCH=amd64 go build -o start main.go
+sudo mv start /home/ubuntu/start && cd /home/ubuntu/
+sudo chmod +x start
+python3 listbucket.py
+./start insert processedJobs.csv COMPANY
+./start insert processedJobs.csv JOBS
+./start insert company_data.csv COMPANY_METADATA
+./start insert job_metadata.csv JOB_METADATA
+./start insert job_description.csv JOB_DESCRIPTION
