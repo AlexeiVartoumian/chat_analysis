@@ -38,9 +38,6 @@ docker run -d \
   pgvector/pgvector:pg16
 
 
-
-
-
 sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
 sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
 
