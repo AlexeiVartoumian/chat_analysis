@@ -48,3 +48,7 @@ python3 listbucket.py
 ./start insert company_data.csv COMPANY_METADATA
 ./start insert job_metadata.csv JOB_METADATA
 ./start insert job_description.csv JOB_DESCRIPTION
+sudo rm -rf chat_analysis/
+git clone --single-branch --branch  api-code-tls https://github.com/AlexeiVartoumian/chat_analysis.git
+cd chat_analysis/anotherExperiment/api/cmd/
+sudo go run main.go
