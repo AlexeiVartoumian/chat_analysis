@@ -21,6 +21,17 @@ type LastThreeDays struct {
 	Job_url          string
 }
 
+type UrlOnCompanySite struct {
+	Date_posted      string
+	Title            string
+	Company_name     string
+	Location         string
+	Salary           string
+	Applicants_count string
+	Apply_url        string
+	Job_url          string
+}
+
 func SearchSimilarJobs(query string) error {
 
 	db, err := ConnectDb()
@@ -115,6 +126,56 @@ SELECT
 		// log.Printf("DatePosted: %s | %s | %s | %s | %s | %s | View: %s",
 		// 	Out.date_posted, Out.day_posted, Out.title, Out.company_name, Out.location,
 		// 	Out.applicants_count, Out.apply_url)
+
+		output = append(output, Out)
+	}
+	return output, nil
+}
+
+func OnlyUrlOnCompanySite() ([]UrlOnCompanySite, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	rows, err := db.Query(`
+	SELECT 
+    j.date_posted,
+    j.title,
+    c.name as company_name,
+    j.location,
+    j.salary,
+    jm.applicants_count,
+    jm.company_apply_url,
+    j.job_url
+FROM JOBS j
+JOIN COMPANY c ON j.company_id = c.company_id
+LEFT JOIN JOB_METADATA jm ON j.job_id = jm.job_id
+WHERE j.date_posted IS NOT NULL
+  AND j.salary IS NOT NULL
+  AND j.salary != 'Not specified'
+  AND (jm.company_apply_url NOT LIKE 'https://www.linkedin%'
+       OR jm.company_apply_url IS NULL)
+ORDER BY j.date_posted DESC;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "hoo hhaa ")
+	}
+	defer rows.Close()
+
+	var output []UrlOnCompanySite
+
+	for rows.Next() {
+
+		var Out UrlOnCompanySite
+
+		rows.Scan(&Out.Date_posted, &Out.Title, &Out.Company_name,
+			&Out.Location, &Out.Salary, &Out.Applicants_count,
+			&Out.Apply_url, &Out.Job_url)
 
 		output = append(output, Out)
 	}

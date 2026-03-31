@@ -58,6 +58,28 @@ func SemanticSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+func CompanyUrlOnly(w http.ResponseWriter, r *http.Request) {
+
+	CompanyLinks, err := sqlconnect.OnlyUrlOnCompanySite()
+
+	if err != nil {
+		http.Error(w, "Invalid request Body", http.StatusBadRequest)
+		return
+	}
+	fmt.Println("here is yout data", CompanyLinks)
+
+	response := struct {
+		Status string                        `json:"status"`
+		Count  int                           `json:"count"`
+		Data   []sqlconnect.UrlOnCompanySite `json:"data"`
+	}{
+		Status: "success",
+		Count:  len(CompanyLinks),
+		Data:   CompanyLinks,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
 
 func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 	recentJobs, err := sqlconnect.LastThreeDaysJobs()
