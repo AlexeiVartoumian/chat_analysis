@@ -12,13 +12,14 @@ if len(sys.argv) >1 :
 
 client = boto3.client('lambda', region_name='eu-west-2')
 
-
+#TODO paramertirize
 if search_term != None:
     response = client.invoke(
         FunctionName='mydemofunction',
         InvocationType='Event', 
         Payload=json.dumps({
-            "search_term": search_term
+            "search_term": search_term,
+            "target_bucket" : "somebuckethaha" 
         })
     )
 else:
