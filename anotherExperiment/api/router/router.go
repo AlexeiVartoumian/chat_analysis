@@ -31,5 +31,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.GetLastThreeDays),
 	))
 
+	mux.Handle("POST /semanticSearch", authMiddleware.Authenticate(models.ScopeRead)(
+		http.HandlerFunc(handlers.SemanticSearch),
+	))
+
 	return mux
 }

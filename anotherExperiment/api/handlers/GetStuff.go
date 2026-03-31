@@ -8,9 +8,56 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os/exec"
 )
+
+func updateLambda(search_term string) error {
+
+	cmd := exec.Command("python3", "/home/ubuntu/update_search.py", search_term)
+
+	if err := cmd.Run(); err != nil {
+		return utils.ErrorHandler(err, "program did not execute")
+	}
+	return nil
+
+}
+
+func SemanticSearch(w http.ResponseWriter, r *http.Request) {
+
+	//
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "mthod not allowed", http.StatusMethodNotAllowed)
+	}
+
+	//todo sanitize input
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "Invalid requestr body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	search_term := string(body)
+
+	err = updateLambda(search_term)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem executing", http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	response := struct {
+		Status string `json:"status"`
+	}{
+		Status: fmt.Sprintf(" successfully sent request for %s", search_term),
+	}
+	json.NewEncoder(w).Encode(response)
+
+}
 
 func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 	recentJobs, err := sqlconnect.LastThreeDaysJobs()
