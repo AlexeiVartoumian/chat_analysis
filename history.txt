@@ -1,0 +1,165 @@
+  clear
+  sudo apt install -y apt-transport-https ca-certificates curl gnupg lsb-release
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  clear
+  sudo apt update
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list
+  sudo apt update
+  sudo apt install -y docker-ce docker-ce-cli containerd.io
+sudo systemctl start docker
+sudo usermod -aG docker $USER
+newgrp docker
+docker run -d   --name postgres   -e POSTGRES_PASSWORD=alex   -e POSTGRES_DB=interview   -p 5432:5432   pgvector/pgvector:pg16
+sudo apt install python3.12-venv
+sudo python3 -m venv /venv
+source /venv/bin/activate
+sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy
+git clone --single-branch model-insert https://github.com/AlexeiVartoumian/chat_analysis.git
+git clone --single-branch --branch model-insert https://github.com/AlexeiVartoumian/chat_analysis.git
+ls
+ls chat_analysis/
+ls chat_analysis/anotherExperiment/
+mv chat_analysis/anotherExperiment/model.py /model.py
+sudo mv chat_analysis/anotherExperiment/model.py /model.py
+
+     pwd
+     sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
+    udo mv /model.py /home/ubuntu/model.py
+     ls
+     sudo rm -rf chat_analysis/
+     ls
+     cat model.py
+     python3 model.py
+     ls
+     aws ssm -get-parameters-by-path --path"/api/store/" --query "Parameters[*].[Name,Value]" --output text | while read name value; do echo "$(basename $name)=\"$value\"" done > /.env;
+     clear
+     aws ssm get-parameters-by-path --path "/api/store/" --query "Parameters[*].[Name,Value]" --output text | while read name value; do echo "$(basename $name)=\"$value\"" done > /.env;
+     clear
+     aws ssm get-parameters-by-path   --path "/api/store/"   --with-decryption   --query "Parameters[*].[Name,Value]"   --output text | while read name value; do     echo "$(basename $name)=\"$value\""; done > /.env    
+     sudo aws ssm get-parameters-by-path   --path "/api/store/"   --with-decryption   --query "Parameters[*].[Name,Value]"   --output text | while read name value; do     echo "$(basename $name)=\"$value\""; done > /.env
+     aws --version
+     TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" \
+       -H "X-aws-ec2-metadata-token-ttl-seconds: 21600")
+     sudo nano myscript.sh
+     sudo chmod +x myscript.sh
+     ./myscript.sh
+     sudo ./myscript.sh
+     sudo nano myscript.sh
+     sudo ./myscript.sh
+     sudo nano myscript.sh
+     sudo rm -rf myscript.sh
+     clear
+     sudo nano myscript.sh
+     sudo chmod +x myscript.sh
+     ./myscript.sh
+     sudo nano myscript.sh
+     ./myscript.sh
+     sudo rm-rf myscript.sh
+     sudo rm -rf myscript.sh
+     sudo nano mysqcript.sh
+     sudo chmod +x mysqcript.sh
+     ./mysqcript.sh
+     sudo ./mysqcript.sh
+     ls
+     cat .env
+     sudo apt update
+     ls
+     sudo source /venv/bin/activate
+     source /venv/bin/activate
+     clear
+     ls
+     sudo /venv/bin/pip install boto3
+     sudo nano ssmparam.py
+     clear
+     ls
+     py ssmparam.py
+     python3 ssmparam.py
+     ls -lart
+     cat .env
+     ls
+     python3 model.py
+     docker ps
+     docker ps aux
+     docker aux
+     docker ps -a
+     docker start 6103de4621f7
+     docker ps
+     python3 model.py
+     docker exec
+     docker exec -it 6103de4621f7 psql -U interview
+     docker exec -it 6103de4621f7 psql -U postgres -W interview
+     clear
+     ls
+     git clone --single-branch --branch  cli-binray-code https://github.com/AlexeiVartoumian/chat_analysis.git
+     git clone --single-branch --branch  cli-binary-code https://github.com/AlexeiVartoumian/chat_analysis.git
+     clear
+     ls
+     cd chat_analysis/
+     ls
+    cd anotherExperiment/
+    ls
+    cd ../..
+    sudo apt install golang-go
+    sudo apt install golang-go -y
+    sudo free -h
+    sudo GOOS=linux GOARCH=amd64 build -o /chat_analysis/anotherExperiment/
+    sudo GOOS=linux GOARCH=amd64 go build -o /chat_analysis/anotherExperiment/
+    pwd
+    sudo GOOS=linux GOARCH=amd64 go build -o /chat_analysis/anotherExperiment/cli
+    sudo GOOS=linux GOARCH=amd64 go build -o /home/ubuntu/chat_analysis/anotherExperiment/cli
+    ls chat_analysis/anotherExperiment/cli/
+    sudo GOOS=linux GOARCH=amd64 go build -o /home/ubuntu/chat_analysis/anotherExperiment/cli/
+    cd /home/ubuntu/chat_analysis/anotherExperiment/cli/
+    cd ../../..
+    ls
+    sudo GOOS=linux GOARCH=amd64 go build -o start /home/ubuntu/chat_analysis/anotherExperiment/cli/main.go
+    cd chat_analysis/anotherExperiment/cli/
+    sudo GOOS=linux GOARCH=amd64 go build -o start main.go
+    mv start /home/ubuntu/start
+    cd /home/ubuntu/
+    ls
+    sudo chmod +x start
+    ls
+    sudo nano bucket.py
+    clear
+    ls
+    python3 bucket.py
+    ls
+    cat processedJobs.csv
+    ./start insert processedJobs.csv
+    ./start insert processedJobs.csv COMPANY
+    docker ps -a
+    sudo docker start 6103de4621f7
+    ./start insert processedJobs.csv COMPANY
+    ls
+    rm -rf start
+    cd chat_analysis/anotherExperiment/
+    ls
+    cd cli/
+    ls
+    cd cmd/
+    sudo nano sqlconfig.go
+    cd ..
+    sudo GOOS=linux GOARCH=amd64 go build -o start main.go
+    ls
+    mv start /home/ubuntu/start
+    cd /home/ubuntu/
+    ls
+    sudo chmod +x start
+    ls
+    ./start insert processedJobs.csv COMPANY
+    sudo rm -rf start
+    ls -lart
+    cd chat_analysis/anotherExperiment/cli/cmd
+    sudo nano sqlconfig.go
+    sudo GOOS=linux GOARCH=amd64 go build -o start main.go
+    cd ..
+    sudo GOOS=linux GOARCH=amd64 go build -o start main.go
+    mv start /home/ubuntu/start
+    cd /home/ubuntu/
+    sudo chmod +x start
+    ./start insert processedJobs.csv COMPANY
+    ls
+    docker exec -it 6103de4621f7 psql -U postgres -W interview
+    history
