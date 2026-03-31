@@ -15,7 +15,7 @@ client = boto3.client('lambda', region_name='eu-west-2')
 #TODO paramertirize
 if search_term != None:
     response = client.invoke(
-        FunctionName='mydemofunction',
+        FunctionName='reader',
         InvocationType='Event', 
         Payload=json.dumps({
             "search_term": search_term,
