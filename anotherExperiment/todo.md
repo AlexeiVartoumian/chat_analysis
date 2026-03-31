@@ -18,3 +18,6 @@ breakdown :
 
 9. add all the routes 
 10. add backfill embedding route
+
+11. .update reader lambda env keys . trigger automation for s3 bucket workflow.
+create api endpoint pto update this . think about api being in lambda . think about iam permissions . for now test on ec2 .
