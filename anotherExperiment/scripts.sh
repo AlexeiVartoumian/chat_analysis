@@ -39,21 +39,23 @@ docker run -d \
 
 
 sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
+sudo mv chat_analysis/anotherExperiment/update_search.py /home/ubuntu/update_search.py
 sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
 
 sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
 my_ip=$(curl http://checkip.amazonaws.com)
 
 python3 hosted.py $my_ip
-
 python3 model.py
+
 sudo apt install golang-go -y
 git clone --single-branch --branch  cli-binary-code https://github.com/AlexeiVartoumian/chat_analysis.git
 cd /home/ubuntu/chat_analysis/anotherExperiment/cli/
 sudo GOOS=linux GOARCH=amd64 go build -o start main.go
 sudo mv start /home/ubuntu/start && cd /home/ubuntu/
 sudo chmod +x start
-python3 listbucket.py
+
+python3 listbucket.py #todo this should be triggered by something else
 ./start insert processedJobs.csv COMPANY
 ./start insert processedJobs.csv JOBS
 ./start insert company_data.csv COMPANY_METADATA
