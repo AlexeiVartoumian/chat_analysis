@@ -21,3 +21,5 @@ breakdown :
 
 11. .update reader lambda env keys . trigger automation for s3 bucket workflow.
 create api endpoint pto update this . think about api being in lambda . think about iam permissions . for now test on ec2 .
+
+12. add the semantic search field as a column somewhere ? with timestamp ? also there is thow to connectr the s3 to the ec2
