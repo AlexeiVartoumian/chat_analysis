@@ -16,7 +16,7 @@ import (
 
 func updateLambda(search_term string) error {
 
-	cmd := exec.Command("python3", "/home/ubuntu/update_search.py", search_term)
+	cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/update_search.py", search_term)
 
 	if err := cmd.Run(); err != nil {
 		return utils.ErrorHandler(err, "program did not execute")
