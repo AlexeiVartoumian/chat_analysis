@@ -49,6 +49,7 @@ python3 hosted.py $my_ip
 python3 model.py
 
 sudo apt install golang-go -y
+sudo rm -rf chat_analysis/
 git clone --single-branch --branch  cli-binary-code https://github.com/AlexeiVartoumian/chat_analysis.git
 cd /home/ubuntu/chat_analysis/anotherExperiment/cli/
 sudo GOOS=linux GOARCH=amd64 go build -o start main.go
