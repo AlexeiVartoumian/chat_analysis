@@ -1,0 +1,27 @@
+{
+  "file_id": {
+    "S": "filename"
+  },
+  "locked_at": {
+    "N": "0"
+  },
+  "status": {
+    "S": "FREE"
+  },
+  "ttl": {
+    "NULL": true
+  },
+  "workflow_id": {
+    "NULL": true
+  }
+}
+
+// status-index
+// Active
+// status (String)
+// locked_at (Number)
+// On-demand
+// On-demand
+// All
+// 0 bytes
+// 0

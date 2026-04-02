@@ -1,0 +1,4 @@
+
+Name status-index
+Partition key status (String)
+Sort key locked_at (Number)
