@@ -57,11 +57,8 @@ sudo mv start /home/ubuntu/start && cd /home/ubuntu/
 sudo chmod +x start
 
 python3 listbucket.py #todo this should be triggered by something else
-./start insert processedJobs.csv COMPANY
-./start insert processedJobs.csv JOBS
-./start insert company_data.csv COMPANY_METADATA
-./start insert job_metadata.csv JOB_METADATA
-./start insert job_description.csv JOB_DESCRIPTION
+sudo chmod +x itertest.sh
+./itertest.sh
 sudo rm -rf chat_analysis/
 git clone --single-branch --branch  api-code-tls https://github.com/AlexeiVartoumian/chat_analysis.git
 cd chat_analysis/anotherExperiment/api/cmd/
