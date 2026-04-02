@@ -24,30 +24,35 @@ with open("keys.txt", "w" , encoding="utf-8") as f:
             f.writelines("\n")
 
 with open("keys.json" , "w" , encoding="utf-8" ) as f:
-    records = defaultdict(list)
-
+    records = defaultdict(lambda: [0] * 4)
     for key in keys:
         unique = key.split("-", 1)[1].split(".")[0] 
-        print(unique)
-        
-        records[unique].append(os.path.basename(key))
-       
+        document = os.path.basename(key)
+        if document.startswith("processed"):
+            records[unique][0] = os.path.basename(key)
+        if document.startswith("company_data"):
+            records[unique][1] = os.path.basename(key)
+        if document.startswith("job_metadata"):
+            records[unique][2] = os.path.basename(key)
+        if document.startswith("job_description"):
+            records[unique][3] = os.path.basename(key)
+  
     json.dump(records , f)
 
 
-# for key in keys:
-#     sanitizekey = os.path.basename(key)
-#     with open (sanitizekey , "wb" ) as f :
-#         client.download_fileobj('alexeitranscribefile', key, f)
+for key in keys:
+    sanitizekey = os.path.basename(key)
+    with open (sanitizekey , "wb" ) as f :
+        client.download_fileobj('alexeitranscribefile', key, f)
 
-#     with open(sanitizekey , "wb" ) as f :
-#         client.download_fileobj('alexeitranscribefile', key, f)
+    with open(sanitizekey , "wb" ) as f :
+        client.download_fileobj('alexeitranscribefile', key, f)
 
-#     with open(sanitizekey , "wb" ) as f :
-#         client.download_fileobj('alexeitranscribefile', key, f)
+    with open(sanitizekey , "wb" ) as f :
+        client.download_fileobj('alexeitranscribefile', key, f)
 
-#     with open(sanitizekey, "wb" ) as f :
-#         client.download_fileobj('alexeitranscribefile', key, f)
+    with open(sanitizekey, "wb" ) as f :
+        client.download_fileobj('alexeitranscribefile', key, f)
 
 
 # with open ("processedJobs.csv" , "wb" ) as f :
