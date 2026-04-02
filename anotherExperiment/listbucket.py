@@ -1,6 +1,7 @@
 import boto3
 import os
-
+import json
+from collections import defaultdict
 client = boto3.client('s3')
 
 ##check available files . pair off against local "seen" file . 
@@ -11,23 +12,42 @@ resp = client.list_objects(Bucket='alexeitranscribefile')
 
 keys = []
 for key in resp["Contents"]:
-    print(key["Key"])
-    #print("ok \n")
-    keys.append(key)
+    keys.append(key["Key"])
 #print(resp)
 
-for key in keys:
-    with open ("processedJobs.csv" , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+#print(keys)
 
-    with open("company_data.csv" , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+with open("keys.txt", "w" , encoding="utf-8") as f:
+        
+        for key in keys:
+            f.writelines(key)
+            f.writelines("\n")
 
-    with open("job_metadata.csv" , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+with open("keys.json" , "w" , encoding="utf-8" ) as f:
+    records = defaultdict(list)
 
-    with open("job_description.csv" , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+    for key in keys:
+        unique = key.split("-", 1)[1].split(".")[0] 
+        print(unique)
+        
+        records[unique].append(os.path.basename(key))
+       
+    json.dump(records , f)
+
+
+# for key in keys:
+#     sanitizekey = os.path.basename(key)
+#     with open (sanitizekey , "wb" ) as f :
+#         client.download_fileobj('alexeitranscribefile', key, f)
+
+#     with open(sanitizekey , "wb" ) as f :
+#         client.download_fileobj('alexeitranscribefile', key, f)
+
+#     with open(sanitizekey , "wb" ) as f :
+#         client.download_fileobj('alexeitranscribefile', key, f)
+
+#     with open(sanitizekey, "wb" ) as f :
+#         client.download_fileobj('alexeitranscribefile', key, f)
 
 
 # with open ("processedJobs.csv" , "wb" ) as f :
