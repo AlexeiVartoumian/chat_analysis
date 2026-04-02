@@ -75,6 +75,7 @@ def create_tables(conn) -> None:
                 job_url     VARCHAR(256)    NOT NULL,
                 easy_apply  VARCHAR(256),
                 promoted    VARCHAR(256),
+                search_term VARCHAR(256) NOT NULL,  
                 expiry_date DATE,
                 company_id  BIGINT          NOT NULL,
                 CONSTRAINT fk_jobs_company
