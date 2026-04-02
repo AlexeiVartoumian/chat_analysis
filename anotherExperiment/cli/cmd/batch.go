@@ -197,6 +197,7 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 		Salary:      record["salary"],
 		Date_Posted: time1,
 		Job_url:     record["job_url"],
+		Search_term: record["search_term"],
 		Easy_apply:  easy_apply,
 		Promoted:    promoted,
 		Expiry_Date: time.Now(),

@@ -9,6 +9,7 @@ type JOBS struct {
 	Salary      string    `json:"salary,omitempty" db:"salary"`
 	Date_Posted time.Time `json:"date_posted,omitempty" db:"date_posted"`
 	Job_url     string    `json:"job_url,omitempty" db:"job_url"`
+	Search_term string    `json:"search_term,omitempty" db:"search_term"`
 	Easy_apply  bool      `json:"easy_apply,omitempty" db:"easy_apply"`
 	Promoted    bool      `json:"promoted,omitempty" db:"promoted"`
 	Expiry_Date time.Time `json:"expiry_date,omitempty" db:"expiry_date"`
