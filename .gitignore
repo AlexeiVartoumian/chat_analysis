@@ -6,4 +6,6 @@ readme.md
 test.py
 *.tfstate
 /anotherExperiment/Deploy/backend.tf
-
+/cookies/*
+/anotherExperiment/sources
+/anotherExperiment/package
