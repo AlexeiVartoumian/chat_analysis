@@ -23,3 +23,5 @@ breakdown :
 create api endpoint pto update this . think about api being in lambda . think about iam permissions . for now test on ec2 .
 
 12. add the semantic search field as a column somewhere ? with timestamp ? also there is thow to connectr the s3 to the ec2
+
+13 . handle ssl connections via proxy ? cache popular requests ..
