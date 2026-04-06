@@ -28,8 +28,8 @@ import boto3
 import json
 import sys
 import uuid
-dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('workflowstate')
+# dynamodb = boto3.resource('dynamodb')
+# table = dynamodb.Table('workflowstate')
 
 search_term = None
 
