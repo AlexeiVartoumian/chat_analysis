@@ -7,3 +7,5 @@ test.py
 *.tfstate
 /anotherExperiment/Deploy/backend.tf
 /cookies
+/anotherExperiment/package
+/anotherExperiment/sources
