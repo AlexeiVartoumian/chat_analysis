@@ -29,3 +29,6 @@ create api endpoint pto update this . think about api being in lambda . think ab
 14. handle acquisition logic of lambda1 . 
     update multiple ddb tables across the stream .
     cross-account lambda on hub resources. 
+
+
+15. include additional tables you know what they are
