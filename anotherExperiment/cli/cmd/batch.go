@@ -32,6 +32,12 @@ func CsvFile(filepath string, tablename string) error {
 
 		return ErrorHandler(err, "uh oh")
 	}
+	//if tablename == "JOBS" && len(records) > 0 {
+	if tablename == "JOBS" && len(records) > 0 {
+
+		Job_And_search_loader(records, tablename, filepath)
+		return nil
+	}
 
 	for index, record := range records {
 		fmt.Println(record)
@@ -52,6 +58,45 @@ func CsvFile(filepath string, tablename string) error {
 	return nil
 }
 
+func Job_And_search_loader(records []map[string]string, tablename string, filepath string) {
+	search_term := models.Search_term{Search_term: records[0]["search_term"]}
+
+	AddNewRow(search_term, tablename)
+	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
+	workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
+	if err != nil {
+		fmt.Println("err observed in search term retriavel", ErrorHandler(err, "you brought this on yourself"))
+	}
+	InsertTime := time.Now()
+	DuplicateCount := 0
+	for index, record := range records {
+
+		value, err := JobLoader(record)
+		if err != nil {
+
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		skipped, _ := AddNewRow(value, tablename)
+
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM{
+			Job_id:      value.Job_id,
+			Workflow_id: workflowid,
+		}
+		AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM")
+	}
+	SearchWorkflow := models.SearchWorkflow{
+		Workflow_id:      workflowid,
+		Search_term_id:   search_term_id,
+		Run_at:           InsertTime,
+		Total_jobs_found: len(records),
+		Net_new_found:    len(records) - DuplicateCount,
+	}
+	AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
+}
+
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
 
 	switch tablename {
@@ -59,8 +104,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return CompanyLoader(record)
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
-	case "JOBS":
-		return JobLoader(record)
+	// case "JOBS":
+	// 	return JobLoader(record)
 	case "JOB_METADATA":
 		return Jobs_MetadataLoader(record)
 	case "JOB_DESCRIPTION":
@@ -214,4 +259,26 @@ func urlHelper(url string) string {
 
 	job_id := parts[len(parts)-1]
 	return job_id
+}
+
+func getSearchTermIdHelper(searchTerm string) (int, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return -1, ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	row := db.QueryRow(`
+		Select search_term_id FROM SEARCH_TERM
+		WHERE term = %s
+	`, searchTerm)
+
+	var search_term_id int
+	if err := row.Scan(&searchTerm); err != nil {
+		return -1, ErrorHandler(err, "row scan error")
+	}
+
+	return search_term_id, nil
 }

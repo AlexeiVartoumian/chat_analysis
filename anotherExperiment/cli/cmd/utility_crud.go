@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/lib/pq"
 	"github.com/pgvector/pgvector-go"
 )
 
@@ -20,11 +21,11 @@ type EmbeddingResponse struct {
 	} `json:"data"`
 }
 
-func AddNewRow(model interface{}, tablename string) (error, error) {
+func AddNewRow(model interface{}, tablename string) (int, error) {
 	db, err := ConnectDb()
 
 	if err != nil {
-		return nil, ErrorHandler(err, "db conn error")
+		return 0, ErrorHandler(err, "db conn error")
 	}
 
 	defer db.Close()
@@ -32,7 +33,7 @@ func AddNewRow(model interface{}, tablename string) (error, error) {
 	stmt, err := db.Prepare(GenerateInsertQuery(tablename, model))
 
 	if err != nil {
-		return nil, ErrorHandler(err, "SQL prep statement err")
+		return 0, ErrorHandler(err, "SQL prep statement err")
 	}
 	defer stmt.Close()
 	values := getStructValues(model)
@@ -42,11 +43,12 @@ func AddNewRow(model interface{}, tablename string) (error, error) {
 
 	if err != nil {
 		//return nil, ErrorHandler(err, "db insertion error")
-		if strings.Contains(err.Error(), "Duplicate entry") {
+		//if strings.Contains(err.Error(), "Duplicate entry") {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
 			log.Printf("Skipping duplicate entry: %v", values[0])
-			return nil, nil
+			return 1, nil
 		}
-		return nil, ErrorHandler(err, "db insertion error")
+		return 0, ErrorHandler(err, "db insertion error")
 	}
 
 	fmt.Println(res.RowsAffected())
@@ -58,7 +60,7 @@ func AddNewRow(model interface{}, tablename string) (error, error) {
 
 	// fmt.Printf("job successful!  job insertd with id %d ", lastid)
 
-	return nil, nil
+	return 0, nil
 
 }
 
