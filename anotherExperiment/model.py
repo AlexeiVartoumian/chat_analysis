@@ -168,7 +168,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM (
                 job_id          BIGINT      NOT NULL,
-                workflow_id     BIGINT      NOT NULL,
+                workflow_id     VARCHAR(64)      NOT NULL,
                 PRIMARY KEY (job_id, workflow_id),
                 CONSTRAINT fk_jst_job
                     FOREIGN KEY (job_id) REFERENCES JOBS (job_id) ON DELETE CASCADE,
