@@ -1,0 +1,11 @@
+{
+  "account_id": {
+    "S": "123456789"
+  },
+  "active_workflows": {
+    "N": "0"
+  },
+  "queue_url": {
+    "S": "your-sqs-queue-url"
+  }
+}
