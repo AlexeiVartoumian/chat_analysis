@@ -4,7 +4,7 @@ import "time"
 
 type Search_term struct {
 	//search term id generated
-	Search_term string `json:"search_term,omitempty" db:"search_term"`
+	Search_term string `json:"search_term,omitempty" db:"term"`
 }
 
 type SearchWorkflow struct {

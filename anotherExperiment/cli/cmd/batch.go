@@ -262,23 +262,18 @@ func urlHelper(url string) string {
 }
 
 func getSearchTermIdHelper(searchTerm string) (int, error) {
-
 	db, err := ConnectDb()
-
 	if err != nil {
 		return -1, ErrorHandler(err, "db conn error")
 	}
 	defer db.Close()
-
 	row := db.QueryRow(`
-		Select search_term_id FROM SEARCH_TERM
-		WHERE term = %s
-	`, searchTerm)
-
+        SELECT search_term_id FROM SEARCH_TERM
+        WHERE term = $1
+    `, searchTerm)
 	var search_term_id int
-	if err := row.Scan(&searchTerm); err != nil {
+	if err := row.Scan(&search_term_id); err != nil {
 		return -1, ErrorHandler(err, "row scan error")
 	}
-
 	return search_term_id, nil
 }
