@@ -65,20 +65,27 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
 	workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
 	if err != nil {
-		fmt.Println("err observed in search term retriavel", ErrorHandler(err, "you brought this on yourself"))
+		fmt.Println("err observed in search term retrieval", ErrorHandler(err, "you brought this on yourself"))
 	}
 	InsertTime := time.Now()
 	DuplicateCount := 0
-	for index, record := range records {
 
+	SearchWorkflow := models.SearchWorkflow{
+		Workflow_id:      workflowid,
+		Search_term_id:   search_term_id,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
+
+	for index, record := range records {
 		value, err := JobLoader(record)
 		if err != nil {
-
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
 		}
 		skipped, _ := AddNewRow(value, tablename)
-
 		DuplicateCount += skipped
 
 		JobSearchWorkflow := models.JOB_SEARCH_TERM{
@@ -87,16 +94,9 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 		}
 		AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM")
 	}
-	SearchWorkflow := models.SearchWorkflow{
-		Workflow_id:      workflowid,
-		Search_term_id:   search_term_id,
-		Run_at:           InsertTime,
-		Total_jobs_found: len(records),
-		Net_new_found:    len(records) - DuplicateCount,
-	}
-	AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
-}
 
+	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount)
+}
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
 
 	switch tablename {
@@ -276,4 +276,24 @@ func getSearchTermIdHelper(searchTerm string) (int, error) {
 		return -1, ErrorHandler(err, "row scan error")
 	}
 	return search_term_id, nil
+}
+
+func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	_, err = db.Exec(`
+        UPDATE SEARCH_WORKFLOW 
+        SET total_jobs_found = $1, net_new_jobs = $2
+        WHERE workflow_id = $3
+    `, totalJobs, netNew, workflowid)
+
+	if err != nil {
+		return ErrorHandler(err, "update search workflow counts error")
+	}
+
+	return nil
 }
