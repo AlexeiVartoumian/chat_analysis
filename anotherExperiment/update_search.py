@@ -42,7 +42,7 @@ if search_term is None:
 sqs = boto3.client('sqs', region_name='eu-west-2')
 
 response = sqs.send_message(
-    QueueUrl='https://sqs.eu-west-2.amazonaws.com/390746273208/workflow-requests',
+    QueueUrl='https://sqs.eu-west-2.amazonaws.com/390746273208/workflow-cordinator',
     MessageBody=json.dumps({
         "search_term": search_term,
         "target_bucket": "somebuckethaha"  
