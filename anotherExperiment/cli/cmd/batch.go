@@ -61,7 +61,7 @@ func CsvFile(filepath string, tablename string) error {
 func Job_And_search_loader(records []map[string]string, tablename string, filepath string) {
 	search_term := models.Search_term{Search_term: records[0]["search_term"]}
 
-	AddNewRow(search_term, tablename)
+	AddNewRow(search_term, "SEARCH_TERM")
 	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
 	workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
 	if err != nil {
