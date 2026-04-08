@@ -90,7 +90,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 
 		if err != nil {
 			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
-
+			break
 		}
 
 		DuplicateCount += skipped
