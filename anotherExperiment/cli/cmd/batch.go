@@ -213,7 +213,7 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 	_, err2 := strconv.Atoi(record["company_id"])
 	if err2 != nil {
 		//could be a solo person posting the job
-
+		Company_id = -1
 	} else {
 		Company_id, err = strconv.Atoi(record["company_id"])
 		if err != nil {
