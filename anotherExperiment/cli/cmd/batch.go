@@ -40,19 +40,16 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	for index, record := range records {
-		//fmt.Println(record)
+		fmt.Println(record)
 		fmt.Println(" ")
 		value, err := ModelLoader(tablename, record)
 
 		if err != nil {
 			//return ErrorHandler(err, "you brought this on yourself")
 			//dont return process other records
-			//fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
-			fmt.Printf("SKIPPED company at index %d: company_id=%s name=%s reason=%v\n",
-				index, record["company_id"], record["company"], err)
-			return nil
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 
-			//continue
+			continue
 		}
 
 		AddNewRow(value, tablename)
