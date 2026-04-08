@@ -38,7 +38,7 @@ func AddNewRow(model interface{}, tablename string) (int, error) {
 	defer stmt.Close()
 	values := getStructValues(model)
 
-	fmt.Println("Args:", values)
+	//fmt.Println("Args:", values)
 	res, err := stmt.Exec(values...)
 
 	if err != nil {
