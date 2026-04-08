@@ -104,7 +104,7 @@ func getStructValues(model interface{}) []interface{} {
 		dbTag := modelType.Field(i).Tag.Get("db")
 
 		if dbTag != "" {
-			fmt.Println("Processing ", modelValue.Field(i).Interface())
+			//fmt.Println("Processing ", modelValue.Field(i).Interface())
 			values = append(values, modelValue.Field(i).Interface())
 		}
 	}
