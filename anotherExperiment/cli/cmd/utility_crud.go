@@ -71,7 +71,7 @@ func GenerateInsertQuery(tableName string, model interface{}) string {
 	paramindex := 1 // postgres way of doing things
 	for i := 0; i < modelType.NumField(); i++ {
 		dbTag := modelType.Field(i).Tag.Get("db")
-		fmt.Println("dbTag", dbTag)
+		//fmt.Println("dbTag", dbTag)
 		dbTag = strings.TrimSuffix(dbTag, ",omitempty")
 
 		//if dbTag != "" && dbTag != "job_id" {
@@ -92,7 +92,7 @@ func GenerateInsertQuery(tableName string, model interface{}) string {
 	// return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)\n", tableName, columns, placeholders)
 
 	//postgresway
-	fmt.Printf("INSERT INTO %s (%s) VALUES (%s)\n", tableName, columns, placeholders)
+	//fmt.Printf("INSERT INTO %s (%s) VALUES (%s)\n", tableName, columns, placeholders)
 	return fmt.Sprintf("INSERT INTO %s (%s) VALUES (%s)", tableName, columns, placeholders)
 }
 
@@ -108,7 +108,7 @@ func getStructValues(model interface{}) []interface{} {
 			values = append(values, modelValue.Field(i).Interface())
 		}
 	}
-	log.Println("Values", values)
+	//log.Println("Values", values)
 	return values
 }
 
