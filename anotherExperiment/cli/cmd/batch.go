@@ -48,7 +48,8 @@ func CsvFile(filepath string, tablename string) error {
 			//return ErrorHandler(err, "you brought this on yourself")
 			//dont return process other records
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
-			continue
+			//continue
+			break
 		}
 
 		AddNewRow(value, tablename)
