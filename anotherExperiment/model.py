@@ -45,7 +45,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS COMPANY (
                 company_id  BIGINT          PRIMARY KEY,
-                name        VARCHAR(64)     NOT NULL,
+                name        VARCHAR(128)     NOT NULL,
                 logo        VARCHAR(512)
             );
         """)
@@ -53,11 +53,11 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS COMPANY_METADATA (
                 company_id          BIGINT          PRIMARY KEY,
-                name                VARCHAR(64)     NOT NULL,
+                name                VARCHAR(128)     NOT NULL,
                 industry            VARCHAR(64)     NOT NULL,
                 description         TEXT,
                 employee_count      INTEGER,
-                employee_count_range VARCHAR(64)    NOT NULL,
+                employee_count_range VARCHAR(128)    NOT NULL,
                 CONSTRAINT fk_company_metadata_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY (company_id)
