@@ -1,0 +1,24 @@
+{
+  "Version": "2012-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "__owner_statement",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::985539795117:root"
+      },
+      "Action": "SQS:*",
+      "Resource": "arn:aws:sqs:eu-west-2:985539795117:workflow-requests"
+    },
+    {
+      "Sid": "orchestrator send message",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::390746273208:role/bucketreader"
+      },
+      "Action": "SQS:SendMessage",
+      "Resource": "arn:aws:sqs:eu-west-2:985539795117:workflow-requests"
+    }
+  ]
+}
