@@ -182,13 +182,21 @@ func Company_MetadataLoader(record map[string]string) (models.Company_Metadata, 
 
 func CompanyLoader(record map[string]string) (models.COMPANY, error) {
 
-	if record["company_id"] == "N/A" {
-		return models.COMPANY{}, ErrorHandler(nil, "nil value")
-	}
-	company_id, err := strconv.Atoi(record["company_id"])
-	if err != nil {
-		return models.COMPANY{}, ErrorHandler(err, "uh oh Company id fail parse")
+	var company_id int
 
+	if record["company_id"] == "N/A" {
+		company_id = -1
+
+		record["company"] = "Unknown / individual"
+		//return models.COMPANY{}, ErrorHandler(nil, "nil value")
+	} else {
+
+		var err error
+		company_id, err = strconv.Atoi(record["company_id"])
+		if err != nil {
+			return models.COMPANY{}, ErrorHandler(err, "uh oh Company id fail parse")
+
+		}
 	}
 
 	company := models.COMPANY{
