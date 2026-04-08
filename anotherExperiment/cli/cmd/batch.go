@@ -85,7 +85,14 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
 		}
-		skipped, _ := AddNewRow(value, tablename)
+		//skipped, _ := AddNewRow(value, tablename)
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+
 		DuplicateCount += skipped
 
 		JobSearchWorkflow := models.JOB_SEARCH_TERM{
