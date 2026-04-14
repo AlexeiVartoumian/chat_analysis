@@ -10,4 +10,14 @@ history.txt
 /cookies
 /anotherExperiment/package
 /anotherExperiment/sources/
-
+/anotherExperiment/terraform.tfvars
+/anotherExperiment/module/sources
+/anotherExperiment/vars.yaml
+/anotherExperiment/vars_tmp.yaml
+/anotherExperiment/terraform.tfstate.backup
+/anotherExperiment/.terraform/
+/anotherExperiment/providers.tf
+/anotherExperiment/main_spoke.tf
+/anotherExperiment/terraform.tfvars
+/anotherExperiment/mysqlqueries.sql
+/oldstuff
