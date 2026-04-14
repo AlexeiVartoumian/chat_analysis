@@ -8,7 +8,7 @@ client = boto3.client('s3')
 #write download obj
 
 
-resp = client.list_objects(Bucket='alexeitranscribefile')
+resp = client.list_objects(Bucket='output-store-390746273208')
 
 keys = []
 for key in resp["Contents"]:
@@ -43,16 +43,16 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
 for key in keys:
     sanitizekey = os.path.basename(key)
     with open (sanitizekey , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+        client.download_fileobj('output-store-390746273208', key, f)
 
     with open(sanitizekey , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+        client.download_fileobj('output-store-390746273208', key, f)
 
     with open(sanitizekey , "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+        client.download_fileobj('output-store-390746273208', key, f)
 
     with open(sanitizekey, "wb" ) as f :
-        client.download_fileobj('alexeitranscribefile', key, f)
+        client.download_fileobj('output-store-390746273208', key, f)
 
 
 # with open ("processedJobs.csv" , "wb" ) as f :
@@ -66,5 +66,3 @@ for key in keys:
 
 # with open("job_description.csv" , "wb" ) as f :
 #     client.download_fileobj('alexeitranscribefile', '/output/job_description.csv', f)
-
-
