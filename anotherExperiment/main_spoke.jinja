@@ -1,0 +1,54 @@
+
+
+{% for account in enabled_accounts %}
+module "iam_spoke_{{ account }}" {
+    source = "./module/iam_spoke"
+
+    providers = {
+      aws = aws.spoke-{{ account }}
+    }
+}
+
+module "iam_spoke_attachments_{{ account }}" {
+    source = "./module/iam_spoke_attachments"
+    sqs_request_access = module.sqs_spoke_{{ account }}.workflow_requests_sqs_queue_name
+    sqs_queue_2 = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_name
+    sqs_queue_3 = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_name
+    bucket_reader_spoke = module.iam_spoke_{{ account }}.iam_spoke_role_name
+    hub_account = var.hub_account
+
+    providers = {
+      aws = aws.spoke-{{ account }}
+    }
+}
+
+module "sqs_spoke_{{ account }}" {
+    source = "./module/sqs"
+    hub_account = var.hub_account
+    aws_iam_role_main_name = module.iam_hub.aws_iam_role_main_name
+    providers = {
+      aws = aws.spoke-{{ account }}
+    }
+}
+
+module "lambda_spoke_{{ account }}" {
+    source = "./module/lambda_spoke"
+    iam_role_arn_spoke = module.iam_spoke_{{ account }}.iam_spoke_role_arn
+    iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
+    s3_source_name = module.s3.s3_bucket_source_name
+    s3_filestore_name = module.s3.s3_bucket_file_name
+    s3_output_bucket_name = module.s3.s3_bucket_output_name
+    sqs_request_access_arn = module.sqs_spoke_{{ account }}.workflow_requests_sqs_queue_arn
+    sqs_queue_2_arn = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_arn
+    sqs_queue_3_arn = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_arn
+    sqs_queue_2_id = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_id
+    sqs_queue_3_id = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_id
+    dynamodb_filetable_name = module.dynamodb_hub.filepool_table_name
+    dynamodb_accounttable_name = module.dynamodb_hub.accountpool_table_name
+
+    providers = {
+      aws = aws.spoke-{{ account }}
+    }
+}
+
+{% endfor %}

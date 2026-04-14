@@ -1,0 +1,16 @@
+
+## Auto generated providers.tf ##
+## Updated on: {{ timestamp }} ##
+
+{% for account in enabled_accounts %}
+provider "aws"{
+  alias  = "spoke-{{ account }}"
+  region = "eu-west-2"
+
+  assume_role {
+   
+    role_arn = "arn:aws:iam::{{ account }}:role/{{ role_name }}"
+  }
+}
+
+{% endfor %}
