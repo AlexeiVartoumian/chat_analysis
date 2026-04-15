@@ -35,6 +35,28 @@
 # }
 
 
+resource "aws_iam_role_policy" "send_spoke_sqs" {
+  role = var.bucket_reader_role_name
+  policy = jsonencode({
+       "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:SendMessage"
+            ],
+            "Resource": [
+                for account_id in var.spoke_accounts:
+                "arn:aws:sqs:eu-west-2:${account_id}:workflow-requests-test"
+            ]
+        }
+    ]
+
+  })
+}
 
 # resource "aws_iam_role_policy" "send_spoke_sqs" {
 #   role = var.bucket_reader_role_name
@@ -43,29 +65,7 @@
 #   })
 # }
 
-resource "aws_iam_role_policy" "send_spoke_sqs" {
-  name = "send_spoke_sqs"
-  role = var.bucket_reader_role_name
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:GetQueueAttributes",
-          "sqs:SendMessage"
-        ]
-        Resource = [
-          for accnt in var.spoke_accounts :
-          "arn:aws:sqs:eu-west-2:${accnt}:workflow-requests-test"
-        ]
-      }
-    ]
-  })
-}
 resource "aws_iam_role_policy" "bucket_permissions" {
   role = var.bucket_reader_role_name
   policy = templatefile("${path.module}/bucket_permissions.tpl" , {

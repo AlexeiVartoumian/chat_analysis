@@ -15,7 +15,15 @@ resource "aws_iam_role" "bucket_reader_main" {
           ]
         }
         Action = "sts:AssumeRole"
-      }
+       }
+       #,
+      #   {
+      #   Action = "sts:AssumeRole"
+      #   Effect = "Allow"
+      #   Principal = {
+      #     Service = "ecs-tasks.amazonaws.com"
+      #   }
+      # }
     ]
   })
 }

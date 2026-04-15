@@ -8,7 +8,6 @@ module "sqs_hub"{
 }
 module dynamodb_hub {
     source = "./module/dynamodb_hub"
-
     providers = {
       aws = aws.hub
     }
@@ -58,3 +57,14 @@ module "iam_hub_attachments" {
     }
     depends_on = [module.iam_hub]
 }
+
+# module "fargate_hub"{
+#     source = "./module/fargate_hub"
+#     iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
+#     s3_source_name = module.s3.s3_bucket_source_name
+#     s3_filestore_name = module.s3.s3_bucket_file_name
+
+#      providers = {
+#         aws = aws.hub
+#     }
+# }

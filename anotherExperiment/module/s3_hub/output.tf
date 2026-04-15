@@ -14,7 +14,7 @@ output "s3_bucket_output_arn" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store.arn
 }
-
+ 
 
 output "s3_bucket_source_id" {
     description = "s3_bucket_id_source"
