@@ -34,7 +34,7 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
         unique = key.split("-", 1)[1].split(".")[0] 
         document = os.path.basename(key)
         timestamp = timelines[index]
-        key = key.split(".")[0] + "_" + timestamp + ".csv"
+        key = document.split(".")[0] + "_" + timestamp + ".csv"
         new_keys.append(key) 
         if document.startswith("processed"):
             records[unique][0] = os.path.basename(key)
@@ -51,7 +51,7 @@ count = 0
 for index ,key in enumerate(keys):
     #sanitizekey = os.path.basename(key)
     sanitizekey = new_keys[index]
-
+   
     with open (sanitizekey , "wb" ) as f :
         client.download_fileobj('output-store-390746273208', key, f)
 
