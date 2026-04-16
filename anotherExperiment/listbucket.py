@@ -11,23 +11,29 @@ client = boto3.client('s3')
 resp = client.list_objects(Bucket='output-store-390746273208')
 
 keys = []
+timelines = []
 for key in resp["Contents"]:
     keys.append(key["Key"])
-#print(resp)
-
-#print(keys)
+    
+    timelines.append("-".join( str(key["LastModified"]).split(" ")).replace(":" , "-"))
 
 with open("keys.txt", "w" , encoding="utf-8") as f:
         
-        for key in keys:
+        for index , key  in enumerate(keys):
+            timestamp = timelines[index] 
+            
+            #split it up add timestamp and  .csv in
+            key = key.split(".")[0] + "_" + timestamp + ".csv"
             f.writelines(key)
             f.writelines("\n")
 
 with open("keys.json" , "w" , encoding="utf-8" ) as f:
     records = defaultdict(lambda: [0] * 4)
-    for key in keys:
+    for index , key  in enumerate(keys):
         unique = key.split("-", 1)[1].split(".")[0] 
         document = os.path.basename(key)
+        timestamp = timelines[index]
+        key = key.split(".")[0] + "_" + timestamp + ".csv" 
         if document.startswith("processed"):
             records[unique][0] = os.path.basename(key)
         if document.startswith("company_data"):
@@ -39,9 +45,11 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
   
     json.dump(records , f)
 
-
+count = 0
 for key in keys:
     sanitizekey = os.path.basename(key)
+
+
     with open (sanitizekey , "wb" ) as f :
         client.download_fileobj('output-store-390746273208', key, f)
 
