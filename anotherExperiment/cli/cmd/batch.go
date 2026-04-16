@@ -17,6 +17,14 @@ import (
 // maybe make a model loader function too
 // */
 
+func parseTimestamp(ts string) (time.Time, error) {
+	// Convert "2026-04-13-23-18-27+00-00" → "2026-04-13T23:18:27+00:00"
+	if len(ts) < 25 {
+		return time.Time{}, fmt.Errorf("unexpected timestamp format: %s", ts)
+	}
+	iso := ts[:10] + "T" + ts[11:13] + ":" + ts[14:16] + ":" + ts[17:19] + ts[19:22] + ":" + ts[23:]
+	return time.Parse(time.RFC3339, iso)
+}
 func CsvFile(filepath string, tablename string) error {
 	// func CsvFile(filepath string, item chan<- models.COMPANY) {
 	//jobModel := jobs.model models.JOBS{}
@@ -64,11 +72,20 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 
 	AddNewRow(search_term, "SEARCH_TERM")
 	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
-	workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
 	if err != nil {
 		fmt.Println("err observed in search term retrieval", ErrorHandler(err, "you brought this on yourself"))
 	}
-	InsertTime := time.Now()
+	//workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0], "_")
+
+	workflowid := meta_data[0]
+	timestamp, err := parseTimestamp(meta_data[1])
+
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	//InsertTime := time.Now()
+	InsertTime := timestamp
 	DuplicateCount := 0
 
 	SearchWorkflow := models.SearchWorkflow{
