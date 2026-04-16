@@ -202,3 +202,55 @@ WHERE (cm.employee_count >= 500
   AND jm.company_apply_url IS NOT NULL
 GROUP BY c.company_id, c.name, cm.industry, cm.employee_count, cm.employee_count_range, cm.description
 ORDER BY total_jobs DESC, cm.employee_count DESC;
+
+-- search term performance
+SELECT 
+    st.term,
+    sw.run_at,
+    sw.total_jobs_found,
+    sw.net_new_jobs,
+    (sw.total_jobs_found - sw.net_new_jobs) as duplicate_jobs,
+    ROUND(sw.net_new_jobs * 100.0 / NULLIF(sw.total_jobs_found, 0), 2) as fresh_pct
+FROM SEARCH_WORKFLOW sw
+JOIN SEARCH_TERM st ON sw.search_term_id = st.search_term_id
+ORDER BY sw.run_at DESC;
+
+--dupes on j's
+SELECT 
+    j.job_id,
+    j.title,
+    c.name as company_name,
+    j.date_posted,
+    COUNT(DISTINCT jst.workflow_id) as times_surfaced,
+    STRING_AGG(DISTINCT st.term, ' | ') as matched_search_terms
+FROM JOB_SEARCH_TERM jst
+JOIN JOBS j ON jst.job_id = j.job_id
+JOIN COMPANY c ON j.company_id = c.company_id
+JOIN SEARCH_WORKFLOW sw ON jst.workflow_id = sw.workflow_id
+JOIN SEARCH_TERM st ON sw.search_term_id = st.search_term_id
+GROUP BY j.job_id, j.title, c.name, j.date_posted
+HAVING COUNT(DISTINCT jst.workflow_id) > 1
+ORDER BY times_surfaced DESC;
+
+--runs
+SELECT DISTINCT ON (st.term)
+    st.term,
+    sw.run_at,
+    sw.total_jobs_found,
+    sw.net_new_jobs,
+    (sw.total_jobs_found - sw.net_new_jobs) as duplicates
+FROM SEARCH_TERM st
+JOIN SEARCH_WORKFLOW sw ON st.search_term_id = sw.search_term_id
+ORDER BY st.term, sw.run_at DESC;
+
+SELECT 
+    st.term,
+    COUNT(sw.workflow_id) as total_runs,
+    SUM(sw.total_jobs_found) as total_found,
+    SUM(sw.net_new_jobs) as total_fresh,
+    ROUND(AVG(sw.net_new_jobs * 100.0 / NULLIF(sw.total_jobs_found, 0)), 2) as avg_fresh_pct,
+    MAX(sw.run_at) as last_run
+FROM SEARCH_TERM st
+JOIN SEARCH_WORKFLOW sw ON st.search_term_id = sw.search_term_id
+GROUP BY st.term
+ORDER BY avg_fresh_pct ASC;
