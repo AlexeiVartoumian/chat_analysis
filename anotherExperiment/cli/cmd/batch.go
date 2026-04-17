@@ -47,6 +47,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_LIFECYCLE" && len(records) > 0 {
+		Jobs_LifecycleLoader(records, tablename, filepath)
+		return nil
+	}
+
 	for index, record := range records {
 		fmt.Println(record)
 		fmt.Println(" ")
@@ -135,6 +140,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Jobs_MetadataLoader(record)
 	case "JOB_DESCRIPTION":
 		return Jobs_DescriptionLoader(record)
+	// case "JOB_LIFECYCLE":
+	// 	return Jobs_LifecycleLoader(record)
 	default:
 		return nil, nil
 	}
@@ -283,6 +290,50 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 	}
 
 	return job, nil
+
+}
+
+func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepath string) {
+
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
+
+	timestamp, err := parseTimestamp(meta_data[1])
+
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+
+	for index, record := range records {
+
+		value, err := Jobs_Lifecyclemodel(record, timestamp)
+
+		if err != nil {
+			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		AddNewRow(value, "JOB_LIFECYCLE")
+
+	}
+
+}
+func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.JobLifeCycle, error) {
+
+	job_id, err := strconv.Atoi(record["job_id"])
+
+	if err != nil {
+		fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		return models.JobLifeCycle{}, ErrorHandler(err, "whoops")
+	}
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycle{
+		JobId:            job_id,
+		JobState:         record["job_state"],
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
 
 }
 
