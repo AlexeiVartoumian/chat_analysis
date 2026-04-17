@@ -10,6 +10,9 @@ while IFS= read -r file; do
 
     elif [ "$type" = "COMPANY_DATA" ]; then
         ./start insert $file COMPANY_METADATA
+    elif [ "$type" = "JOB_METADATA" ]; then
+        ./start insert $file JOB_METADATA
+        ./start insert $file JOB_LIFECYCLE
     else
         ./start insert $file $type
 
