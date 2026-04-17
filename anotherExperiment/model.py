@@ -156,7 +156,7 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW (
                 workflow_id         UUID      PRIMARY KEY,
                 search_term_id      BIGINT      NOT NULL,
-                run_at              TIMESTAMP   NOT NULL DEFAULT NOW(),
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
                 total_jobs_found    INTEGER     NOT NULL,
                 net_new_jobs        INTEGER     NOT NULL,
                 CONSTRAINT fk_workflow_search_term
@@ -175,6 +175,22 @@ def create_tables(conn) -> None:
                 CONSTRAINT fk_jst_workflow
                     FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW (workflow_id) ON DELETE CASCADE
             );                    
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE (
+                job_id               BIGINT          PRIMARY KEY,
+                job_state            VARCHAR(256)    NOT NULL,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE
+        );
+
         """)
 
 def _enum_exists(cur, enum_name: str) -> bool:
