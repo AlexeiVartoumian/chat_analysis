@@ -5,7 +5,6 @@ import (
 	"api/repository/sqlconnect"
 	"api/router"
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
@@ -65,7 +64,7 @@ func main() {
 
 	//err = server.ListenAndServe()
 
-	server.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
+	server.TLSConfig = m.TLSConfig() //&tls.Config{GetCertificate: m.GetCertificate}
 
 	go func() {
 		err := server.ListenAndServeTLS("", "")
