@@ -36,6 +36,12 @@ func CsvFile(filepath string, tablename string) error {
 	}
 	defer file.Close()
 
+	bom := make([]byte, 3)
+	file.Read(bom)
+	if string(bom) != "\xef\xbb\xbf" {
+		file.Seek(0, 0)
+	}
+
 	records, err := gocsv.CSVToMaps(file)
 	if err != nil {
 
