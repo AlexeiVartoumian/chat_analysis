@@ -21,3 +21,6 @@ history.txt
 /anotherExperiment/terraform.tfvars
 /anotherExperiment/mysqlqueries.sql
 /oldstuff
+/anotherExperiment/terraform.tfstate
+/anotherExperiment/deployer.py
+/anotherExperiment/deps.sh
