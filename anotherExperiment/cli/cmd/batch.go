@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"cli/models"
+	"encoding/json"
 
 	"fmt"
 	"os"
@@ -147,16 +148,18 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	}
 }
 
-func Jobs_DescriptionLoader(record map[string]string) (models.JOB_DESCRIPTION, error) {
+func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, error) {
 
 	job_id, err := strconv.Atoi(record["job_id"])
 
 	if err != nil {
-		return models.JOB_DESCRIPTION{}, ErrorHandler(err, "whoops")
+		return models.JobDescription{}, ErrorHandler(err, "whoops")
 	}
-	Job_Description := models.JOB_DESCRIPTION{
+
+	Job_Description := models.JobDescription{
 		JobId:          job_id,
 		JobDescription: record["job_description"],
+		Encodings:      json.RawMessage(record["encodings"]),
 	}
 	return Job_Description, nil
 }
