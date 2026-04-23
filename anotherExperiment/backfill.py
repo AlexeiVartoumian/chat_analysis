@@ -78,7 +78,7 @@ def main():
     ecs = boto3.client('ecs' , region_name = "eu-west-2")
     ecs.run_task(
     cluster='reader-cluster',
-    taskDefinition='reader-task:3',
+    taskDefinition='reader-task',
     launchType='FARGATE',
     networkConfiguration={ 'awsvpcConfiguration': {
         'subnets': ['subnet-093b63a5b7e5ae000' ,'subnet-0ce31ad86252fdc48' ],
