@@ -32,6 +32,12 @@ variable s3_output_bucket_arn{
     description = "ok"
 }
 
+variable  s3_backfill_bucket_arn{
+    type = string
+    description = "v"
+}
+               
+
 variable file_pool_table {
     type = string 
 } 

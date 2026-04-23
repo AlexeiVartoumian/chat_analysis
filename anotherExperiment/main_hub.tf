@@ -46,11 +46,11 @@ module "iam_hub_attachments" {
     s3_source_bucket_arn = module.s3.s3_bucket_source_arn
     s3_file_bucket_arn = module.s3.s3_bucket_file_arn
     s3_output_bucket_arn = module.s3.s3_bucket_output_arn
+    s3_backfill_bucket_arn = module.s3.s3_bucket_backfill_arn
     file_pool_table = module.dynamodb_hub.filepool_table_name
     account_pool_table = module.dynamodb_hub.accountpool_table_name 
     bucket_reader_role_name= module.iam_hub.aws_iam_role_main_name
     bucket_reader_main_arn = module.iam_hub.aws_iam_role_main_arn
-
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn
     providers = {
         aws = aws.hub
@@ -58,13 +58,13 @@ module "iam_hub_attachments" {
     depends_on = [module.iam_hub]
 }
 
-# module "fargate_hub"{
-#     source = "./module/fargate_hub"
-#     iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
-#     s3_source_name = module.s3.s3_bucket_source_name
-#     s3_filestore_name = module.s3.s3_bucket_file_name
+module "fargate_hub"{
+    source = "./module/fargate_hub"
+    iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
+    # s3_source_name = module.s3.s3_bucket_source_name
+    # s3_filestore_name = module.s3.s3_bucket_file_name
 
-#      providers = {
-#         aws = aws.hub
-#     }
-# }
+     providers = {
+        aws = aws.hub
+    }
+}

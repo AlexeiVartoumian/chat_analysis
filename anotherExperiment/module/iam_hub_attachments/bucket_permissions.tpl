@@ -16,7 +16,9 @@
                 "${s3_file_bucket_arn}",
                 "${s3_file_bucket_arn}/*",
                 "${s3_output_bucket_arn}",
-                "${s3_output_bucket_arn}/*"
+                "${s3_output_bucket_arn}/*",
+                "${s3_backfill_bucket_arn}",
+                "${s3_backfill_bucket_arn}/*"
               
             ]
         }

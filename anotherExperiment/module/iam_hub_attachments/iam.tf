@@ -72,6 +72,7 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_source_bucket_arn = var.s3_source_bucket_arn
     s3_file_bucket_arn = var.s3_file_bucket_arn
     s3_output_bucket_arn = var.s3_output_bucket_arn
+    s3_backfill_bucket_arn = var.s3_backfill_bucket_arn
   })
 }
 

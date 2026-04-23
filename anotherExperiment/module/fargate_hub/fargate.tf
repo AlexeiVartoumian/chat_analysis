@@ -58,12 +58,12 @@ resource "aws_ecs_task_definition" "reader_task" {
       command   = [
      
       ]
-      environment = [
-        { name = "s3_source_bucket", value = var.s3_source_name},
-        { name = "file_store", value = var.s3_filestore_name},
-        { name = "file_id", value = "cookies-grouped-remi"},
-        { name = "search_term", value = "cloud engineer"}
-      ]
+      # environment = [
+      #   { name = "s3_source_bucket", value = var.s3_source_name},
+      #   { name = "file_store", value = var.s3_output_store_name},
+      #   { name = "file_id", value = "cookies-grouped-remi"},
+       
+      # ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {
@@ -78,6 +78,6 @@ resource "aws_ecs_task_definition" "reader_task" {
 
 
 resource "aws_cloudwatch_log_group" "reader_task" {
-  name              = "/ecs/reader-task"
+  name              = "/ecs/backfill-task"
   retention_in_days = 7
 }
