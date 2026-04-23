@@ -19,3 +19,10 @@ variable "s3_bucket_name_output" {
 
     default = "output-store"
 }
+
+variable "s3_bucket_name_backfill" {
+    type = string
+    description = "name of bucket"
+
+    default = "backfill-store"
+}

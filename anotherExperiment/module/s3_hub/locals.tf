@@ -5,4 +5,5 @@ locals{
     
 
     s3_bucket_name_output = var.s3_bucket_name_output
+    s3_bucket_name_backfill = var.s3_bucket_name_backfill
 }

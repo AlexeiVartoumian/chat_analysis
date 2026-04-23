@@ -13,3 +13,9 @@ resource "aws_s3_bucket" "output_store" {
     bucket = "${local.s3_bucket_name_output}-${data.aws_caller_identity.current.account_id}"
 
 }
+
+resource "aws_s3_bucket" "backfill_store" {
+
+    bucket = "${local.s3_bucket_name_backfill}-${data.aws_caller_identity.current.account_id}"
+
+}
