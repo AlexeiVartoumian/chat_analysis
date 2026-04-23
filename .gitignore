@@ -24,3 +24,6 @@ history.txt
 /anotherExperiment/deps.sh
 /anotherExperiment/deployer.py
 /anotherExperiment/terraform.tfstate
+/anotherExperiment/terraform.tfstate.backup
+/anotherExperiment/deploydebug.log
+
