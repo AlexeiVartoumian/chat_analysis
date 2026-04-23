@@ -42,6 +42,8 @@ resource "aws_lambda_function" "reader" {
             sqs_2_id = var.sqs_queue_2_id
         }
     }
+
+    depends_on = [ aws_cloudwatch_log_group.reader ]
 }
 
 resource "aws_lambda_function" "processor" {
@@ -60,6 +62,7 @@ resource "aws_lambda_function" "processor" {
             sqs_queue_3_id = var.sqs_queue_3_id
         }
     }
+    depends_on = [aws_cloudwatch_log_group.processor]
 }
 
 resource "aws_lambda_function" "go_metadata" {
@@ -80,6 +83,7 @@ resource "aws_lambda_function" "go_metadata" {
             account_pool = var.dynamodb_accounttable_name
         }
     }
+    depends_on = [ aws_cloudwatch_log_group.go_metadata ]
 }
 
 resource "aws_lambda_permission" "allow_sqs_request" {
@@ -122,8 +126,6 @@ resource "aws_lambda_event_source_mapping" "processor_trigger" {
   batch_size       = 10
   enabled          = true
 depends_on = [aws_lambda_function.processor]
-
-
 }
 
 resource "aws_lambda_event_source_mapping" "go_metadata_trigger" {
@@ -132,4 +134,21 @@ resource "aws_lambda_event_source_mapping" "go_metadata_trigger" {
   batch_size       = 10
   enabled          = true
   depends_on = [aws_lambda_function.go_metadata]
+}
+
+
+resource "aws_cloudwatch_log_group" "reader" {
+    name = "/aws/lambda/readerv2"
+    retention_in_days = 7
+
+}
+
+
+resource "aws_cloudwatch_log_group" "processor" {
+    name = "/aws/lambda/processorv2"
+    retention_in_days = 7
+}
+resource "aws_cloudwatch_log_group" "go_metadata" {
+    name = "/aws/lambda/go_metadatav2"
+    retention_in_days = 7
 }
