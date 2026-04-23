@@ -38,5 +38,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 	mux.Handle("GET /onlyCompanyLinks", authMiddleware.Authenticate(models.ScopeRead)(
 		http.HandlerFunc(handlers.CompanyUrlOnly),
 	))
+
+	mux.Handle("GET /seekExpired", authMiddleware.Authenticate(models.ScopeRead)(
+		http.HandlerFunc(handlers.SeekExpiredRoles),
+	))
+
 	return mux
 }
