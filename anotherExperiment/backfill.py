@@ -92,6 +92,8 @@ def main():
                 {'name': 's3_source_bucket', 'value': source_store},
                 {'name': 'output_store',    'value': output_store},
                 {'name': 'file_id',    'value': file["file_id"] },
+                {'name': 'workflow_id',    'value': workflow_id },
+                {'name': 'file_pool_table',    'value': filepool_table_name },
             ]
         }]
     }
