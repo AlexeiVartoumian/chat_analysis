@@ -181,3 +181,30 @@ ORDER BY j.date_posted DESC;
 	}
 	return output, nil
 }
+
+func SeekExpired() ([]string, error) {
+
+	db, err := ConnectDb()
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+	rows, err := db.Query(`
+		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED'
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var output []string
+
+	for rows.Next() {
+
+		var res string
+
+		rows.Scan(&res)
+		output = append(output, res)
+	}
+	return output, nil
+
+}

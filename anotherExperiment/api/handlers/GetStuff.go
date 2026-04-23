@@ -5,12 +5,14 @@ import (
 	"api/models"
 	"api/repository/sqlconnect"
 	"api/utils"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 )
 
@@ -79,6 +81,29 @@ func CompanyUrlOnly(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+// TODO make middleware function so not anyone can do
+func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
+
+	LiveRoles, err := sqlconnect.SeekExpired()
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("here is your data", LiveRoles)
+
+	payload, _ := json.Marshal(LiveRoles)
+	cmd := exec.Command("python3", "backfill.py")
+
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("backfill.py failed %v", err)
+	}
+
 }
 
 func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
