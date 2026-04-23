@@ -8,7 +8,7 @@ from botocore.exceptions import ClientError
 
 roles = json.loads(sys.stdin.read())
 
-s3 = boto3.client("s3")
+s3 = boto3.client("s3", region_name='eu-west-2')
 
 source_store = "source-store-390746273208"
 output_store = "backfill-store-390746273208"
@@ -18,7 +18,7 @@ s3.put_object(
     Body=json.dumps(roles, indent=2),
     ContentType="application/json",
 )
-dynamodb = boto3.resource('dynamodb')
+dynamodb = boto3.resource('dynamodb',region_name='eu-west-2')
 
 filepool_table_name = "filepoolstore"
 accountpool_table_name = "accountpoolstore"
@@ -76,7 +76,7 @@ def main():
     
 
     ecs = boto3.client('ecs' , region_name = "eu-west-2")
-    ecs.run_task(
+    response = ecs.run_task(
     cluster='reader-cluster',
     taskDefinition='reader-task',
     launchType='FARGATE',
@@ -98,3 +98,8 @@ def main():
         }]
     }
 )
+    print("response:", response)
+    
+
+if __name__ == "__main__":
+    main()
