@@ -374,7 +374,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 				return ErrorHandler(err, "whoops")
 			}
 
-			_, err = db.Exec("UPDATE JOBLIFECYCLE SET last_seen_listed_at = ? WHERE job_id = ?", timestamp, job_id)
+			_, err = db.Exec("UPDATE JOBLIFECYCLE SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, job_id)
 
 			if err != nil {
 				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
@@ -392,7 +392,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 				return ErrorHandler(err, "whoops")
 			}
 
-			_, err = db.Exec("UPDATE JOBLIFECYCLE SET first_seen_closed_at = ? , job_state = ? WHERE job_id = ?", timestamp, job_state, job_id)
+			_, err = db.Exec("UPDATE JOBLIFECYCLE SET first_seen_closed_at = $1 , job_state = $2 WHERE job_id = $3", timestamp, job_state, job_id)
 
 			if err != nil {
 				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
