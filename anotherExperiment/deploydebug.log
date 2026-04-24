@@ -1,0 +1,8 @@
+2026-04-23 15:10:52,519 botocore.credentials INFO Found credentials in shared credentials file: ~/.aws/credentials
+2026-04-23 15:10:53,921 root INFO cookies-grouped-2.json is bad missing LIDC 
+2026-04-23 15:10:54,274 root INFO cookies-grouped-4.json is bad missing LIDC 
+2026-04-23 16:16:07,757 botocore.credentials INFO Found credentials in shared credentials file: ~/.aws/credentials
+2026-04-24 15:40:46,598 botocore.credentials INFO Found credentials in shared credentials file: ~/.aws/credentials
+2026-04-24 15:40:49,358 root INFO cookies-grouped-7.json is bad missing LI_AT_TOKEN 
+2026-04-24 17:56:36,210 botocore.credentials INFO Found credentials in shared credentials file: ~/.aws/credentials
+2026-04-24 17:56:38,510 root INFO cookies-grouped-7.json is bad missing LI_AT_TOKEN 

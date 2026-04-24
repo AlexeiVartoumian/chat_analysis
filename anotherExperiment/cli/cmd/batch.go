@@ -59,6 +59,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
+		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
+		return nil
+	}
+
 	for index, record := range records {
 		fmt.Println(record)
 		fmt.Println(" ")
@@ -344,6 +349,59 @@ func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.
 
 	return Job_lifeCycle, nil
 
+}
+
+func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string) error {
+
+	//meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
+	meta_data := strings.Split(strings.Split(filepath, ".csv")[0], "_")
+	timestamp, err := parseTimestamp(meta_data[1])
+
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		return ErrorHandler(err, "whoops")
+	}
+	defer db.Close()
+
+	if meta_data[0] == "live-roles" {
+
+		for index, record := range records {
+			job_id, err := strconv.Atoi(record["job_id"])
+
+			if err != nil {
+				fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+				return ErrorHandler(err, "whoops")
+			}
+
+			_, err = db.Exec("UPDATE JOBLIFECYCLE SET last_seen_listed_at = ? WHERE job_id = ?", timestamp, job_id)
+
+			if err != nil {
+				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+				fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+			}
+		}
+	} else {
+		for index, record := range records {
+			job_id, err := strconv.Atoi(record["job_id"])
+
+			job_state := record["job_state"]
+			if err != nil {
+				fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+				return ErrorHandler(err, "whoops")
+			}
+
+			_, err = db.Exec("UPDATE JOBLIFECYCLE SET first_seen_closed_at = ? , job_state = ? WHERE job_id = ?", timestamp, job_state, job_id)
+
+			if err != nil {
+				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+				fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+			}
+		}
+
+	}
+
+	return nil
 }
 
 func urlHelper(url string) string {
