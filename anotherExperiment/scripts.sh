@@ -43,6 +43,7 @@ sudo mv chat_analysis/anotherExperiment/update_search.py /home/ubuntu/update_sea
 sudo mv chat_analysis/anotherExperiment/listbucket.py /home/ubuntu/listbucket.py
 sudo mv chat_analysis/anotherExperiment/backfill.py /home/ubuntu/backfill.py
 sudo mv chat_analysis/anotherExperiment/itertest.sh /home/ubuntu/itertest.sh
+sudo mv chat_analysis/anotherExperiment/backfilloutputbucket.py /home/ubuntu/backfilloutputbucket.py
 
 sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
 my_ip=$(curl http://checkip.amazonaws.com)
