@@ -254,3 +254,8 @@ FROM SEARCH_TERM st
 JOIN SEARCH_WORKFLOW sw ON st.search_term_id = sw.search_term_id
 GROUP BY st.term
 ORDER BY avg_fresh_pct ASC;
+
+
+SELECT c.company_id , c.name,count(j.job_id) as total_jobs from COMPANY c JOIN JOBS j on c.company_id = j.company_id group by c.company_id ORDER BY total_jobs DESC;
+
+SELECT Count(name) , Industry FROM COMPANY_METADATA GROUP BY Industry ORDER BY Count(Name) DESC;
