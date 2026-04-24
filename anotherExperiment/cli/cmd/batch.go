@@ -386,6 +386,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 			job_id, err := strconv.Atoi(record["job_id"])
 
 			job_state := record["job_state"]
+
 			if err != nil {
 				fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
 				return ErrorHandler(err, "whoops")
