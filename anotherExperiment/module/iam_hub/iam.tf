@@ -8,7 +8,7 @@ resource "aws_iam_role" "bucket_reader_main" {
       {
         Effect = "Allow"
         Principal = {
-          Service = "lambda.amazonaws.com"
+          Service = ["lambda.amazonaws.com", "ecs-tasks.amazonaws.com" ]
           AWS = [
             for acct in var.spoke_accounts :
             "arn:aws:iam::${acct}:role/the_bucket_dealer_spoke"
