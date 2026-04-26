@@ -14,6 +14,8 @@ if len(sys.argv) > 1:
 
 roles = json.loads(sys.stdin.read())
 
+workflow_id = str(uuid.uuid4())
+
 s3 = boto3.client("s3", region_name='eu-west-2')
 
 source_store = "source-store-390746273208"
@@ -23,7 +25,7 @@ output_store = "backfill-store-390746273208"
 
 s3.put_object(
         Bucket=output_store,
-        Key=f"{search_type}-roles.json",
+        Key=f"{search_type}-{workflow_id}-roles.json",
         Body=json.dumps(roles, indent=2),
         ContentType="application/json",
     )
@@ -76,7 +78,7 @@ def acquire_lock(workflow_id):
 
 def main():
 
-    workflow_id = str(uuid.uuid4())
+    
     file = acquire_lock(workflow_id)
 
     if not file:
