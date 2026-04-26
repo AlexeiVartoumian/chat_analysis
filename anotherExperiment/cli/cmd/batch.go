@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"cli/models"
+	"database/sql"
 	"encoding/json"
 
 	"fmt"
@@ -61,6 +62,11 @@ func CsvFile(filepath string, tablename string) error {
 
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_UPDATE_SUSPENDED" && len(records) > 0 {
+		Jobs_LifeCycleSuspendedRolesUpdater(records, filepath)
 		return nil
 	}
 
@@ -345,6 +351,7 @@ func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.
 		FirstSeenAt:      timestamp,
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
+		SuspendedCount:   0,
 	}
 
 	return Job_lifeCycle, nil
@@ -363,10 +370,11 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 		return ErrorHandler(err, "whoops")
 	}
 	defer db.Close()
-
+	// we want to scan live roles to capture the last time they were seen being live.
 	if meta_data[0] == "live-roles" {
 
 		for index, record := range records {
+
 			job_id, err := strconv.Atoi(record["job_id"])
 
 			if err != nil {
@@ -388,12 +396,93 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 			job_state := record["job_state"]
 
 			if err != nil {
-				fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+				fmt.Println("record extraction wrong", ErrorHandler(err, "you brought this on yourself"))
 				return ErrorHandler(err, "whoops")
 			}
 
+			var suspended_count int
+			err = db.QueryRow("SELECT suspended_count FROM JOB_LIFECYCLE WHERE job_id = $1", job_id).Scan(suspended_count)
+
+			if err != nil {
+				if err == sql.ErrNoRows {
+					fmt.Println("fetching record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+					continue
+				}
+			}
+
+			if job_state == "CLOSED" {
+
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE SET first_seen_closed_at = $1 , job_state = $2 WHERE job_id = $3", timestamp, job_state, job_id)
+
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
+
+			}
+
+			if job_state == "SUSPENDED" {
+				suspended_count += 1
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE SET last_seen_listed_at = $1 , suspended_count = $2 ,job_state = $3  WHERE job_id = $4", timestamp, suspended_count, job_state, job_id)
+
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func Jobs_LifeCycleSuspendedRolesUpdater(records []map[string]string, filepath string) error {
+
+	//meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
+	meta_data := strings.Split(strings.Split(filepath, ".csv")[0], "_")
+	timestamp, err := parseTimestamp(meta_data[1])
+
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		return ErrorHandler(err, "whoops")
+	}
+	defer db.Close()
+
+	for index, record := range records {
+		job_id, err := strconv.Atoi(record["job_id"])
+
+		job_state := record["job_state"]
+
+		if err != nil {
+			fmt.Println("record extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+			return ErrorHandler(err, "whoops")
+		}
+
+		var suspended_count int
+		err = db.QueryRow("SELECT suspended_count FROM JOB_LIFECYCLE WHERE job_id = $1", job_id).Scan(suspended_count)
+
+		if err != nil {
+			if err == sql.ErrNoRows {
+				fmt.Println("fetching record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+		}
+
+		if job_state == "CLOSED" {
+
 			_, err = db.Exec("UPDATE JOB_LIFECYCLE SET first_seen_closed_at = $1 , job_state = $2 WHERE job_id = $3", timestamp, job_state, job_id)
 
+			if err != nil {
+				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+				fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+			}
+
+		}
+
+		if job_state == "LISTED" {
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE SET last_seen_listed_at = $1 ,job_state = $2  WHERE job_id = $3", timestamp, job_state, job_id)
 			if err != nil {
 				//http.Error(w, " error updating Student ", http.StatusInternalServerError)
 				fmt.Println("record at index ", index, " for live roles as not been saved", ErrorHandler(err, "Db query JobLifecycle update error"))

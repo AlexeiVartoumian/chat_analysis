@@ -9,4 +9,5 @@ type JobLifeCycle struct {
 	LastSeenListedAt  time.Time  `json:"last_seen_listed_at,omitempty" db:"last_seen_listed_at"`
 	FirstSeenClosedAt *time.Time `json:"first_seen_closed_at,omitempty" db:"first_seen_closed_at"`
 	NextScanAt        *time.Time `json:"next_scan_at,omitempty" db:"next_scan_at"`
+	SuspendedCount    int        `json:"suspended_count,omitempty" db:"suspended_count"`
 }
