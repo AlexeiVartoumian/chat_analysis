@@ -106,6 +106,28 @@ func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func SeekReopenedRoles(w http.ResponseWriter, r *http.Request) {
+
+	LiveRoles, err := sqlconnect.SeekReopened()
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	fmt.Println("here is your data", LiveRoles)
+
+	payload, _ := json.Marshal(LiveRoles)
+	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "suspended")
+
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("backfill.py failed %v", err)
+	}
+
+}
+
 func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 	recentJobs, err := sqlconnect.LastThreeDaysJobs()
 
