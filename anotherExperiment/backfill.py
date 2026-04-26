@@ -6,18 +6,28 @@ import uuid
 from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
+#search type is suspended or live
+search_type = None
+
+if len(sys.argv) > 1:
+    search_type = sys.argv[1]
+
 roles = json.loads(sys.stdin.read())
 
 s3 = boto3.client("s3", region_name='eu-west-2')
 
 source_store = "source-store-390746273208"
 output_store = "backfill-store-390746273208"
+
+
+
 s3.put_object(
-    Bucket=output_store,
-    Key=f"live-roles.json",
-    Body=json.dumps(roles, indent=2),
-    ContentType="application/json",
-)
+        Bucket=output_store,
+        Key=f"{search_type}-roles.json",
+        Body=json.dumps(roles, indent=2),
+        ContentType="application/json",
+    )
+
 dynamodb = boto3.resource('dynamodb',region_name='eu-west-2')
 
 filepool_table_name = "filepoolstore"
@@ -94,6 +104,7 @@ def main():
                 {'name': 'file_id',    'value': file["file_id"] },
                 {'name': 'workflow_id',    'value': workflow_id },
                 {'name': 'file_pool_table',    'value': filepool_table_name },
+                {'name': 'output_file_name',    'value': search_type },
             ]
         }]
     }
