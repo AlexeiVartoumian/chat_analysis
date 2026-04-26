@@ -95,7 +95,7 @@ func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("here is your data", LiveRoles)
 
 	payload, _ := json.Marshal(LiveRoles)
-	cmd := exec.Command("python3", "/home/ubuntu/backfill.py")
+	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "live")
 
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Stdout = os.Stdout
