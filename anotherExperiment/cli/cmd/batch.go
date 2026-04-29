@@ -364,6 +364,10 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 	meta_data := strings.Split(strings.Split(filepath, ".csv")[0], "_")
 	timestamp, err := parseTimestamp(meta_data[1])
 
+	if err != nil {
+		return ErrorHandler(err, "failed to parse timestamp")
+	}
+
 	file_strings := strings.SplitN(meta_data[0], "-", 3)
 
 	file_type := file_strings[0]
@@ -384,7 +388,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 			job_id, err := strconv.Atoi(record["job_id"])
 
 			if err != nil {
-				fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+				fmt.Println("something wrong", ErrorHandler(err, "you brought this on yourself"))
 				return ErrorHandler(err, "whoops")
 			}
 
@@ -407,7 +411,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 			}
 
 			var suspended_count int
-			err = db.QueryRow("SELECT suspended_count FROM JOB_LIFECYCLE WHERE job_id = $1", job_id).Scan(suspended_count)
+			err = db.QueryRow("SELECT suspended_count FROM JOB_LIFECYCLE WHERE job_id = $1", job_id).Scan(&suspended_count)
 
 			if err != nil {
 				if err == sql.ErrNoRows {
