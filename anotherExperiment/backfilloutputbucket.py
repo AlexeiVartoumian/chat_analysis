@@ -6,7 +6,13 @@ import csv
 client = boto3.client('s3')
 
 
+"""
+TODO : YOU MESSED IT! problem is upstream filetype is called live . problem is insertion logic wants to 
+scan ALL ROLES first suspended or no . then it wants scan closed state roles. you have two diff files backfilloutputbucket and listbucketv2 doing thier own thing
+also improve the pass down filename logic from container.
 
+flow is -> 1.live_roles.csv 2. closed/expired roles.csv
+"""
 
 resp = client.list_objects(Bucket='backfill-store-390746273208')
 
@@ -24,7 +30,7 @@ for index , key  in enumerate(keys):
     print(key)
     #split it up add timestamp and  .csv in
     newkey = key.split(".")[0] + "_" + timestamp + ".csv"
-    if key.startswith("live-roles"):
+    if key.endswith(".json"):
         with open (key , "wb" ) as f :
             client.download_fileobj('backfill-store-390746273208', key, f)
 
