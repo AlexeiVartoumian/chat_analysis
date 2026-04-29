@@ -64,7 +64,7 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
 	}
-
+	fmt.Println("records length:", len(records))
 	if tablename == "JOB_LIFECYCLE_UPDATE_SUSPENDED" && len(records) > 0 {
 		Jobs_LifeCycleSuspendedRolesUpdater(records, filepath)
 		return nil
