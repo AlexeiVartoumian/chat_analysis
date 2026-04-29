@@ -20,6 +20,8 @@ resource "aws_lambda_function" "orchestrator" {
             file_pool_table = var.file_pool_table
         }
     }
+
+    #depends_on = [aws_cloudwatch_log_group.orchestrator]
 }
 
 resource "aws_lambda_permission" "allow_sqs_request" {
@@ -37,3 +39,8 @@ resource "aws_lambda_event_source_mapping" "processor_trigger" {
   enabled          = true
   depends_on = [aws_lambda_function.orchestrator]
 }
+
+# resource "aws_cloudwatch_log_group" "orchestrator" {
+#     name = "/aws/lambda/orchestratortest"
+#     retention_in_days = 7
+# }
