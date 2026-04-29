@@ -359,11 +359,17 @@ func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.
 }
 
 func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string) error {
-
+	// following this format live-roles-38418f82-1d77-4760-8ce4-e40d43917d75_2026-04-29-19-23-53+00-00.csv
 	//meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
 	meta_data := strings.Split(strings.Split(filepath, ".csv")[0], "_")
 	timestamp, err := parseTimestamp(meta_data[1])
 
+	file_strings := strings.SplitN(meta_data[0], "-", 3)
+
+	file_type := file_strings[0]
+	uuid := file_strings[2]
+	//TODO store uuid's in db sep table as done work
+	fmt.Println("Executing this file now", uuid)
 	db, err := ConnectDb()
 	if err != nil {
 		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
@@ -371,7 +377,7 @@ func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string
 	}
 	defer db.Close()
 	// we want to scan live roles to capture the last time they were seen being live.
-	if meta_data[0] == "live-roles" {
+	if file_type == "live" {
 
 		for index, record := range records {
 
