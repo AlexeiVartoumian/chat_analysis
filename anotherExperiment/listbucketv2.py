@@ -212,18 +212,18 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
     json.dump(output, f)
   
 
-# for index ,key in enumerate(keys):
-#     #print(key)
-#     sanitizekey = new_keys[index]
-#     # print(sanitizekey)
-#     # print("here we go \n")
-#     if key.startswith("suspended") or key.startswith("expired")  or key.startswith("live") :
+for index ,key in enumerate(keys):
+    #print(key)
+    sanitizekey = new_keys[index]
+    # print(sanitizekey)
+    # print("here we go \n")
+    if key.startswith("suspended") or key.startswith("expired")  or key.startswith("live") :
         
-#         with open (sanitizekey , "wb" ) as f :
-#             client.download_fileobj('backfill-store-390746273208', key, f)
-#         continue
-#     with open (sanitizekey , "wb" ) as f :
-#         client.download_fileobj('output-store-390746273208', key, f)
+        with open (sanitizekey , "wb" ) as f :
+            client.download_fileobj('backfill-store-390746273208', key, f)
+        continue
+    with open (sanitizekey , "wb" ) as f :
+        client.download_fileobj('output-store-390746273208', key, f)
 
 
 
