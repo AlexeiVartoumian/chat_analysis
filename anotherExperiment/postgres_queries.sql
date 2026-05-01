@@ -259,3 +259,11 @@ ORDER BY avg_fresh_pct ASC;
 SELECT c.company_id , c.name,count(j.job_id) as total_jobs from COMPANY c JOIN JOBS j on c.company_id = j.company_id group by c.company_id ORDER BY total_jobs DESC;
 
 SELECT Count(name) , Industry FROM COMPANY_METADATA GROUP BY Industry ORDER BY Count(Name) DESC;
+
+
+-- jobs closing in three days
+SELECT jl.job_id  ,jl.job_state ,jl.first_seen_at  ,jl.last_seen_listed_at  ,jl.first_seen_closed_at  , jl.next_scan_at ,  
+jl.suspended_count ,JOBS.date_posted FROM JOB_LIFECYCLE jl , JOBS 
+WHERE (jl.first_seen_closed_at::date - jl.first_seen_at::date) < 4 
+AND jl.first_seen_closed_at != '2026-04-24 18:46:03+00' --todo remove bad dates
+AND JOBS.job_id = jl.job_id; 
