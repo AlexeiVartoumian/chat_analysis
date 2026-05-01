@@ -267,3 +267,6 @@ jl.suspended_count ,JOBS.date_posted FROM JOB_LIFECYCLE jl , JOBS
 WHERE (jl.first_seen_closed_at::date - jl.first_seen_at::date) < 4 
 AND jl.first_seen_closed_at != '2026-04-24 18:46:03+00' --todo remove bad dates
 AND JOBS.job_id = jl.job_id; 
+
+
+SELECT jl.job_id  ,jl.job_state ,jl.first_seen_at  ,jl.last_seen_listed_at  ,jl.first_seen_closed_at  , jl.next_scan_at , jl.suspended_count , JOBS.job_url ,JOBS.date_posted ,c.name , c.company_id FROM JOB_LIFECYCLE jl , JOBS , COMPANY_METADATA c WHERE (jl.first_seen_closed_at::date - jl.first_seen_at::date) < 4 AND jl.first_seen_closed_at != '2026-04-24 18:46:03+00'AND JOBS.job_id = jl.job_id and JOBS.company_id = c.company_id ORDER BY JOBS.date_posted DESC;
