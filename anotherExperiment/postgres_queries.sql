@@ -274,3 +274,8 @@ SELECT jl.job_id  ,jl.job_state ,jl.first_seen_at  ,jl.last_seen_listed_at  ,jl.
 
 
  SELECT  workflow_id , SEARCH_WORKFLOW.search_term_id  , SEARCH_TERM.term, run_at ,total_jobs_found , net_new_jobs FROM SEARCH_TERM , SEARCH_WORKFLOW  where SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id;
+
+
+ SELECT JOB_LIFECYCLE.job_id  ,JOB_LIFECYCLE.job_state ,job_url ,first_seen_at   ,last_seen_listed_at  ,first_seen_closed_at ,suspended_co
+unt  FROM JOB_LIFECYCLE  left join JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE first_seen_closed_at is not NULL order by first_seen_closed_at DE
+SC LIMIT 100;
