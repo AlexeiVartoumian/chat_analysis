@@ -189,7 +189,7 @@ func SeekExpired() ([]string, error) {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
 	rows, err := db.Query(`
-		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED'
+		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED' ORDER BY last_seen_listed_at ASC limit 1000;
 	`)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
