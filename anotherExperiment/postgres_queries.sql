@@ -277,5 +277,8 @@ SELECT jl.job_id  ,jl.job_state ,jl.first_seen_at  ,jl.last_seen_listed_at  ,jl.
 
 
  SELECT JOB_LIFECYCLE.job_id  ,JOB_LIFECYCLE.job_state ,job_url ,first_seen_at   ,last_seen_listed_at  ,first_seen_closed_at ,suspended_co
-unt  FROM JOB_LIFECYCLE  left join JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE first_seen_closed_at is not NULL order by first_seen_closed_at DE
-SC LIMIT 100;
+unt  FROM JOB_LIFECYCLE  left join JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE first_seen_closed_at is not NULL order by first_seen_closed_at DESC LIMIT 100;
+
+
+SELECT COMPANY_METADATA.name , JOBS.job_id ,JOBS.title FROM COMPANY_METADATA ,JOBS LEFT JOIN JOB_LIFECYCLE ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE '%LISTED%'  and industry = 'Finan
+cial Services' AND COMPANY_METADATA.company_id = JOBS.company_id;
