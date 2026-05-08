@@ -280,5 +280,6 @@ SELECT jl.job_id  ,jl.job_state ,jl.first_seen_at  ,jl.last_seen_listed_at  ,jl.
 unt  FROM JOB_LIFECYCLE  left join JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE first_seen_closed_at is not NULL order by first_seen_closed_at DESC LIMIT 100;
 
 
-SELECT COMPANY_METADATA.name , JOBS.job_id ,JOBS.title FROM COMPANY_METADATA ,JOBS LEFT JOIN JOB_LIFECYCLE ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE '%LISTED%'  and industry = 'Finan
-cial Services' AND COMPANY_METADATA.company_id = JOBS.company_id;
+SELECT COMPANY_METADATA.name , JOBS.job_id ,JOBS.title FROM COMPANY_METADATA ,JOBS LEFT JOIN JOB_LIFECYCLE ON JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE '%LISTED%'  and industry = 'Financial Services' AND COMPANY_METADATA.company_id = JOBS.company_id;
+
+SELECT COUNT(suspended_count) , COMPANY_METADATA.name FROM JOB_LIFECYCLE JOIN JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id JOIN COMPANY_METADATA on JOBS.company_id = COMPANY_METADATA.company_id  where job_state LIKE '%LISTED%' AND suspended_count > 0 GROUP BY COMPANY_METADATA.name;
