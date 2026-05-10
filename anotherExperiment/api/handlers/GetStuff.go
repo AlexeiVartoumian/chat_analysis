@@ -173,7 +173,8 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 	if lordOfTheRings != sql.ErrNoRows {
 		utils.ErrorHandler(lordOfTheRings, "arrg")
-		http.Error(w, "there can be only one", http.StatusBadRequest)
+		http.Error(w, "admin already exists. welcome to db dear guest :) here is your api key", http.StatusBadRequest)
+		// do something
 		return
 	}
 	// Hash the key for storage
@@ -190,7 +191,7 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 		Name:      r.FormValue("name"),
 		UserID:    "00000000-0000-0000-0000-000000000001", // temp placeholder
 		ProjectID: r.FormValue("project_id"),
-		Scopes:    []models.Scope{models.ScopeRead},
+		Scopes:    []models.Scope{models.ScopeAdmin},
 		RateLimit: 1000,
 		IsActive:  true,
 	}
