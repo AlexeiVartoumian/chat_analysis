@@ -47,7 +47,7 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekReopenedRoles),
 	))
 
-	mux.Handle("GET /queryDb", authMiddleware.Authenticate(models.ScopeRead)(
+	mux.Handle("POST /queryDb", authMiddleware.Authenticate(models.ScopeRead)(
 		http.HandlerFunc(handlers.HandleQuery),
 	))
 
