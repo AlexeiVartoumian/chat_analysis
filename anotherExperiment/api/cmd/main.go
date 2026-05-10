@@ -79,6 +79,7 @@ func main() {
 		Addr: ":80",
 		Handler: m.HTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "https://"+r.Host+r.URL.String(), http.StatusMovedPermanently)
+			//router.ServeHTTP(w , r) its happened that lets encrypt has gone fdown , revert to local host in this case
 		})),
 	}
 	err = httpSrv.ListenAndServe()
