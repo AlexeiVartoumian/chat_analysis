@@ -79,7 +79,7 @@ func (s *PostgresStore) CreateGuestUser(ctx context.Context) error {
 		return utils.ErrorHandler(err, "guest password did not load ")
 	}
 
-	statements := []string{fmt.Sprintf(`CREATE USER IF NOT EXISTS gues WITH PASSWORD '%s';`, db_guestpassword),
+	statements := []string{fmt.Sprintf(`CREATE USER IF NOT EXISTS guest WITH PASSWORD '%s';`, db_guestpassword),
 		`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`}
 
 	for _, stmt := range statements {
