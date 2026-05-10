@@ -197,12 +197,12 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 	var UserId string
 	scopecheck = models.ScopeRead
 
-	if sqlerrnorows != sql.ErrNoRows {
+	if sqlerrnorows == sql.ErrNoRows {
 		scopecheck = models.ScopeAdmin
 		UserId = "00000000-0000-0000-0000-000000000001"
 	} else {
-		UserId = "00000000-0000-0000-0000-000000000002"
-		UserId = fmt.Sprintf("00000000-0000-0000-0000-00000000000%s", strconv.Itoa(lordOfTheRings))
+
+		UserId = fmt.Sprintf("00000000-0000-0000-0000-00000000000%s", strconv.Itoa(lordOfTheRings+1))
 	}
 
 	//TODO refactor! delete me endpoint
@@ -234,9 +234,9 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 	// Return the full key to the user (only shown once!)
 	w.Header().Set("Content-Type", "application/json")
-	if sqlerrnorows != sql.ErrNoRows {
+	if sqlerrnorows == sql.ErrNoRows {
 
-		w.Write([]byte(`{"api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
+		w.Write([]byte(`{ hey you admin "api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
 	} else {
 
 		w.Write([]byte(`{welcome to db dear guest :) here is your api key : "api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
