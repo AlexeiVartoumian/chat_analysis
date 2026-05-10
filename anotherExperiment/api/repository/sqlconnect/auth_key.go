@@ -230,7 +230,8 @@ func (s *PostgresStore) ListByUser(ctx context.Context, userID string) ([]*model
 
 func (s *PostgresStore) ThereCanBeOnlyOne() (int, error) {
 
-	query := `SELECT COUNT(*) FROM api_keys WHERE api_keys.scopes = '{admin}'`
+	//query := `SELECT COUNT(*) FROM api_keys WHERE api_keys.scopes = '{admin}'`
+	query := `SELECT COUNT(*) FROM api_keys `
 
 	rows, err := s.db.Query(query)
 

@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 func updateLambda(search_term string) error {
@@ -195,10 +196,13 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 	var scopecheck models.Scope
 	var UserId string
 	scopecheck = models.ScopeRead
-	UserId = "00000000-0000-0000-0000-000000000002"
+
 	if sqlerrnorows != sql.ErrNoRows {
 		scopecheck = models.ScopeAdmin
 		UserId = "00000000-0000-0000-0000-000000000001"
+	} else {
+		UserId = "00000000-0000-0000-0000-000000000002"
+		UserId = fmt.Sprintf("00000000-0000-0000-0000-00000000000'%s'", strconv.Itoa(lordOfTheRings))
 	}
 
 	//TODO refactor! delete me endpoint
@@ -212,9 +216,11 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 	apiKey := &models.APIKey{
 		KeyID:     keyID,
 		HashedKey: hashedKey,
-		Name:      r.FormValue("name"),
-		UserID:    UserId, // temp placeholder
-		ProjectID: r.FormValue("project_id"),
+		//Name:      r.FormValue("name"),
+		Name:   fmt.Sprintf("mykey_%s", strconv.Itoa(1+lordOfTheRings)),
+		UserID: UserId, // temp placeholder
+		//ProjectID: r.FormValue("project_id"),
+		ProjectID: "00000000-0000-0000-0000-000000000002",
 		Scopes:    []models.Scope{scopecheck},
 		RateLimit: 1000,
 		IsActive:  true,
