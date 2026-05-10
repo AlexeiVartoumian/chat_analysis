@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -58,7 +59,8 @@ func main() {
 		return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
 	}
 
-	dataDir := "."
+	dataDir := "/home/ubuntu/certs"
+	os.MkdirAll(dataDir, 0700)
 
 	m := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,

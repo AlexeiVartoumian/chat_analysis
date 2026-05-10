@@ -87,6 +87,7 @@ func LastThreeDaysJobs() ([]LastThreeDays, error) {
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
+	defer db.Close()
 
 	rows, err := db.Query(`
 SELECT
