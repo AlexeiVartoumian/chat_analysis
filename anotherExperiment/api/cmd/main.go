@@ -30,6 +30,10 @@ func main() {
 	if err := store.CreateTable(context.Background()); err != nil {
 		log.Fatal("Failed to create tables:", err)
 	}
+
+	if err := store.CreateGuestUser(context.Background()); err != nil {
+		log.Fatal("Failed to create guest user:", err)
+	}
 	generator := auth.NewAPIKeyGenerator()
 	hasher := auth.NewKeyHasher()
 	authMiddleware := auth.NewAuthMiddleware(generator, hasher, store)

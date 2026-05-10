@@ -31,7 +31,7 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.GetLastThreeDays),
 	))
 
-	mux.Handle("POST /semanticSearch", authMiddleware.Authenticate(models.ScopeRead)(
+	mux.Handle("POST /semanticSearch", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SemanticSearch),
 	))
 
@@ -39,13 +39,17 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.CompanyUrlOnly),
 	))
 
-	mux.Handle("GET /seekExpired", authMiddleware.Authenticate(models.ScopeRead)(
+	mux.Handle("GET /seekExpired", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekExpiredRoles),
 	))
 
-	mux.Handle("GET /seekReopened", authMiddleware.Authenticate(models.ScopeRead)(
+	mux.Handle("GET /seekReopened", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekReopenedRoles),
 	))
+
+	// mux.Handle("GET /qeuryDb" , authMiddleware.Authenticate(models.ScopeRead)(
+	// 	http.HandlerFunc(handlers.QueryDb),
+	// ))
 
 	return mux
 }

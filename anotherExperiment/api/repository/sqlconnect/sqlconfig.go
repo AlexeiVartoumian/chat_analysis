@@ -11,7 +11,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func ConnectDb() (*sql.DB, error) {
+func ConnectDb(params ...int) (*sql.DB, error) {
 
 	fmt.Println("Attemption connection to db")
 	err := godotenv.Load("../../../../.env")
@@ -29,9 +29,13 @@ func ConnectDb() (*sql.DB, error) {
 	// connectionString := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true", user, password, host, dbport, database)
 
 	//db, err := sql.Open("mysql", connectionString)
-
 	user := os.Getenv("db_user")
 	password := os.Getenv("db_password")
+	if len(params) > 0 {
+		user = ("db_guestuser")
+		password = os.Getenv("db_guestpassword")
+	}
+
 	host := os.Getenv("db_host")
 	database := os.Getenv("db_database")
 	dbport := os.Getenv("db_port")

@@ -2,10 +2,13 @@ package sqlconnect
 
 import (
 	"api/models"
+	"api/utils"
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 
+	"github.com/joho/godotenv"
 	"github.com/lib/pq"
 )
 
@@ -62,6 +65,32 @@ func (s *PostgresStore) CreateTable(ctx context.Context) error {
 	_, err := s.db.ExecContext(ctx, query)
 	return err
 }
+
+func (s *PostgresStore) CreateGuestUser(ctx context.Context) error {
+
+	err := godotenv.Load("../../../../.env")
+	if err != nil {
+		return utils.ErrorHandler(err, "env variables did not load ")
+	}
+
+	db_guestpassword := os.Getenv("db_guestpassword")
+
+	if db_guestpassword == "" {
+		return utils.ErrorHandler(err, "guest password did not load ")
+	}
+
+	statements := []string{fmt.Sprintf(`CREATE USER IF NOT EXISTS gues WITH PASSWORD '%s';`, db_guestpassword),
+		`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`}
+
+	for _, stmt := range statements {
+		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
+			return fmt.Errorf("failed to execute: %w", err)
+		}
+	}
+	return err
+}
+
+//
 
 // Create stores a new API key
 func (s *PostgresStore) Create(ctx context.Context, key *models.APIKey) error {
@@ -188,7 +217,7 @@ func (s *PostgresStore) ListByUser(ctx context.Context, userID string) ([]*model
 	return keys, rows.Err()
 }
 
-func (s *PostgresStore) ThereCanBeOnlyOne() error {
+func (s *PostgresStore) ThereCanBeOnlyOne() (int, error) {
 
 	query := `SELECT COUNT(*) FROM api_keys WHERE api_keys.scopes = '{admin}'`
 
@@ -196,23 +225,23 @@ func (s *PostgresStore) ThereCanBeOnlyOne() error {
 
 	if err != nil {
 		fmt.Println("err is something", err)
-		return nil
+		return -1, nil
 	}
 	var count int
 	for rows.Next() {
 		err := rows.Scan(&count)
 
 		if err != nil {
-			return err
+			return -1, err
 		}
 	}
 	fmt.Println("how many you have in db", err)
 	fmt.Println(count)
 
 	if count != 0 {
-		return nil
+		return count, nil
 	}
 
-	return sql.ErrNoRows
+	return 0, sql.ErrNoRows
 
 }

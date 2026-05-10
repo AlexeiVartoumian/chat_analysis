@@ -34,7 +34,7 @@ type UrlOnCompanySite struct {
 
 func SearchSimilarJobs(query string) error {
 
-	db, err := ConnectDb()
+	db, err := ConnectDb(1)
 
 	if err != nil {
 		return utils.ErrorHandler(err, "db conn error")
@@ -82,7 +82,7 @@ func SearchSimilarJobs(query string) error {
 
 func LastThreeDaysJobs() ([]LastThreeDays, error) {
 
-	db, err := ConnectDb()
+	db, err := ConnectDb(1)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")
@@ -134,7 +134,7 @@ SELECT
 
 func OnlyUrlOnCompanySite() ([]UrlOnCompanySite, error) {
 
-	db, err := ConnectDb()
+	db, err := ConnectDb(1)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")

@@ -169,29 +169,53 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lordOfTheRings := store.ThereCanBeOnlyOne()
+	lordOfTheRings, sqlerrnorows := store.ThereCanBeOnlyOne()
 
-	if lordOfTheRings != sql.ErrNoRows {
-		utils.ErrorHandler(lordOfTheRings, "arrg")
-		http.Error(w, "admin already exists. welcome to db dear guest :) here is your api key", http.StatusBadRequest)
-		// do something
+	if lordOfTheRings == -1 {
+		utils.ErrorHandler(sqlerrnorows, "arrg this function did not fully execute")
+		http.Error(w, "apologies this did not work ", http.StatusBadRequest)
+
 		return
+
 	}
+	// if lordOfTheRings != sql.ErrNoRows {
+	// 	utils.ErrorHandler(lordOfTheRings, "arrg")
+	// 	http.Error(w, "welcome to db dear guest :) here is your api key", http.StatusBadRequest)
+	// 	// do something
+	// 	return
+	// }
 	// Hash the key for storage
 	hashedKey, err := hasher.Hash(fullKey)
 	if err != nil {
 		http.Error(w, "Failed to hash key", http.StatusInternalServerError)
 		return
 	}
-
+	//TODO fix userid creation logic right now hardcoding
 	// Create key record
+	var scopecheck models.Scope
+	var UserId string
+	scopecheck = models.ScopeRead
+	UserId = "00000000-0000-0000-0000-000000000002"
+	if sqlerrnorows != sql.ErrNoRows {
+		scopecheck = models.ScopeAdmin
+		UserId = "00000000-0000-0000-0000-000000000001"
+	}
+
+	//TODO refactor! delete me endpoint
+	if lordOfTheRings > 2 {
+
+		http.Error(w, "maximum db users reached ! plz use this endpoint to delete your key. /deleteme", http.StatusBadRequest)
+		// do something
+		return
+	}
+
 	apiKey := &models.APIKey{
 		KeyID:     keyID,
 		HashedKey: hashedKey,
 		Name:      r.FormValue("name"),
-		UserID:    "00000000-0000-0000-0000-000000000001", // temp placeholder
+		UserID:    UserId, // temp placeholder
 		ProjectID: r.FormValue("project_id"),
-		Scopes:    []models.Scope{models.ScopeAdmin},
+		Scopes:    []models.Scope{scopecheck},
 		RateLimit: 1000,
 		IsActive:  true,
 	}
@@ -204,5 +228,12 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 	// Return the full key to the user (only shown once!)
 	w.Header().Set("Content-Type", "application/json")
-	w.Write([]byte(`{"api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
+	if sqlerrnorows != sql.ErrNoRows {
+
+		w.Write([]byte(`{"api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
+	} else {
+
+		w.Write([]byte(`{welcome to db dear guest :) here is your api key : "api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
+	}
+
 }
