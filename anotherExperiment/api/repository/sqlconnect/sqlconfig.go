@@ -32,7 +32,7 @@ func ConnectDb(params ...int) (*sql.DB, error) {
 	user := os.Getenv("db_user")
 	password := os.Getenv("db_password")
 	if len(params) > 0 {
-		user = ("db_guestuser")
+		user = os.Getenv("db_guestuser")
 		password = os.Getenv("db_guestpassword")
 	}
 
