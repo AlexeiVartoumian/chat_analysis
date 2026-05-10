@@ -78,10 +78,21 @@ func (s *PostgresStore) CreateGuestUser(ctx context.Context) error {
 	if db_guestpassword == "" {
 		return utils.ErrorHandler(err, "guest password did not load ")
 	}
+	//if not exists does not exist in postgres :/
+	// statements := []string{fmt.Sprintf(`CREATE USER IF NOT EXISTS guest WITH PASSWORD '%s';`, db_guestpassword),
+	// 	`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`}
 
-	statements := []string{fmt.Sprintf(`CREATE USER IF NOT EXISTS guest WITH PASSWORD '%s';`, db_guestpassword),
-		`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`}
-
+	statements := []string{
+		fmt.Sprintf(`
+        DO $$
+        BEGIN
+            IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'guest') THEN
+                CREATE USER guest WITH PASSWORD '%s';
+            END IF;
+        END
+        $$;`, db_guestpassword),
+		`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`,
+	}
 	for _, stmt := range statements {
 		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
 			return fmt.Errorf("failed to execute: %w", err)
