@@ -202,7 +202,7 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 		UserId = "00000000-0000-0000-0000-000000000001"
 	} else {
 		UserId = "00000000-0000-0000-0000-000000000002"
-		UserId = fmt.Sprintf("00000000-0000-0000-0000-00000000000'%s'", strconv.Itoa(lordOfTheRings))
+		UserId = fmt.Sprintf("00000000-0000-0000-0000-00000000000%s", strconv.Itoa(lordOfTheRings))
 	}
 
 	//TODO refactor! delete me endpoint
