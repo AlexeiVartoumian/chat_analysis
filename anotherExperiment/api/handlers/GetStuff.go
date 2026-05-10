@@ -151,6 +151,34 @@ func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func HandleQuery(w http.ResponseWriter, r *http.Request) {
+
+	var req struct {
+		Query string        `json:"query"`
+		Args  []interface{} `json:"args"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	decoder.UseNumber()
+
+	if err := decoder.Decode(&req); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	results, cols, err := sqlconnect.QueryToJson(req.Query, req.Args...)
+
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(sqlconnect.QueryResponse{
+		Columns: cols,
+		Count:   len(results),
+		Rows:    results,
+	})
+}
+
 func PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 	generator := auth.NewAPIKeyGenerator()

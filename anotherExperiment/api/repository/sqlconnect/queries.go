@@ -32,6 +32,16 @@ type UrlOnCompanySite struct {
 	Job_url          string
 }
 
+type QueryResponse struct {
+	Columns []ColumnMeta             `json:"columns"`
+	Count   int                      `json:"count"`
+	Rows    []map[string]interface{} `json:"rows"`
+}
+type ColumnMeta struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
 func SearchSimilarJobs(query string) error {
 
 	db, err := ConnectDb(1)

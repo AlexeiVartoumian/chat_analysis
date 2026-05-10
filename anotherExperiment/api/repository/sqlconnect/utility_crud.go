@@ -191,3 +191,59 @@ func BackfillEmbeddings() error {
 	}
 	return nil
 }
+
+func QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {
+
+	db, err := ConnectDb(1)
+
+	if err != nil {
+		return nil, nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	defer db.Close()
+
+	rows, err := db.Query(query, args...)
+	//todo dep injection as param and rows.close instead of db.close
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, nil, err
+	}
+	colTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	scanTypes := make([]reflect.Type, len(colTypes))
+	colMeta := make([]ColumnMeta, len(colTypes))
+
+	for i, ct := range colTypes {
+		scanTypes[i] = ct.ScanType()
+		colMeta[i] = ColumnMeta{
+			Name: ct.Name(),
+			Type: ct.DatabaseTypeName(),
+		}
+	}
+
+	var results []map[string]interface{}
+
+	for rows.Next() {
+
+		scanTargets := make([]interface{}, len(cols))
+
+		for i, t := range scanTypes {
+			scanTargets[i] = reflect.New(t).Interface()
+		}
+
+		if err := rows.Scan(scanTargets...); err != nil {
+			return nil, nil, err
+		}
+
+		row := make(map[string]interface{})
+
+		for i, col := range cols {
+			row[col] = reflect.ValueOf(scanTargets[i]).Elem().Interface()
+		}
+		results = append(results, row)
+	}
+	return results, colMeta, rows.Err()
+}
