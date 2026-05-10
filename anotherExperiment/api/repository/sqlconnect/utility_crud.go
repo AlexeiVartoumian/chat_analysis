@@ -203,6 +203,12 @@ func QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, [
 	defer db.Close()
 
 	rows, err := db.Query(query, args...)
+
+	if err != nil {
+		return nil, nil, err
+	}
+	defer rows.Close()
+
 	//todo dep injection as param and rows.close instead of db.close
 	cols, err := rows.Columns()
 	if err != nil {
