@@ -91,7 +91,9 @@ func (s *PostgresStore) CreateGuestUser(ctx context.Context) error {
             END IF;
         END
         $$;`, db_guestpassword),
+		`GRANT USAGE ON SCHEMA public TO guest;`,
 		`GRANT SELECT ON ALL TABLES IN SCHEMA public TO guest;`,
+		`ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO guest;`, //for future tables
 	}
 	for _, stmt := range statements {
 		if _, err := s.db.ExecContext(ctx, stmt); err != nil {
