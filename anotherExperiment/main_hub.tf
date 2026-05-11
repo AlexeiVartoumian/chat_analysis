@@ -52,6 +52,7 @@ module "iam_hub_attachments" {
     bucket_reader_role_name= module.iam_hub.aws_iam_role_main_name
     bucket_reader_main_arn = module.iam_hub.aws_iam_role_main_arn
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn
+    sqs_deadletter_arn = module.sqs_hub.deadletter_requests_arn
     providers = {
         aws = aws.hub
     }

@@ -48,3 +48,7 @@ variable account_pool_table{
 variable sqs_coordinator_arn {
     type = string
 }
+
+variable sqs_deadletter_arn {
+    type = string
+}
