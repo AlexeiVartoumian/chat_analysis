@@ -45,3 +45,7 @@ variable "dynamodb_filetable_name"{
 variable dynamodb_accounttable_name{
     type = string
 }
+
+variable sqs_deadletter_url {
+    type = string
+}

@@ -40,6 +40,8 @@ resource "aws_lambda_function" "reader" {
             s3_source_bucket = var.s3_source_name
             file_store = var.s3_filestore_name
             sqs_2_id = var.sqs_queue_2_id
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
         }
     }
 
@@ -60,6 +62,7 @@ resource "aws_lambda_function" "processor" {
             RoleArn = var.iam_role_main_arn
             output_bucket= var.s3_output_bucket_name
             sqs_queue_3_id = var.sqs_queue_3_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
         }
     }
     depends_on = [aws_cloudwatch_log_group.processor]
@@ -81,6 +84,8 @@ resource "aws_lambda_function" "go_metadata" {
             s3_source_bucket = var.s3_source_name
             file_pool = var.dynamodb_filetable_name
             account_pool = var.dynamodb_accounttable_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
         }
     }
     depends_on = [ aws_cloudwatch_log_group.go_metadata ]
