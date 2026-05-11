@@ -41,7 +41,9 @@ resource "aws_lambda_function" "reader" {
             file_store = var.s3_filestore_name
             sqs_2_id = var.sqs_queue_2_id
             sqs_deadletter_url = var.sqs_deadletter_url
-            account_id = data.aws_caller_identity.current.account_id 
+            account_id = data.aws_caller_identity.current.account_id
+            file_pool = var.dynamodb_filetable_name
+            account_pool = var.dynamodb_accounttable_name 
         }
     }
 
