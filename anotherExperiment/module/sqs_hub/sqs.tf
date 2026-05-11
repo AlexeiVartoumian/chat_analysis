@@ -13,9 +13,9 @@ resource "aws_sqs_queue" "sqs_hub_requests" {
 
 resource "aws_sqs_queue" "deadletter_requests" {
   name                      = "workflow-deadletter-test"
-  delay_seconds             = 90
+  delay_seconds             = 0
   max_message_size          = 2048
-  message_retention_seconds = 86400
+  message_retention_seconds = 1209600
   receive_wait_time_seconds = 10
   visibility_timeout_seconds = 1500
   tags = {
@@ -28,5 +28,12 @@ resource "aws_sqs_queue_policy" "sqs_hub_requests"{
     policy = templatefile("${path.module}/sqs_access.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id
         sqs_queuename  = aws_sqs_queue.sqs_hub_requests.name
+    })
+}
+resource "aws_sqs_queue_policy" "sqs_deadletter_requests"{
+    queue_url = aws_sqs_queue.sqs_deadletter_requests.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_deadletter_requests.name
     })
 }
