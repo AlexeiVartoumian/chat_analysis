@@ -153,6 +153,13 @@ def create_tables(conn) -> None:
                 term            VARCHAR(256) NOT NULL UNIQUE
             );
         """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW (
                 workflow_id         UUID      PRIMARY KEY,
