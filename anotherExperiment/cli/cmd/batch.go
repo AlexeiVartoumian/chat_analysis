@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 
+	"bufio"
 	"fmt"
 	"os"
 	"strconv"
@@ -30,6 +31,13 @@ func parseTimestamp(ts string) (time.Time, error) {
 func CsvFile(filepath string, tablename string) error {
 	// func CsvFile(filepath string, item chan<- models.COMPANY) {
 	//jobModel := jobs.model models.JOBS{}
+
+	if tablename == "FILE_KEYS" {
+
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -88,6 +96,30 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	return nil
+}
+
+func InsertNewKeys(tablename string, filepath string) error {
+
+	file, err := os.Open(filepath)
+	if err != nil {
+		//return ErrorHandler(err, ""), jobModel
+		return ErrorHandler(err, "filepat open issue")
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+
+		key := models.File_key{
+			File_name: scanner.Text(),
+		}
+
+		AddNewRow(key, tablename)
+	}
+
+	return nil
+
 }
 
 func Job_And_search_loader(records []map[string]string, tablename string, filepath string) {
