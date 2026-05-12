@@ -25,4 +25,6 @@ pg_dump --version
 pg_dump -h localhost -U postgres -d interview   | gzip   | aws s3 cp - s3://********/backups/dump_$(date +%Y%m%d_%H%M%S).sql.gz
 
 #then on vm
+#copy from s3 bucket to dest
 gunzip /tmp/dump.sql.gz
+#docker exec -i "containter-id" psql -U postgres -d interview < /tmp/dump.sql
