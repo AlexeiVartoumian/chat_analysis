@@ -16,7 +16,7 @@ sudo systemctl start docker
 sudo usermod -aG docker $USER
 newgrp docker
 sudo apt install python3-pip -y
-sudo apt install python3.12-venv -y
+sudo apt install python3.14-venv -y
 sudo python3 -m venv /venv
 
 source /venv/bin/activate
