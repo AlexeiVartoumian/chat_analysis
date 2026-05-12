@@ -5,6 +5,7 @@ import (
 	"api/models"
 	"api/repository/sqlconnect"
 	"api/utils"
+	"bufio"
 	"bytes"
 	"database/sql"
 	"encoding/json"
@@ -268,6 +269,32 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 	} else {
 
 		w.Write([]byte(`{welcome to db dear guest :) here is your api key : "api_key": "` + fullKey + `", "key_id": "` + keyID + `"}`))
+	}
+
+}
+
+func InsertToDb(w http.ResponseWriter, r *http.Request) {
+
+	SeenFileKeys, err := sqlconnect.GetKeys()
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("here is your data", SeenFileKeys)
+
+	file, err := os.Create("/home/ubuntu/keystest.txt")
+
+	if err != nil {
+		http.Error(w, "Internal server error writing file", http.StatusInternalServerError)
+		return
+	}
+
+	writer := bufio.NewWriter(file)
+
+	for _, line := range SeenFileKeys {
+		fmt.Fprintln(writer, line)
 	}
 
 }

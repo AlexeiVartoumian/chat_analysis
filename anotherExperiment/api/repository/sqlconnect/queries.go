@@ -245,3 +245,29 @@ func SeekReopened() ([]string, error) {
 	return output, nil
 
 }
+func GetKeys() ([]string, error) {
+
+	db, err := ConnectDb()
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+	rows, err := db.Query(`
+		SELECT * from FILE_KEYS;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "no no but yes")
+	}
+	defer rows.Close()
+
+	var output []string
+
+	for rows.Next() {
+
+		var res string
+
+		rows.Scan(&res)
+		output = append(output, res)
+	}
+	return output, nil
+
+}
