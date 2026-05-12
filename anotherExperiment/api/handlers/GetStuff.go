@@ -290,11 +290,17 @@ func InsertToDb(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Internal server error writing file", http.StatusInternalServerError)
 		return
 	}
+	defer file.Close()
 
 	writer := bufio.NewWriter(file)
 
 	for _, line := range SeenFileKeys {
 		fmt.Fprintln(writer, line)
+	}
+
+	if err := writer.Flush(); err != nil {
+		http.Error(w, "internal server error flushing file", http.StatusInternalServerError)
+		return
 	}
 
 }
