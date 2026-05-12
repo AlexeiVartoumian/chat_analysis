@@ -111,6 +111,12 @@ with open("keys.txt", "a" , encoding="utf-8") as f:
             f.writelines(key)
             f.writelines("\n")
 
+with open("newkeys.txt" , "w" , encoding="utf-8") as f :
+
+        for index , key in enumerate(new_keys_to_upload):
+            f.writelines(key)
+            f.writelines("\n")
+
 
 def forgive(key , mydict ):
 
