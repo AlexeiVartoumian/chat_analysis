@@ -12,3 +12,17 @@ rm -rf cookies-grouped.json
 npx tsx getCookies.ts
 
 aws s3 cp cookies-grouped.json s3://destina.json
+
+
+#dumps
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+
+sudo apt install -y postgresql-common
+sudo apt install -y postgresql-client
+pg_dump --version
+pg_dump -h localhost -U postgres -d interview   | gzip   | aws s3 cp - s3://********/backups/dump_$(date +%Y%m%d_%H%M%S).sql.gz
+
+#then on vm
+gunzip /tmp/dump.sql.gz
