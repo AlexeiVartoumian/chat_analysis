@@ -98,7 +98,7 @@ func CsvFile(filepath string, tablename string) error {
 	return nil
 }
 
-func InsertNewKeys(tablename string, filepath string) error {
+func InsertNewKeys(filepath string, tablename string) error {
 
 	file, err := os.Open(filepath)
 	if err != nil {
