@@ -282,7 +282,7 @@ func InsertToDb(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println("here is your data", SeenFileKeys)
+	fmt.Println("here is your data", len(SeenFileKeys))
 
 	file, err := os.Create("/home/ubuntu/keystest.txt")
 
