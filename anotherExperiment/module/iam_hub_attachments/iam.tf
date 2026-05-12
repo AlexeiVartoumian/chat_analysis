@@ -117,7 +117,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:GetQueueAttributes",
           "sqs:SendMessage"
         ]
-        Resource = var.sqs_coordinator_arn  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn]  # pass the actual SQS ARN directly
       }
     ]
   })

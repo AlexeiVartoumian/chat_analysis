@@ -8,7 +8,8 @@
                 "dynamodb:DescribeTable",
                 "dynamodb:Scan",
                 "dynamodb:PutItem",
-                "dynamodb:Query"
+                "dynamodb:Query",
+                "dynamodb:DeleteItem"
             ],
             "Resource": [
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table}",

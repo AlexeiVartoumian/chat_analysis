@@ -10,8 +10,9 @@
                 "sqs:SendMessage"
             ],
             "Resource": [
-                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator}",
-                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_deadletter_arn}" 
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_deadletter_arn}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator}"
+               
             ]
         }
     ]

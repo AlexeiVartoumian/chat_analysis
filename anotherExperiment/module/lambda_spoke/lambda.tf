@@ -21,7 +21,7 @@ data "archive_file" "go_metadata_path" {
 data "archive_file" "requests_layer" {
   type        = "zip"
   source_dir  = "${path.root}/module/sources/layer"
-  output_path = "${path.root}/module/sources/layer/python.zip"
+  output_path = "${path.root}/module/sources/python.zip"
 }
 
 resource "aws_lambda_function" "reader" {
