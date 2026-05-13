@@ -279,7 +279,7 @@ func GetSearchTerms() ([]string, error) {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
 	rows, err := db.Query(`
-		SELECT * from SEARCH_TERM;
+		SELECT term from SEARCH_TERM;
 	`)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "no no but yes")
