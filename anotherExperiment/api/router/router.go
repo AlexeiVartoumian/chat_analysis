@@ -35,7 +35,7 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SemanticSearch),
 	))
 
-	mux.Handle("GET /sqsBlaster", authMiddleware.Authenticate(models.ScopeAdmin)(
+	mux.Handle("POST /sqsBlaster", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SqsBlaster),
 	))
 

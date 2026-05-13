@@ -307,6 +307,22 @@ func InsertToDb(w http.ResponseWriter, r *http.Request) {
 
 func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed ", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "Invalid requestr body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	first_run_and_number_accounts := string(body)
+
+	fmt.Println(first_run_and_number_accounts)
+
 	SearchTerms, err := sqlconnect.GetSearchTerms()
 
 	if err != nil {
