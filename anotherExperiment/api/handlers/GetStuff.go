@@ -327,4 +327,15 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 	if err := cmd.Run(); err != nil {
 		log.Printf("sqsblaster.py failed %v", err)
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status string `json:"status"`
+	}{
+		Status: fmt.Sprintf(" Successfully blasted sqs. have a good day %d", len(payload)),
+	}
+
+	json.NewEncoder(w).Encode(response)
+
 }
