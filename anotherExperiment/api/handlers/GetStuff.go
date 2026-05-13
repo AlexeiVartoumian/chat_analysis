@@ -304,3 +304,27 @@ func InsertToDb(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func SqsBlaster(w http.ResponseWriter, r *http.Request) {
+
+	SearchTerms, err := sqlconnect.GetSearchTerms()
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println("here is your data", len(SearchTerms))
+
+	payload, _ := json.Marshal(SearchTerms)
+
+	cmd := exec.Command("python3", "/home/ubuntu/sqsblaster.py")
+
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("sqsblaster.py failed %v", err)
+	}
+}
