@@ -272,15 +272,16 @@ func GetKeys() ([]string, error) {
 
 }
 
-func GetSearchTerms() ([]string, error) {
+func GetSearchTerms(first_run bool, number_accounts int) ([]string, error) {
 	db, err := ConnectDb()
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
+
 	rows, err := db.Query(`
-		SELECT term from SEARCH_TERM;
-	`)
+		SELECT term from SEARCH_TERM LIMIT $1;
+	`, number_accounts)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "no no but yes")
 	}

@@ -16,6 +16,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 func updateLambda(search_term string) error {
@@ -320,10 +321,29 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	first_run_and_number_accounts := string(body)
+	first_run := false
+	number_accounts := 0
+	if strings.Contains(first_run_and_number_accounts, "first") {
+
+		first_run = true
+		number_accounts, err = strconv.Atoi(strings.Split(first_run_and_number_accounts, " ")[1])
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem executing most likely data in unexpected format", http.StatusInternalServerError)
+		}
+
+	} else {
+		number_accounts, err = strconv.Atoi(first_run_and_number_accounts)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem executing most likely data in unexpected format", http.StatusInternalServerError)
+		}
+	}
 
 	fmt.Println(first_run_and_number_accounts)
 
-	SearchTerms, err := sqlconnect.GetSearchTerms()
+	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts)
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
