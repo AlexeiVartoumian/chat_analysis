@@ -351,6 +351,11 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if SearchTerms != nil {
+		fmt.Println("Job Done")
+		return
+	}
+
 	fmt.Println("here is your data", SearchTerms, len(SearchTerms))
 
 	payload, _ := json.Marshal(SearchTerms)

@@ -2,6 +2,8 @@ package sqlconnect
 
 import (
 	"api/utils"
+	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -298,6 +300,14 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			var res SearchTerm
 
 			rows.Scan(&res.Search_term_id, &res.Search_term)
+
+			_, err := db.Exec(`
+			UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
+				`, res.Search_term_id)
+
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "no no but yes")
+			}
 			output = append(output, res)
 		}
 		return output, nil
@@ -310,35 +320,40 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		// 3. check if min is equal to max then we know we are done else load and return
 
 		_, err := db.Exec(`
-		UPDATE SEARCH_TERM SET run_count = run_count + 1 where search_term_id = $1;
+		UPDATE SEARCH_TERM SET run_count = 1 AND mid_run = FALSE where search_term_id = $1;
 	`, number_accounts)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "no no but yes")
 		}
 
-		rows, err := db.Query(`
-			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM GROUP BY search_term_id HAVING run_count= MIN(run_count) limit 1;
+		row := db.QueryRow(`
+			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count= MIN(run_count) limit 1;
 		`)
-
-		if err != nil {
-			return nil, utils.ErrorHandler(err, "no no but yes")
-		}
-		defer rows.Close()
 		var output []SearchTerm
-		for rows.Next() {
 
-			var res SearchTerm
-			var min int
-			var max int
+		var res SearchTerm
+		var min int
+		var max int
 
-			rows.Scan(&res.Search_term_id, &res.Search_term, &min, &max)
-
-			if min == max {
-				return nil, nil
-			}
-			output = append(output, res)
-
+		err = row.Scan(&res.Search_term_id, &res.Search_term, &min, &max)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
 		}
+		if min == max {
+			//can only be reached if all all search terms have had a run . mid_run is false
+			_, err := db.Exec(`
+			UPDATE SEARCH_TERM SET run_count = 0 total_run_count = total_run_count +1;
+			`)
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "no no but yes")
+			}
+
+			return nil, nil
+		}
+		output = append(output, res)
+
 		return output, nil
 
 	}
