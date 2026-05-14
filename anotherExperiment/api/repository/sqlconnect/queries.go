@@ -49,6 +49,7 @@ type SearchTerm struct {
 	Search_term    string `json:"search_term"`
 }
 
+// TODO!!! dep injection on db and close db con
 func SearchSimilarJobs(query string) error {
 
 	db, err := ConnectDb(1)
@@ -299,8 +300,11 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		for rows.Next() {
 			var res SearchTerm
 
-			rows.Scan(&res.Search_term_id, &res.Search_term)
+			err = rows.Scan(&res.Search_term_id, &res.Search_term)
 
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "Scann load error on first run in GetSearchTerms function")
+			}
 			_, err := db.Exec(`
 			UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
 				`, res.Search_term_id)
@@ -340,6 +344,9 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
 			fmt.Println("job done , waiting for remaining jobs to complete ")
 			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
 		}
 		if min == max {
 			//SHOULD only be reached if all all search terms have had a run . mid_run is false

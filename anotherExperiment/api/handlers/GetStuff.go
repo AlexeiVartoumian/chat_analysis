@@ -352,7 +352,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if SearchTerms == nil {
-		fmt.Println("Job Done")
+		fmt.Println("Job Done either second last run or last run ")
 		return
 	}
 
