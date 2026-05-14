@@ -327,7 +327,7 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		}
 
 		row := db.QueryRow(`
-			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count= MIN(run_count) limit 1;
+			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
 		`)
 		var output []SearchTerm
 
