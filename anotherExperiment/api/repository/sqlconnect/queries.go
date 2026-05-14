@@ -351,6 +351,14 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			}
 
 			return nil, nil
+		} else {
+			_, err := db.Exec(`
+			UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1
+			`, res.Search_term_id)
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "no no but yes")
+			}
+
 		}
 		output = append(output, res)
 
