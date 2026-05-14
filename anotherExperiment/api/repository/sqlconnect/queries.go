@@ -327,7 +327,7 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		}
 
 		row := db.QueryRow(`
-			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
+			SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE) AS max FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
 		`)
 		var output []SearchTerm
 
@@ -342,7 +342,9 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			return nil, nil
 		}
 		if min == max {
-			//can only be reached if all all search terms have had a run . mid_run is false
+			//SHOULD only be reached if all all search terms have had a run . mid_run is false
+
+			fmt.Println(res)
 			_, err := db.Exec(`
 			UPDATE SEARCH_TERM SET run_count = 0 , total_run_count = total_run_count +1;
 			`)
