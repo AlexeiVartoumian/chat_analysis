@@ -279,22 +279,23 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]string, error) {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
 
-	rows, err := db.Query(`
+	if first_run == true {
+		rows, err := db.Query(`
 		SELECT term from SEARCH_TERM LIMIT $1;
 	`, number_accounts)
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "no no but yes")
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "no no but yes")
+		}
+		defer rows.Close()
+		var output []string
+
+		for rows.Next() {
+			var res string
+
+			rows.Scan(&res)
+			output = append(output, res)
+		}
+		return output, nil
 	}
-	defer rows.Close()
-
-	var output []string
-
-	for rows.Next() {
-		var res string
-
-		rows.Scan(&res)
-		output = append(output, res)
-	}
-	return output, nil
 
 }
