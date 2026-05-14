@@ -291,7 +291,7 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
 	`, number_accounts)
 		if err != nil {
-			return nil, utils.ErrorHandler(err, "no no but yes")
+			return nil, utils.ErrorHandler(err, "first run failure in GetSearchTerms function")
 		}
 		defer rows.Close()
 		var output []SearchTerm
@@ -306,7 +306,7 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 				`, res.Search_term_id)
 
 			if err != nil {
-				return nil, utils.ErrorHandler(err, "no no but yes")
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
 			}
 			output = append(output, res)
 		}
@@ -320,10 +320,10 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		// 3. check if min is equal to max then we know we are done else load and return
 
 		_, err := db.Exec(`
-		UPDATE SEARCH_TERM SET run_count = 1 AND mid_run = FALSE where search_term_id = $1;
+		UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
 	`, number_accounts)
 		if err != nil {
-			return nil, utils.ErrorHandler(err, "no no but yes")
+			return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
 		}
 
 		row := db.QueryRow(`
@@ -344,7 +344,7 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		if min == max {
 			//can only be reached if all all search terms have had a run . mid_run is false
 			_, err := db.Exec(`
-			UPDATE SEARCH_TERM SET run_count = 0 total_run_count = total_run_count +1;
+			UPDATE SEARCH_TERM SET run_count = 0 , total_run_count = total_run_count +1;
 			`)
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "no no but yes")
