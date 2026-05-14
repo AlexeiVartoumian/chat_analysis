@@ -42,6 +42,11 @@ type ColumnMeta struct {
 	Type string `json:"type"`
 }
 
+type SearchTerm struct {
+	Search_term_id int    `json:"search_term_id"`
+	Search_term    string `json:"search_term"`
+}
+
 func SearchSimilarJobs(query string) error {
 
 	db, err := ConnectDb(1)
@@ -272,7 +277,7 @@ func GetKeys() ([]string, error) {
 
 }
 
-func GetSearchTerms(first_run bool, number_accounts int) ([]string, error) {
+func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 	db, err := ConnectDb()
 
 	if err != nil {
@@ -281,21 +286,61 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]string, error) {
 
 	if first_run == true {
 		rows, err := db.Query(`
-		SELECT term from SEARCH_TERM LIMIT $1;
+		SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
 	`, number_accounts)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "no no but yes")
 		}
 		defer rows.Close()
-		var output []string
+		var output []SearchTerm
 
 		for rows.Next() {
-			var res string
+			var res SearchTerm
 
-			rows.Scan(&res)
+			rows.Scan(&res.Search_term_id, &res.Search_term)
 			output = append(output, res)
 		}
 		return output, nil
+	} else {
+
+		// then we know that its automation that triggered this and number_accounts is actually searchterm id
+
+		//order of ops : 1. update run count by search term id.
+		// 2. select search term by id order by min
+		// 3. check if min is equal to max then we know we are done else load and return
+
+		_, err := db.Exec(`
+		UPDATE SEARCH_TERM SET run_count = run_count + 1 where search_term_id = $1;
+	`, number_accounts)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "no no but yes")
+		}
+
+		rows, err := db.Query(`
+			SELECT search_term_id , term , min(run_count) , max(run_count) FROM SEARCH_TERM GROUP BY search_term_id HAVING run_count= MIN(run_count) limit 1;
+		`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "no no but yes")
+		}
+		defer rows.Close()
+		var output []SearchTerm
+		for rows.Next() {
+
+			var res SearchTerm
+			var min int
+			var max int
+
+			rows.Scan(&res.Search_term_id, &res.Search_term, &min, &max)
+
+			if min == max {
+				return nil, nil
+			}
+			output = append(output, res)
+
+		}
+		return output, nil
+
 	}
 
 }

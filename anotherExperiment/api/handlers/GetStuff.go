@@ -323,6 +323,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 	first_run_and_number_accounts := string(body)
 	first_run := false
 	number_accounts := 0
+	//TODO dont use data for identification use something else
 	if strings.Contains(first_run_and_number_accounts, "first") {
 
 		first_run = true
