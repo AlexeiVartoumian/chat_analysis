@@ -351,7 +351,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if SearchTerms != nil {
+	if SearchTerms == nil {
 		fmt.Println("Job Done")
 		return
 	}
