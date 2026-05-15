@@ -197,6 +197,7 @@ def create_tables(conn) -> None:
                 first_seen_closed_at TIMESTAMPTZ,
                 next_scan_at         TIMESTAMPTZ,
                 suspended_count      INT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
                 CONSTRAINT fk_job_lifecycle_jobs
                     FOREIGN KEY (job_id)
                     REFERENCES JOBS (job_id)
