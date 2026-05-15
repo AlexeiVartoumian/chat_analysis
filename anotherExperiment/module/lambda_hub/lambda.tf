@@ -14,6 +14,7 @@ resource "aws_lambda_function" "orchestrator" {
     role = var.aws_iam_role_main_arn
     handler = "orchestrator.lambda_handler"
     runtime = "python3.13" 
+    timeout     = 60
     environment {
         variables = {
             account_pool_table= var.account_pool_table
