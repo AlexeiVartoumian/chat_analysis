@@ -395,7 +395,7 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 
 	first_run_and_file_type := string(body)
-
+	fmt.Println(first_run_and_file_type)
 	first_run := false
 	var filetype *string
 	//TODO dont use data for identification use something else
