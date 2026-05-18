@@ -8,9 +8,10 @@ from botocore.exceptions import ClientError
 
 #search type is suspended or live
 search_type = None
-
+auto = None
 if len(sys.argv) > 1:
     search_type = sys.argv[1]
+    auto = sys.argv[2]
 
 roles = json.loads(sys.stdin.read())
 
@@ -107,6 +108,7 @@ def main():
                 {'name': 'workflow_id',    'value': workflow_id },
                 {'name': 'file_pool_table',    'value': filepool_table_name },
                 {'name': 'output_file_name',    'value': search_type },
+                {'name': 'auto',    'value': auto },
             ]
         }]
     }
