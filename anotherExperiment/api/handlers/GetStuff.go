@@ -98,7 +98,8 @@ func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("here is your data", LiveRoles)
 
 	payload, _ := json.Marshal(LiveRoles)
-	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "live")
+	auto := "false"
+	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "live", auto)
 
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Stdout = os.Stdout
@@ -120,7 +121,8 @@ func SeekReopenedRoles(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("here is your data", LiveRoles)
 
 	payload, _ := json.Marshal(LiveRoles)
-	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "suspended")
+	auto := "false"
+	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", "suspended", auto)
 
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Stdout = os.Stdout
@@ -429,7 +431,9 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	payload, _ := json.Marshal(roles)
-	cmd := exec.Command("pyhton3", "/home/ubuntu/backfill.py", filetype)
+
+	auto := "true"
+	cmd := exec.Command("python3", "/home/ubuntu/backfill.py", filetype, auto)
 
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Stdout = os.Stdout
