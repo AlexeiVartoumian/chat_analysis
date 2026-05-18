@@ -280,11 +280,12 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 		return nil, nil
 	}
 
-	for job_id := range output {
+	for index := range output {
 
 		// _, err := db.Exec(`
 		// UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE
 		// `)
+		job_id := output[index]
 		fmt.Println(job_id)
 		_, err := db.Exec(`
 		 UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id = $1
