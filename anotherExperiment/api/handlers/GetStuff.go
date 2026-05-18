@@ -414,7 +414,7 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 		filetype = &first_run_and_file_type
 	}
 
-	fmt.Println(first_run)
+	fmt.Println(&first_run)
 	fmt.Println(filetype)
 	roles, err := sqlconnect.SeekExpiredAuto(*filetype, first_run)
 
