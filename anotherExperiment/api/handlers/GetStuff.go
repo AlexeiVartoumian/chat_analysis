@@ -383,3 +383,59 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+
+// need three or two args . one is first run , bool . second is filetype
+func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	first_run_and_file_type := string(body)
+
+	first_run := false
+	var filetype *string
+	//TODO dont use data for identification use something else
+	if strings.Contains(first_run_and_file_type, "first") {
+
+		first_run = true
+		temp := strings.Split(first_run_and_file_type, " ")[1]
+
+		filetype = &temp
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem executing first run data could be unexpected format", http.StatusBadRequest)
+		}
+
+	} else {
+		filetype = &first_run_and_file_type
+	}
+
+	fmt.Println(first_run)
+	fmt.Println(filetype)
+	roles, err := sqlconnect.SeekExpiredAuto(*filetype, first_run)
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if roles == nil {
+		fmt.Println("Job Done either second last run or last run ")
+		return
+	}
+
+	//TODO send to backfill
+	// response := struct {
+	// 	Status     string `json:"status"`
+	// 	StatusCode int
+	// }{
+	// 	Status:     fmt.Sprintf(" Successfully blasted sqs. have a good day %d", len(payload)),
+	// 	StatusCode: 200,
+	// }
+
+	// json.NewEncoder(w).Encode(response)
+}

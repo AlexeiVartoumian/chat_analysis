@@ -227,19 +227,29 @@ func SeekExpired() ([]string, error) {
 	return output, nil
 }
 
-func SeekExpiredAuto() ([]string, error) {
+func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 
 	db, err := ConnectDb()
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
 
+	if firstrun == true {
+		_, err := db.Exec(`
+		UPDATE JOB_LIFECYCLE SET visited = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "first run errored on db output yes")
+		}
+
+	}
 	// UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE limit 1000);
 	// order of ops: check if first run with bool flag . if yes then all open are in unvisited state .
 	// select 1000 listed roles where listed and unvisited
 	// update table as visited
 	// send.
 	//UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE limit 1000);
+
 	rows, err := db.Query(`
 		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED' and visited = FALSE order by last_seen_listed_at ASC limit 1000;
 	`)
@@ -256,6 +266,18 @@ func SeekExpiredAuto() ([]string, error) {
 
 		rows.Scan(&res)
 		output = append(output, res)
+	}
+
+	// then last run has been reached.
+	if len(output) == 0 {
+
+		_, err := db.Exec(`
+		UPDATE JOB_LIFECYCLE SET visited = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " last run errored on db output yes")
+		}
+		return nil, nil
 	}
 
 	for job_id := range output {
