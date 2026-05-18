@@ -275,7 +275,7 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 	}
 
 	// then last run has been reached.
-	fmt.Println(output)
+	fmt.Println(len(output))
 	if len(output) == 0 {
 
 		_, err := db.Exec(`

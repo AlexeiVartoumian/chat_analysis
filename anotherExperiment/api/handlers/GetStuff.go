@@ -420,7 +420,7 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if roles == nil {
-		fmt.Println("Job Done either second last run or last run ")
+		fmt.Println("Job Done ")
 		return
 	}
 
