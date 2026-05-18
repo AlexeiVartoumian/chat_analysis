@@ -397,26 +397,22 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 	first_run_and_file_type := string(body)
 	fmt.Println(first_run_and_file_type)
 	first_run := false
-	var filetype *string
+	//var filetype *string
 	//TODO dont use data for identification use something else
+	var roles []string
 	if strings.Contains(first_run_and_file_type, "first") {
-
 		first_run = true
-		temp := strings.Split(first_run_and_file_type, " ")[1]
+		filetype := strings.Split(first_run_and_file_type, " ")[1]
 
-		filetype = &temp
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Problem executing first run data could be unexpected format", http.StatusBadRequest)
 		}
+		roles, err = sqlconnect.SeekExpiredAuto(filetype, first_run)
 
 	} else {
-		filetype = &first_run_and_file_type
+		roles, err = sqlconnect.SeekExpiredAuto(first_run_and_file_type, first_run)
 	}
-
-	fmt.Println(&first_run)
-	fmt.Println(filetype)
-	roles, err := sqlconnect.SeekExpiredAuto(*filetype, first_run)
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
