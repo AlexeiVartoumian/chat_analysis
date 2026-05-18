@@ -47,6 +47,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekExpiredRoles),
 	))
 
+	mux.Handle("POST /seekAuto", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SeekExpiredAuto),
+	))
+
 	mux.Handle("GET /seekReopened", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekReopenedRoles),
 	))
