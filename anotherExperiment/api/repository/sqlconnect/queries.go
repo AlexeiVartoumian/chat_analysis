@@ -243,6 +243,12 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 		}
 
 	}
+	var workflow string
+	if filetype == "live" {
+		workflow = "LISTED"
+	} else {
+		workflow = "SUSPENDED"
+	}
 	// UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE limit 1000);
 	// order of ops: check if first run with bool flag . if yes then all open are in unvisited state .
 	// select 1000 listed roles where listed and unvisited
@@ -251,8 +257,8 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 	//UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE limit 1000);
 
 	rows, err := db.Query(`
-		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED' and visited = FALSE order by last_seen_listed_at ASC limit 1000;
-	`)
+		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE '$1' and visited = FALSE order by last_seen_listed_at ASC limit 1000;
+	`, workflow)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
 	}
