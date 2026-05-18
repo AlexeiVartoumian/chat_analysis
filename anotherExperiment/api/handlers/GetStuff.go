@@ -385,6 +385,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 }
 
 // need three or two args . one is first run , bool . second is filetype
+// eg curl -H "Authorization: Bearer mykey" http://localhost/seekAuto  -d 'first live'
 func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -400,9 +401,11 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 	//var filetype *string
 	//TODO dont use data for identification use something else
 	var roles []string
+
+	var filetype string
 	if strings.Contains(first_run_and_file_type, "first") {
 		first_run = true
-		filetype := strings.Split(first_run_and_file_type, " ")[1]
+		filetype = strings.Split(first_run_and_file_type, " ")[1]
 
 		if err != nil {
 			log.Println(err)
@@ -411,7 +414,9 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 		roles, err = sqlconnect.SeekExpiredAuto(filetype, first_run)
 
 	} else {
-		roles, err = sqlconnect.SeekExpiredAuto(first_run_and_file_type, first_run)
+		filetype = first_run_and_file_type
+
+		roles, err = sqlconnect.SeekExpiredAuto(filetype, first_run)
 	}
 
 	if err != nil {
@@ -423,15 +428,24 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Job Done ")
 		return
 	}
+	payload, _ := json.Marshal(roles)
+	cmd := exec.Command("pyhton3", "/home/ubuntu/backfill.py", filetype)
 
-	//TODO send to backfill
-	// response := struct {
-	// 	Status     string `json:"status"`
-	// 	StatusCode int
-	// }{
-	// 	Status:     fmt.Sprintf(" Successfully blasted sqs. have a good day %d", len(payload)),
-	// 	StatusCode: 200,
-	// }
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	// json.NewEncoder(w).Encode(response)
+	if err := cmd.Run(); err != nil {
+		log.Printf("backfill.py failed %v", err)
+	}
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully sent auto. have a good day %d", len(roles)),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
 }
