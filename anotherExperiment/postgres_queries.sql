@@ -284,3 +284,6 @@ SELECT COMPANY_METADATA.name , JOBS.job_id ,JOBS.title FROM COMPANY_METADATA ,JO
 
 -- reopened w. suspended
 SELECT COUNT(suspended_count) , COMPANY_METADATA.name FROM JOB_LIFECYCLE JOIN JOBS ON JOBS.job_id = JOB_LIFECYCLE.job_id JOIN COMPANY_METADATA on JOBS.company_id = COMPANY_METADATA.company_id  where job_state LIKE '%LISTED%' AND suspended_count > 0 GROUP BY COMPANY_METADATA.name;
+
+-- search term listed yields
+SELECT COUNT(*),JOBS.search_term FROM JOBS join JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id JOIN SEARCH_TERM ON SEARCH_TERM.term = JOBS.search_term where job_state LIKE 'LISTED' GROUP BY JOBS.search_term ORDER BY COUNT(*) DESC;
