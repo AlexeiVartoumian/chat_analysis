@@ -455,3 +455,19 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 	}
 
 }
+
+func BackoffUpdate(searchterm string) (string, error) {
+	db, err := ConnectDb()
+	if err != nil {
+		return "", utils.ErrorHandler(err, "db conn error")
+	}
+
+	_, err = db.Exec(`
+        UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term LIKE $1;
+    `, "%"+searchterm+"%")
+	if err != nil {
+		return "", utils.ErrorHandler(err, "update error")
+	}
+
+	return searchterm, nil
+}

@@ -453,3 +453,40 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 }
+
+// should be expobackoff will pass fileid from lambda. for now only search term to update .
+func Backoff(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
+	}
+
+	searchterm := string(body)
+
+	fmt.Println(searchterm)
+
+	updateSearchTermDB, err := sqlconnect.BackoffUpdate(searchterm)
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully backedoff. have a good day %s", updateSearchTermDB),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}

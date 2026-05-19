@@ -39,6 +39,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SqsBlaster),
 	))
 
+	mux.Handle("POST /Backoff", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SqsBlaster),
+	))
+
 	mux.Handle("GET /onlyCompanyLinks", authMiddleware.Authenticate(models.ScopeRead)(
 		http.HandlerFunc(handlers.CompanyUrlOnly),
 	))
