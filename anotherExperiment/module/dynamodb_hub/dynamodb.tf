@@ -23,16 +23,7 @@ resource "aws_dynamodb_table" "filepool" {
     attribute_name = "ttl"
     enabled        = true
   }
-  attribute {
-    name = "back_off"
-    type = "N"
-  }
-
-  attribute {
-    name = "retry_count"
-    type = "N"
-  }
-
+ 
   global_secondary_index {
     name            = "status-index"
     hash_key        = "status"
