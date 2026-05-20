@@ -1,9 +1,28 @@
 
 
+data "archive_file" "requests_hub_layer" {
+  type        = "zip"
+  source_dir  = "${path.root}/module/sources/layer"
+  output_path = "${path.root}/module/sources/python.zip"
+}
+
+
+
 data "archive_file" "orchestrator_path" {
     type = "zip"
     source_file = "${path.root}/module/sources/orchestrator/orchestrator.py"
     output_path = "${path.root}/module/sources/orchestrator/orchestrator.zip"
+}
+
+
+resource "aws_lambda_layer_version" "requests_hub_layer" {
+
+    filename         = data.archive_file.requests_hub_layer.output_path
+    source_code_hash = data.archive_file.requests_hub_layer.output_base64sha256
+    layer_name = "requests_layer_data_source"
+    compatible_runtimes = ["python3.14", "python3.13", "python3.12", "python3.11", "python3.10"]
+
+    depends_on = [data.archive_file.requests_hub_layer]
 }
 
 resource "aws_lambda_function" "orchestrator" {
@@ -15,6 +34,7 @@ resource "aws_lambda_function" "orchestrator" {
     handler = "orchestrator.lambda_handler"
     runtime = "python3.13" 
     timeout     = 60
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
     environment {
         variables = {
             account_pool_table= var.account_pool_table
