@@ -402,11 +402,15 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 		// 2. select search term by id order by min
 		// 3. check if min is equal to max then we know we are done else load and return
 
-		_, err := db.Exec(`
-		UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
-	`, number_accounts)
-		if err != nil {
-			return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			_, err := db.Exec(`
+			UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
+		`, number_accounts)
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+
 		}
 
 		row := db.QueryRow(`
@@ -456,18 +460,21 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 
 }
 
-func BackoffUpdate(searchterm string) (string, error) {
+func BackoffUpdate(searchtermid int) error {
 	db, err := ConnectDb()
 	if err != nil {
-		return "", utils.ErrorHandler(err, "db conn error")
+		return utils.ErrorHandler(err, "db conn error")
 	}
 
+	// _, err = db.Exec(`
+	//     UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term LIKE $1;
+	// `, "%"+searchterm+"%")
 	_, err = db.Exec(`
-        UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term LIKE $1;
-    `, "%"+searchterm+"%")
+        UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term_id LIKE $1;
+    `, searchtermid)
 	if err != nil {
-		return "", utils.ErrorHandler(err, "update error")
+		return utils.ErrorHandler(err, "update error")
 	}
 
-	return searchterm, nil
+	return nil
 }

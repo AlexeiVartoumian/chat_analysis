@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func updateLambda(search_term string) error {
@@ -360,17 +361,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("here is your data", SearchTerms, len(SearchTerms))
 
-	payload, _ := json.Marshal(SearchTerms)
-
-	cmd := exec.Command("python3", "/home/ubuntu/sqsblaster.py")
-
-	cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		log.Printf("sqsblaster.py failed %v", err)
-	}
+	payload := SendToSqs(SearchTerms)
 
 	w.Header().Set("Content-Type", "application/json")
 
@@ -384,6 +375,21 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 
+}
+
+func SendToSqs(SearchTerms []sqlconnect.SearchTerm) []byte {
+	payload, _ := json.Marshal(SearchTerms)
+
+	cmd := exec.Command("python3", "/home/ubuntu/sqsblaster.py")
+
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("sqsblaster.py failed %v", err)
+	}
+	return payload
 }
 
 // need three or two args . one is first run , bool . second is filetype
@@ -460,33 +466,69 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
-
-	body, err := io.ReadAll(r.Body)
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
-	}
-
-	searchterm := string(body)
-
-	fmt.Println(searchterm)
-
-	updateSearchTermDB, err := sqlconnect.BackoffUpdate(searchterm)
-
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
 
-	response := struct {
-		Status     string `json:"status"`
-		StatusCode int
-	}{
-		Status:     fmt.Sprintf(" Successfully backedoff. have a good day %s", updateSearchTermDB),
-		StatusCode: 200,
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
+		return
 	}
 
-	json.NewEncoder(w).Encode(response)
+	type BackoffSearchTerms struct {
+		Search_term_id int `json:"search_term_id"`
+		Timestamp      int `json:"timestamp"`
+	}
+
+	// if minus 1 then we know that it came from orchestrator . in which case reset the sql search term.
+	// if timestamp though then use scheduler for next call.
+	var Search_term BackoffSearchTerms
+
+	err = json.Unmarshal(body, &Search_term)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem ummarshalling json could be unexpected format", http.StatusBadRequest)
+		return
+	}
+
+	err = sqlconnect.BackoffUpdate(Search_term.Search_term_id)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem with db update on backoff searchtermid", http.StatusBadRequest)
+		return
+	}
+
+	if Search_term.Timestamp != -1 {
+
+		//do time.dofunc
+		delay := time.Until(time.Unix(int64(Search_term.Timestamp), 0))
+
+		time.AfterFunc(delay, func() {
+
+			search_term, err := sqlconnect.GetSearchTerms(false, -1)
+			if err != nil {
+				log.Println("error getting search terms", err)
+				return
+			}
+
+			if search_term == nil {
+				fmt.Println("Job Done either second last run or last run ")
+				return
+			}
+
+			fmt.Println("here is your data", search_term, len(search_term))
+
+			payload := SendToSqs(search_term)
+
+			log.Printf("successfully blasted sqs, %d items sent", len(payload))
+		})
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusAccepted)
+	json.NewEncoder(w).Encode(map[string]string{
+		"status": "scheduled",
+	})
+
 }
