@@ -287,3 +287,7 @@ SELECT COUNT(suspended_count) , COMPANY_METADATA.name FROM JOB_LIFECYCLE JOIN JO
 
 -- search term listed yields
 SELECT COUNT(*),JOBS.search_term FROM JOBS join JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id JOIN SEARCH_TERM ON SEARCH_TERM.term = JOBS.search_term where job_state LIKE 'LISTED' GROUP BY JOBS.search_term ORDER BY COUNT(*) DESC;
+
+
+-- Company historic and live postings 
+SELECT COMPANY_METADATA.name , industry , COMPANY_METADATA.description ,JOBS.search_term ,JOBS.title , job_state , JOBS.date_posted , first_seen_closed_at  from COMPANY_METADATA JOIN JOBS on COMPANY_METADATA.company_id = JOBS.company_id JOIN JOB_LIFECYCLE on JOB_LIFECYCLE.job_id = JOBS.job_id ;
