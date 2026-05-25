@@ -7,12 +7,13 @@
 
 ## update . looks to be good ! listbucketv2 works because of "w" flag where we create a fresh batch each time .
 ## therefore all we have to do here is follow the business rules of the db piping keys.json to this file . 
-WHILE IFS= read -r file; do
+while IFS= read -r file; do
 
     echo "$file"
 
     type="${file%%-*}"
     type="${type^^}"
+
 
     if [ "$type" = "LIVE" ]; then 
         ./start insert $file JOB_LIFECYCLE_UPDATE
@@ -23,4 +24,4 @@ WHILE IFS= read -r file; do
         ./start insert $file JOB_LIFECYCLE_UPDATE_SUSPENDED
     
     fi
-done < <(jq -r '.[][]' keys.json)
+done < <(jq -r '.[][][][]' keys.json)
