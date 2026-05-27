@@ -22,11 +22,6 @@ s3 = boto3.client("s3", region_name='eu-west-2')
 S3_BUCKET = "somebuckethaha"
 
 
-
-
-
-
-
 def main():
     
     #file["fil
