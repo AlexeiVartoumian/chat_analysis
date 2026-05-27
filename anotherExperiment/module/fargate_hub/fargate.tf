@@ -2,6 +2,10 @@ resource "aws_ecs_cluster" "reader_cluster" {
   name = "reader-cluster"
 }
 
+resource "aws_ecs_cluster" "scroller_cluster" {
+  name = "scroller-cluster"
+}
+
 resource "aws_iam_role" "ecs_task_role" {
   name = "ecs_reader_task_role"
 
@@ -76,6 +80,44 @@ resource "aws_ecs_task_definition" "reader_task" {
   ])
 }
 
+resource "aws_ecs_task_definition" "scroller_task" {
+  family                   = "scroller-task"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  task_role_arn            = var.iam_role_main_arn
+  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "scroller-container"
+      image     = "390746273208.dkr.ecr.eu-west-2.amazonaws.com/scroller:latest"
+      essential = true
+      command   = [
+     
+      ]
+      # environment = [
+      #   { name = "s3_source_bucket", value = var.s3_source_name},
+      #   { name = "file_store", value = var.s3_output_store_name},
+      #   { name = "file_id", value = "cookies-grouped-remi"},
+       
+      # ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          awslogs-group         = aws_cloudwatch_log_group.scroller_task.name
+          awslogs-region        = "eu-west-2"
+          awslogs-stream-prefix = "ecs"
+        }
+      }
+    }
+  ])
+}
+resource "aws_cloudwatch_log_group" "scroller_task" {
+  name              = "/ecs/scroller-task"
+  retention_in_days = 7
+}
 
 resource "aws_cloudwatch_log_group" "reader_task" {
   name              = "/ecs/backfill-task"
