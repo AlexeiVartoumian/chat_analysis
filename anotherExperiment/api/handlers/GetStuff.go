@@ -532,3 +532,15 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 	})
 
 }
+
+func SeekScroller(w http.ResponseWriter, r *http.Request) {
+
+	cmd := exec.Command("python3", "/home/ubuntu/scroller.py")
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		log.Printf("scroller.py failed %v", err)
+	}
+
+}
