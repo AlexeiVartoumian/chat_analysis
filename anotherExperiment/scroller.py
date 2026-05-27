@@ -7,15 +7,15 @@ from boto3.dynamodb.conditions import Key, Attr
 from botocore.exceptions import ClientError
 
 #search type is suspended or live
-search_type = None
-auto = None
-if len(sys.argv) > 1:
-    search_type = sys.argv[1]
-    auto = sys.argv[2]
+# search_type = None
+# auto = None
+# if len(sys.argv) > 1:
+#     search_type = sys.argv[1]
+#     auto = sys.argv[2]
 
-roles = json.loads(sys.stdin.read())
+# roles = json.loads(sys.stdin.read())
 
-workflow_id = str(uuid.uuid4())
+# workflow_id = str(uuid.uuid4())
 
 s3 = boto3.client("s3", region_name='eu-west-2')
 
