@@ -291,3 +291,6 @@ SELECT COUNT(*),JOBS.search_term FROM JOBS join JOB_LIFECYCLE on JOBS.job_id = J
 
 -- Company historic and live postings 
 SELECT COMPANY_METADATA.name , industry , COMPANY_METADATA.description ,JOBS.search_term ,JOBS.title , job_state , JOBS.date_posted , first_seen_closed_at  from COMPANY_METADATA JOIN JOBS on COMPANY_METADATA.company_id = JOBS.company_id JOIN JOB_LIFECYCLE on JOB_LIFECYCLE.job_id = JOBS.job_id ;
+
+--give me fresh
+SELECT sum(net_new_jobs) FROM  (SELECT net_new_jobs FROM SEARCH_WORKFLOW order by run_at DESC limit 63);
