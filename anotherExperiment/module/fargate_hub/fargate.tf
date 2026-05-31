@@ -84,11 +84,14 @@ resource "aws_ecs_task_definition" "scroller_task" {
   family                   = "scroller-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "256"
-  memory                   = "512"
+  cpu                      = "1024"
+  memory                   = "2048"
   task_role_arn            = var.iam_role_main_arn
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
 
+  volume  {
+    name = "shm_volume"
+  }
   container_definitions = jsonencode([
     {
       name      = "scroller-container"
@@ -97,6 +100,16 @@ resource "aws_ecs_task_definition" "scroller_task" {
       command   = [
      
       ]
+
+     
+      mountPoints = [
+        {
+          sourceVolume = "shm_volume"
+          containerPath = "/dev/shm"
+          readOnly = false
+        }
+      ]
+
       # environment = [
       #   { name = "s3_source_bucket", value = var.s3_source_name},
       #   { name = "file_store", value = var.s3_output_store_name},
