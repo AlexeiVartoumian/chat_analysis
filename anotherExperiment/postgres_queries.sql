@@ -294,3 +294,7 @@ SELECT COMPANY_METADATA.name , industry , COMPANY_METADATA.description ,JOBS.sea
 
 --give me fresh
 SELECT sum(net_new_jobs) FROM  (SELECT net_new_jobs FROM SEARCH_WORKFLOW order by run_at DESC limit 63);
+
+--winner winner chicken dinner
+SELECT net_new_jobs , SEARCH_WORKFLOW.search_term_id , term  FROM  SEARCH_WORKFLOW join SEARCH_TERM ON SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id where net_new_jobs 
+=  ( Select Max(net_new_jobs) FROM (Select net_new_jobs from SEARCH_WORKFLOW order by run_at DESC limit 63) AS recent);
