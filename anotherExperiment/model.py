@@ -252,7 +252,7 @@ def create_tables(conn) -> None:
                 net_new_jobs        INTEGER     NOT NULL,
                 CONSTRAINT fk_workflow_search_term
                     FOREIGN KEY (search_term_id)
-                    REFERENCES SEARCH_TERM_DEED (search_term_id)
+                    REFERENCES SEARCH_TERM (search_term_id)
             );
         """)
 
