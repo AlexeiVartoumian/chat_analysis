@@ -17,10 +17,18 @@ from botocore.exceptions import ClientError
 
 # workflow_id = str(uuid.uuid4())
 
+search_term = "cloud engineer"
+if len(sys.argv >1):
+
+    search_term = sys.argv[1]
+    search_term = search_term.lstrip('{"')
+    search_term = search_term.rstrip('}"')
+
 s3 = boto3.client("s3", region_name='eu-west-2')
 
 S3_BUCKET = "somebuckethaha"
 
+workflow_id = str(uuid.uuid4())
 
 def main():
     
@@ -39,7 +47,9 @@ def main():
         'containerOverrides': [{
             'name': 'reader-container',
             'environment': [
-                {'name': 'S3_BUCKET', 'value': S3_BUCKET}, 
+                {'name': 'S3_BUCKET', 'value': S3_BUCKET},
+                {'name': 'search_term' , 'value' : search_term },
+                {'name': 'workflow_id' , 'value' : workflow_id },  
             ]
         }]
     }
