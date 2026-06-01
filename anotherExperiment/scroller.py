@@ -45,7 +45,7 @@ def main():
     } },
     overrides={
         'containerOverrides': [{
-            'name': 'reader-container',
+            'name': 'scroller-container',
             'environment': [
                 {'name': 'S3_BUCKET', 'value': S3_BUCKET},
                 {'name': 'search_term' , 'value' : search_term },
