@@ -242,18 +242,7 @@ def create_tables(conn) -> None:
             );
         """)
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_DEED (
-                job_id          BIGINT      NOT NULL,
-                workflow_id         UUID       NOT NULL,
-                PRIMARY KEY (job_id, workflow_id),
-                CONSTRAINT fk_jst_job
-                    FOREIGN KEY (job_id) REFERENCES JOBS_DEED (job_id) ON DELETE CASCADE,
-                CONSTRAINT fk_jst_workflow
-                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_DEED (workflow_id) ON DELETE CASCADE
-            );                    
-        """)
-
+        
         cur.execute("""
             CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_DEED (
                 workflow_id         UUID      PRIMARY KEY,
@@ -265,6 +254,18 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (search_term_id)
                     REFERENCES SEARCH_TERM_DEED (search_term_id)
             );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_DEED (
+                job_id          BIGINT      NOT NULL,
+                workflow_id         UUID       NOT NULL,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_DEED (job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_DEED (workflow_id) ON DELETE CASCADE
+            );                    
         """)
 
         cur.execute("""
