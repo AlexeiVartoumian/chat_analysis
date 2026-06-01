@@ -533,9 +533,24 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// for manual runs only todo make auto
 func SeekScroller(w http.ResponseWriter, r *http.Request) {
 
-	cmd := exec.Command("python3", "/home/ubuntu/scroller.py")
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	search_term := string(body)
+
+	cmd := exec.Command("python3", "/home/ubuntu/scroller.py", search_term)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
