@@ -18,7 +18,7 @@ from botocore.exceptions import ClientError
 # workflow_id = str(uuid.uuid4())
 
 search_term = "cloud engineer"
-if len(sys.argv >1):
+if len(sys.argv) >1:
 
     search_term = sys.argv[1]
     search_term = search_term.lstrip('{"')
