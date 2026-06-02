@@ -357,11 +357,11 @@ func CompanyLoader(record map[string]string) (models.COMPANY, error) {
 
 func CompanyDeedLoader(record map[string]string) (models.COMPANY_DEED, error) {
 
-	var company_id string
+	company_id := record["company_id"]
 
 	company := models.COMPANY_DEED{
 		CompanyId:    company_id,
-		Name:         record["company"],
+		Name:         record["company_name"],
 		Employer_url: record["employer_url"],
 	}
 	return company, nil
