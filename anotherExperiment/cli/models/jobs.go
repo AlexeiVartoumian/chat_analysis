@@ -16,6 +16,19 @@ type JOBS struct {
 	Company_id  int       `json:"company_id,omitempty" db:"company_id"`
 }
 
+type JOBS_DEED struct {
+	Job_id          int       `json:"id,omitempty" db:"job_id"`
+	Title           string    `json:"title,omitempty" db:"title"`
+	Date_published  time.Time `json:"date_published,omitempty" db:"date_published"`
+	Date_advertised time.Time `json:"date_advertised,omitempty" db:"date_advertised"`
+	Job_url         string    `json:"job_url,omitempty" db:"job_url"`
+	Search_term     string    `json:"search_term,omitempty" db:"search_term"`
+	Organic_apply   int       `json:"organic_apply,omitempty" db:"organic_apply"`
+	Is_repost       bool      `json:"is_repost,omitempty" db:"is_repost"`
+	Is_latest       bool      `json:"is_latest,omitempty" db:"is_latest"`
+	Company_id      int       `json:"company_id,omitempty" db:"company_id"`
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

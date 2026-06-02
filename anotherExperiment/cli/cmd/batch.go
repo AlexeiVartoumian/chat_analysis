@@ -63,6 +63,12 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOBS_DEED" && len(records) > 0 {
+
+		Job_And_search_loader(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE" && len(records) > 0 {
 		Jobs_LifecycleLoader(records, tablename, filepath)
 		return nil
@@ -124,15 +130,25 @@ func InsertNewKeys(filepath string, tablename string) error {
 
 func Job_And_search_loader(records []map[string]string, tablename string, filepath string) {
 	search_term := models.Search_term{Search_term: records[0]["search_term"]}
-
-	AddNewRow(search_term, "SEARCH_TERM")
+	if tablename != "JOBS" {
+		AddNewRow(search_term, "SEARCH_TERM")
+	} else {
+		AddNewRow(search_term, "SEARCH_TERM_DEED")
+	}
 	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
 	if err != nil {
 		fmt.Println("err observed in search term retrieval", ErrorHandler(err, "you brought this on yourself"))
 	}
-	//workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
-	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0], "_")
 
+	var meta_data []string
+
+	if tablename != "JOBS" {
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsInd-")[1], ".csv")[0], "_")
+
+	} else {
+		//workflowid := strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0]
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobs-")[1], ".csv")[0], "_")
+	}
 	workflowid := meta_data[0]
 	timestamp, err := parseTimestamp(meta_data[1])
 
@@ -150,38 +166,76 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 		Total_jobs_found: 0,
 		Net_new_found:    0,
 	}
-	AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
-
-	for index, record := range records {
-		value, err := JobLoader(record)
-		if err != nil {
-			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
-			continue
-		}
-		//skipped, _ := AddNewRow(value, tablename)
-		skipped, err := AddNewRow(value, tablename)
-
-		if err != nil {
-			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
-			break
-		}
-
-		DuplicateCount += skipped
-
-		JobSearchWorkflow := models.JOB_SEARCH_TERM{
-			Job_id:      value.Job_id,
-			Workflow_id: workflowid,
-		}
-		AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM")
+	if tablename != "JOBS" {
+		AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_DEED")
+	} else {
+		AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
 	}
 
-	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount)
+	if tablename != "JOBS" {
+		for index, record := range records {
+
+			value, err := JobLoaderDeed(record)
+			if err != nil {
+				fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			//skipped, _ := AddNewRow(value, tablename)
+			skipped, err := AddNewRow(value, tablename)
+
+			if err != nil {
+				fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+				break
+			}
+
+			DuplicateCount += skipped
+
+			JobSearchWorkflow := models.JOB_SEARCH_TERM{
+				Job_id:      value.Job_id,
+				Workflow_id: workflowid,
+			}
+			AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_DEED")
+		}
+	} else {
+		for index, record := range records {
+
+			value, err := JobLoader(record)
+			if err != nil {
+				fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			//skipped, _ := AddNewRow(value, tablename)
+			skipped, err := AddNewRow(value, tablename)
+
+			if err != nil {
+				fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+				break
+			}
+
+			DuplicateCount += skipped
+
+			JobSearchWorkflow := models.JOB_SEARCH_TERM{
+				Job_id:      value.Job_id,
+				Workflow_id: workflowid,
+			}
+			AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM")
+		}
+	}
+
+	// if tablename != "JOBS" {
+	// 	DuplicateCount = AddJobToDb(records, tablename, DuplicateCount, workflowid, JobLoaderDeed)
+	// }
+
+	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
 }
+
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
 
 	switch tablename {
 	case "COMPANY":
 		return CompanyLoader(record)
+	case "COMPANY_DEED":
+		return CompanyDeedLoader(record)
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
 	// case "JOBS":
@@ -285,6 +339,34 @@ func CompanyLoader(record map[string]string) (models.COMPANY, error) {
 	return company, nil
 }
 
+func CompanyDeedLoader(record map[string]string) (models.COMPANY_DEED, error) {
+
+	var company_id int
+
+	if record["company_id"] == "N/A" {
+		company_id = -1
+
+		record["company"] = "Unknown / individual"
+		//return models.COMPANY{}, ErrorHandler(nil, "nil value")
+	} else {
+
+		var err error
+		company_id, err = strconv.Atoi(record["company_id"])
+		if err != nil {
+			return models.COMPANY_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
+
+		}
+	}
+
+	company := models.COMPANY_DEED{
+		CompanyId:    company_id,
+		Name:         record["company"],
+		Employer_url: record["employer_url"],
+	}
+
+	return company, nil
+}
+
 func JobLoader(record map[string]string) (models.JOBS, error) {
 
 	//companyid, _ := GetCompanyByIdFromName(record["company"])
@@ -339,6 +421,83 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 		Promoted:    promoted,
 		Expiry_Date: time.Now(),
 		Company_id:  Company_id,
+	}
+
+	return job, nil
+
+}
+
+func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
+
+	//companyid, _ := GetCompanyByIdFromName(record["company"])
+	job_id, err := strconv.Atoi(urlHelper(record["job_url"]))
+	if err != nil {
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh jobid id fail parse")
+	}
+
+	var Company_id int
+
+	_, err2 := strconv.Atoi(record["company_id"])
+	if err2 != nil {
+		//could be a solo person posting the job
+		Company_id = -1
+	} else {
+		Company_id, err = strconv.Atoi(record["company_id"])
+		if err != nil {
+			return models.JOBS_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
+
+		}
+	}
+
+	var organic_apply int
+
+	_, err3 := strconv.Atoi(record["organic_apply"])
+	if err3 != nil {
+		//could be a solo person posting the job
+		organic_apply = -1
+	} else {
+		organic_apply, err = strconv.Atoi(record["organic_apply"])
+		if err != nil {
+			return models.JOBS_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
+
+		}
+	}
+
+	is_repost, err := strconv.ParseBool(record["is_repost"])
+
+	if err != nil {
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is repost fail bool parse")
+	}
+
+	is_latest, err := strconv.ParseBool(record["is_latest"])
+
+	if err != nil {
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is latest fail bool parse")
+	}
+
+	date_pub, err := strconv.ParseInt(record["date_published"], 10, 64)
+	if err != nil {
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh date published fail bool parse")
+	}
+	date_published := time.Unix(date_pub/1000, 0)
+
+	date_ad, err := strconv.ParseInt(record["date_advertised"], 10, 64)
+	if err != nil {
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh date published fail bool parse")
+	}
+	date_advertised := time.Unix(date_ad/1000, 0)
+
+	job := models.JOBS_DEED{
+		Job_id:          job_id,
+		Title:           record["title"],
+		Date_published:  date_published,
+		Date_advertised: date_advertised,
+		Job_url:         record["job_url"],
+		Search_term:     record["search_term"],
+		Organic_apply:   organic_apply,
+		Is_repost:       is_repost,
+		Is_latest:       is_latest,
+		Company_id:      Company_id,
 	}
 
 	return job, nil
@@ -561,19 +720,29 @@ func getSearchTermIdHelper(searchTerm string) (int, error) {
 	return search_term_id, nil
 }
 
-func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int) error {
+func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, tablename string) error {
 	db, err := ConnectDb()
 	if err != nil {
 		return ErrorHandler(err, "db conn error")
 	}
 	defer db.Close()
+	if tablename != "JOBS" {
 
-	_, err = db.Exec(`
+		_, err = db.Exec(`
+        UPDATE SEARCH_WORKFLOW_DEED 
+        SET total_jobs_found = $1, net_new_jobs = $2
+        WHERE workflow_id = $3
+    `, totalJobs, netNew, workflowid)
+
+	} else {
+
+		_, err = db.Exec(`
         UPDATE SEARCH_WORKFLOW 
         SET total_jobs_found = $1, net_new_jobs = $2
         WHERE workflow_id = $3
     `, totalJobs, netNew, workflowid)
 
+	}
 	if err != nil {
 		return ErrorHandler(err, "update search workflow counts error")
 	}
