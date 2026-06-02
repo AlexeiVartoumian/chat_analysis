@@ -38,6 +38,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_DEED" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -244,8 +249,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Jobs_MetadataLoader(record)
 	case "JOB_DESCRIPTION":
 		return Jobs_DescriptionLoader(record)
-	// case "JOB_LIFECYCLE":
-	// 	return Jobs_LifecycleLoader(record)
+	case "JOB_DESCRIPTION_DEED":
+		return Jobs_DescriptionDeedLoader(record)
 	default:
 		return nil, nil
 	}
@@ -263,6 +268,21 @@ func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, er
 		JobId:          job_id,
 		JobDescription: record["job_description"],
 		Encodings:      json.RawMessage(record["encodings"]),
+	}
+	return Job_Description, nil
+}
+
+func Jobs_DescriptionDeedLoader(record map[string]string) (models.JobDescription, error) {
+
+	job_id, err := strconv.Atoi(record["job_id"])
+
+	if err != nil {
+		return models.JobDescription{}, ErrorHandler(err, "whoops")
+	}
+
+	Job_Description := models.JobDescription{
+		JobId:          job_id,
+		JobDescription: record["job_description"],
 	}
 	return Job_Description, nil
 }
