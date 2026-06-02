@@ -15,4 +15,4 @@ while IFS= read -r file; do
         ./start insert $file JOB_DESCRIPTION_DEED
     fi 
 
-done < <(jq -r '.[][]' keys_deed.json)
+done < <(jq -r '.[][][]' keys_deed.json)
