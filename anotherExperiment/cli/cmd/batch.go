@@ -195,7 +195,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 
 			DuplicateCount += skipped
 
-			JobSearchWorkflow := models.JOB_SEARCH_TERM{
+			JobSearchWorkflow := models.JOB_SEARCH_TERM_DEED{
 				Job_id:      value.Job_id,
 				Workflow_id: workflowid,
 			}
@@ -272,15 +272,11 @@ func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, er
 	return Job_Description, nil
 }
 
-func Jobs_DescriptionDeedLoader(record map[string]string) (models.JobDescription, error) {
+func Jobs_DescriptionDeedLoader(record map[string]string) (models.JobDescription_DEED, error) {
 
-	job_id, err := strconv.Atoi(record["job_id"])
+	job_id := record["job_id"]
 
-	if err != nil {
-		return models.JobDescription{}, ErrorHandler(err, "whoops")
-	}
-
-	Job_Description := models.JobDescription{
+	Job_Description := models.JobDescription_DEED{
 		JobId:          job_id,
 		JobDescription: record["job_description"],
 	}
@@ -361,29 +357,13 @@ func CompanyLoader(record map[string]string) (models.COMPANY, error) {
 
 func CompanyDeedLoader(record map[string]string) (models.COMPANY_DEED, error) {
 
-	var company_id int
-
-	if record["company_id"] == "N/A" {
-		company_id = -1
-
-		record["company"] = "Unknown / individual"
-		//return models.COMPANY{}, ErrorHandler(nil, "nil value")
-	} else {
-
-		var err error
-		company_id, err = strconv.Atoi(record["company_id"])
-		if err != nil {
-			return models.COMPANY_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
-
-		}
-	}
+	var company_id string
 
 	company := models.COMPANY_DEED{
 		CompanyId:    company_id,
 		Name:         record["company"],
 		Employer_url: record["employer_url"],
 	}
-
 	return company, nil
 }
 
@@ -450,24 +430,9 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 
 	//companyid, _ := GetCompanyByIdFromName(record["company"])
-	job_id, err := strconv.Atoi(urlHelper(record["job_url"]))
-	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh jobid id fail parse")
-	}
+	job_id := record["job_id"]
 
-	var Company_id int
-
-	_, err2 := strconv.Atoi(record["company_id"])
-	if err2 != nil {
-		//could be a solo person posting the job
-		Company_id = -1
-	} else {
-		Company_id, err = strconv.Atoi(record["company_id"])
-		if err != nil {
-			return models.JOBS_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
-
-		}
-	}
+	Company_id := record["company_id"]
 
 	var organic_apply int
 
@@ -476,10 +441,9 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 		//could be a solo person posting the job
 		organic_apply = -1
 	} else {
-		organic_apply, err = strconv.Atoi(record["organic_apply"])
-		if err != nil {
-			return models.JOBS_DEED{}, ErrorHandler(err, "uh oh Company id fail parse")
-
+		organic_apply, err3 = strconv.Atoi(record["organic_apply"])
+		if err3 != nil {
+			return models.JOBS_DEED{}, ErrorHandler(err3, "uh oh Company id fail parse")
 		}
 	}
 

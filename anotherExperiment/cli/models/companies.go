@@ -10,7 +10,7 @@ type COMPANY struct {
 
 type COMPANY_DEED struct {
 	//Job_id      int       `json:"id,omitempty" db:"job_id"`
-	CompanyId    int    `json:"company_id,omitempty" db:"company_id"`
+	CompanyId    string `json:"company_id,omitempty" db:"company_id"`
 	Name         string `json:"company_name,omitempty" db:"name"`
 	Employer_url string `json:"employer_url,omitempty" db:"employer_url"`
 }
