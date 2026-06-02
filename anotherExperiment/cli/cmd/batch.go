@@ -131,9 +131,9 @@ func InsertNewKeys(filepath string, tablename string) error {
 func Job_And_search_loader(records []map[string]string, tablename string, filepath string) {
 	search_term := models.Search_term{Search_term: records[0]["search_term"]}
 	if tablename != "JOBS" {
-		AddNewRow(search_term, "SEARCH_TERM")
-	} else {
 		AddNewRow(search_term, "SEARCH_TERM_DEED")
+	} else {
+		AddNewRow(search_term, "SEARCH_TERM")
 	}
 	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
 	if err != nil {
