@@ -11,7 +11,7 @@ while IFS= read -r file; do
         ./start insert $file COMPANY_DEED
         ./start insert $file JOBS_DEED
     
-    elif [ "$type" = "JOBDESCRIPTIONIND"]; then
+    elif [ "$type" = "JOBDESCRIPTIONIND" ]; then
         ./start insert $file JOB_DESCRIPTION_DEED
     fi 
 
