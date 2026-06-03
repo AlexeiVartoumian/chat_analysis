@@ -22,7 +22,7 @@ if len(sys.argv) >1:
     search_term = search_term.rstrip('}"')
 else:
     company_c = sys.stdin.read()
-    s3.put_object(Bucket = "alexeitranscribefile" , Key=f"fresh_companyInd-{workflow_id}" , Body=company_c)
+    s3.put_object(Bucket = "alexeitranscribefile" , Key=f"fresh_companyInd-{workflow_id}.json" , Body=company_c)
 
 
 def main():
