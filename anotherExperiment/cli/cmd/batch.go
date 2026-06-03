@@ -248,6 +248,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return CompanyDeedLoader(record)
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
+
+	case "COMPANY_METADATA_DEED":
+		return Company_MetadataDeedLoader(record)
 	// case "JOBS":
 	// 	return JobLoader(record)
 	case "JOB_METADATA":
@@ -327,6 +330,21 @@ func Company_MetadataLoader(record map[string]string) (models.Company_Metadata, 
 		Description:        record["company_about"],
 		EmployeeCount:      employeeCount,
 		EmployeeCountRange: record["employee_count_range"],
+	}
+
+	return Company_metadata, nil
+}
+
+func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Metadata, error) {
+
+	Company_metadata := models.CompanyDeed_Metadata{
+		CompanyId:            record["company_id"],
+		Name:                 record["company_name"],
+		Employee_count_range: record["company_size"],
+		Industry:             record["industry"],
+		Revenue:              record["revenue"],
+		Description:          record["description"],
+		Url:                  record["company_url"],
 	}
 
 	return Company_metadata, nil
