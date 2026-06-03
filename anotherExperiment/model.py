@@ -213,6 +213,21 @@ def create_tables(conn) -> None:
                 employer_url        VARCHAR(256)
             );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_METADATA_DEED (
+                company_id                  TEXT          PRIMARY KEY,
+                name                        VARCHAR(128)     NOT NULL,
+                employee_count_range        VARCHAR(32),
+                industry                    VARCHAR(64), 
+                revenue                     VARCHAR(32),    
+                description                 TEXT,
+                url                         VARCHAR(256),
+                CONSTRAINT fk_company_metadata_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_DEED (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
         #here emp key maps to company_id
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOBS_DEED (
