@@ -140,7 +140,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 	} else {
 		AddNewRow(search_term, "SEARCH_TERM")
 	}
-	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"])
+	search_term_id, err := getSearchTermIdHelper(records[0]["search_term"], tablename)
 	if err != nil {
 		fmt.Println("err observed in search term retrieval", ErrorHandler(err, "you brought this on yourself"))
 	}
@@ -175,6 +175,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 		_, err := AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_DEED")
 		if err != nil {
 			fmt.Println("workflow insert failed:", err)
+			return
 		}
 	} else {
 		AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
@@ -691,16 +692,24 @@ func urlHelper(url string) string {
 	return job_id
 }
 
-func getSearchTermIdHelper(searchTerm string) (int, error) {
+func getSearchTermIdHelper(searchTerm string, tablename string) (int, error) {
 	db, err := ConnectDb()
 	if err != nil {
 		return -1, ErrorHandler(err, "db conn error")
 	}
 	defer db.Close()
-	row := db.QueryRow(`
-        SELECT search_term_id FROM SEARCH_TERM
-        WHERE term = $1
-    `, searchTerm)
+	var searchtermtable string
+	if tablename != "JOBS" {
+		searchtermtable = "SEARCH_TERM_DEED"
+	} else {
+		searchtermtable = "SEARCH_TERM"
+	}
+	query := fmt.Sprintf("SELECT search_term_id FROM %s WHERE term = $1", searchtermtable)
+	row := db.QueryRow(query, searchTerm)
+	// row := db.QueryRow(`
+	//     SELECT search_term_id FROM SEARCH_TERM
+	//     WHERE term = $1
+	// `, searchTerm)
 	var search_term_id int
 	if err := row.Scan(&search_term_id); err != nil {
 		return -1, ErrorHandler(err, "row scan error")
