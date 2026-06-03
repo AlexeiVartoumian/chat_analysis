@@ -13,8 +13,7 @@ while IFS= read -r file; do
     elif [ "$type" = "JOB_METADATA" ]; then
         ./start insert $file JOB_METADATA
         ./start insert $file JOB_LIFECYCLE
-    else
-        ./start insert $file $type
-
+    elif [ "$type" = "JOB_DESCRIPTION" ]; then
+        ./start insert $file JOB_DESCRIPTION
     fi
-done < <(jq -r '.[][]' keys.json)
+done < <(jq -r '.[] | .[] | .[][]' keys.json)
