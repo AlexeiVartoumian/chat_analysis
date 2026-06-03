@@ -172,9 +172,13 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 		Net_new_found:    0,
 	}
 	if tablename != "JOBS" {
-		AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_DEED")
+		_, err := AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_DEED")
+		if err != nil {
+			fmt.Println("workflow insert failed:", err)
+		}
 	} else {
 		AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW")
+
 	}
 
 	if tablename != "JOBS" {
