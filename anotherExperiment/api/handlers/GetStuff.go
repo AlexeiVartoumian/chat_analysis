@@ -559,3 +559,26 @@ func SeekScroller(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func SeekCompanyDeed(w http.ResponseWriter, r *http.Request) {
+
+	FreshCompany, err := sqlconnect.SeekCompanyChecker()
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	payload, _ := json.Marshal(FreshCompany)
+
+	cmd := exec.Command("python3", "/home/ubuntu/scroller.py")
+
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("scroller.py failed %v", err)
+	}
+
+}

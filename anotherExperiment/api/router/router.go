@@ -71,5 +71,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekScroller),
 	))
 
+	mux.Handle("POST /seekcompanydeed", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SeekCompanyDeed),
+	))
+
 	return mux
 }

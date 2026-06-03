@@ -20,5 +20,5 @@ type Everything struct {
 	Jobs_metadata
 	Company_Metadata
 	COMPANY
-	JOB_DESCRIPTION
+	JobDescription
 }

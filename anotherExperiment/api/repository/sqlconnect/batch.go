@@ -63,25 +63,25 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return JobLoader(record)
 	case "JOB_METADATA":
 		return Jobs_MetadataLoader(record)
-	case "JOB_DESCRIPTION":
+	case "JobDescription":
 		return Jobs_DescriptionLoader(record)
 	default:
 		return nil, nil
 	}
 }
 
-func Jobs_DescriptionLoader(record map[string]string) (models.JOB_DESCRIPTION, error) {
+func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, error) {
 
 	job_id, err := strconv.Atoi(record["job_id"])
 
 	if err != nil {
-		return models.JOB_DESCRIPTION{}, utils.ErrorHandler(err, "whoops")
+		return models.JobDescription{}, utils.ErrorHandler(err, "whoops")
 	}
-	Job_Description := models.JOB_DESCRIPTION{
+	JobDescription := models.JobDescription{
 		JobId:          job_id,
-		JobDescription: record["job_description"],
+		JobDescription: record["JobDescription"],
 	}
-	return Job_Description, nil
+	return JobDescription, nil
 }
 
 func Jobs_MetadataLoader(record map[string]string) (models.Jobs_metadata, error) {

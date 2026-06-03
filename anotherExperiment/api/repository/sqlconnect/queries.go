@@ -1,6 +1,7 @@
 package sqlconnect
 
 import (
+	"api/models"
 	"api/utils"
 	"database/sql"
 	"fmt"
@@ -477,4 +478,32 @@ func BackoffUpdate(searchtermid int) error {
 	}
 
 	return nil
+}
+
+func SeekCompanyChecker() ([]models.COMPANY_DEED, error) {
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	rows, err := db.Query(`SELECT * FROM COMPANY_DEED WHERE NOT EXISTS (SELECT * FROM COMPANY_METADATA_DEED where COMPANY_DEED.company_id = COMPANY_METADATA_deed.company_id);
+`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.COMPANY_DEED
+
+	for rows.Next() {
+
+		var res models.COMPANY_DEED
+
+		rows.Scan(&res.CompanyId, &res.Name, &res.Employer_url)
+		results = append(results, res)
+
+	}
+
+	return results, nil
 }
