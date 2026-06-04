@@ -347,7 +347,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(first_run_and_number_accounts)
 
-	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts)
+	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM")
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -507,7 +507,7 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 
 		time.AfterFunc(delay, func() {
 
-			search_term, err := sqlconnect.GetSearchTerms(false, -1)
+			search_term, err := sqlconnect.GetSearchTerms(false, -1, "SEARCH_TERM")
 			if err != nil {
 				log.Println("error getting search terms", err)
 				return
@@ -580,5 +580,92 @@ func SeekCompanyDeed(w http.ResponseWriter, r *http.Request) {
 	if err := cmd.Run(); err != nil {
 		log.Printf("scroller.py failed %v", err)
 	}
+
+}
+
+// TODO MAKE SCROOLERV2 a loop for sqlconnect.SearchTerm array
+// func SendToScroller(SearchTerms []sqlconnect.SearchTerm) []byte {
+func SendToScroller(SearchTerms []sqlconnect.SearchTerm) {
+	//payload, _ := json.Marshal(SearchTerms)
+	search_term := SearchTerms[0].Search_term
+	search_term_id := strconv.Itoa(SearchTerms[0].Search_term_id)
+
+	cmd := exec.Command("python3", "/home/ubuntu/scrollerv2.py", search_term, search_term_id)
+
+	//cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("scrollerv2.py failed %v", err)
+	}
+	//return payload
+}
+
+func DeedBlaster(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed ", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+
+	if err != nil {
+		http.Error(w, "Invalid requestr body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	first_run_and_number_accounts := string(body)
+	first_run := false
+	number_accounts := 0
+	//TODO dont use data for identification use something else
+	if strings.Contains(first_run_and_number_accounts, "first") {
+
+		first_run = true
+		number_accounts, err = strconv.Atoi(strings.Split(first_run_and_number_accounts, " ")[1])
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem executing most likely data in unexpected format", http.StatusInternalServerError)
+		}
+
+	} else {
+		number_accounts, err = strconv.Atoi(first_run_and_number_accounts)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem executing most likely data in unexpected format", http.StatusInternalServerError)
+		}
+	}
+
+	fmt.Println(first_run_and_number_accounts)
+
+	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM_DEED")
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if SearchTerms == nil {
+		fmt.Println("Job Done either second last run or last run ")
+		return
+	}
+
+	fmt.Println("here is your data", SearchTerms, len(SearchTerms))
+
+	SendToScroller(SearchTerms)
+
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted scroller. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
 
 }

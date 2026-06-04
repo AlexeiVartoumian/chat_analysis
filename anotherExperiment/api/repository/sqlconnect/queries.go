@@ -360,7 +360,7 @@ func GetKeys() ([]string, error) {
 
 }
 
-func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
+func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]SearchTerm, error) {
 	db, err := ConnectDb()
 
 	if err != nil {
@@ -368,9 +368,14 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 	}
 
 	if first_run == true {
-		rows, err := db.Query(`
-		SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
-	`, number_accounts)
+
+		query := fmt.Sprintf("SELECT search_term_id , term from %s LIMIT $1", tablename)
+
+		// 	rows, err := db.Query(`
+		// 	SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
+		// `, number_accounts)
+		rows, err := db.Query(query, number_accounts)
+
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "first run failure in GetSearchTerms function")
 		}
@@ -385,9 +390,12 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "Scann load error on first run in GetSearchTerms function")
 			}
-			_, err := db.Exec(`
-			UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
-				`, res.Search_term_id)
+			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where search_term_id = $1;", tablename)
+
+			_, err := db.Exec(query, res.Search_term_id)
+			// _, err := db.Exec(`
+			// UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
+			// 	`, res.Search_term_id)
 
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
@@ -405,18 +413,24 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 
 		if number_accounts != -1 { // backoff file will send -1 since they already updated table
 
-			_, err := db.Exec(`
-			UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
-		`, number_accounts)
+			query := fmt.Sprintf("UPDATE %s SET run_count = 1 , mid_run = FALSE where search_term_id =$1", tablename)
+			_, err := db.Exec(query, number_accounts)
+
+			// 	_, err := db.Exec(`
+			// 	UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
+			// `, number_accounts)
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
 			}
 
 		}
 
-		row := db.QueryRow(`
-			SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE) AS max FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
-		`)
+		query := fmt.Sprintf("SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM %s WHERE mid_run = FALSE) AS max FROM %s WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM %s) limit 1;", tablename, tablename, tablename)
+
+		row := db.QueryRow(query)
+		// row := db.QueryRow(`
+		// 	SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE) AS max FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
+		// `)
 		var output []SearchTerm
 
 		var res SearchTerm
@@ -436,18 +450,22 @@ func GetSearchTerms(first_run bool, number_accounts int) ([]SearchTerm, error) {
 			//SHOULD only be reached if all all search terms have had a run . mid_run is false
 
 			fmt.Println(res)
-			_, err := db.Exec(`
-			UPDATE SEARCH_TERM SET run_count = 0 , total_run_count = total_run_count +1;
-			`)
+			query := fmt.Sprintf("UPDATE %s SET run_count = 0 , total_run_count = total_run_count +1;", tablename)
+			_, err := db.Exec(query)
+			// _, err := db.Exec(`
+			// UPDATE SEARCH_TERM SET run_count = 0 , total_run_count = total_run_count +1;
+			// `)
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "no no but yes")
 			}
 
 			return nil, nil
 		} else {
-			_, err := db.Exec(`
-			UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1
-			`, res.Search_term_id)
+			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where search_term_id = $1", tablename)
+			_, err := db.Exec(query, res.Search_term_id)
+			// _, err := db.Exec(`
+			// UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1
+			// `, res.Search_term_id)
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "no no but yes")
 			}
