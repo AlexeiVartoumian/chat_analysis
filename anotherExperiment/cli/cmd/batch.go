@@ -335,16 +335,25 @@ func Company_MetadataLoader(record map[string]string) (models.Company_Metadata, 
 	return Company_metadata, nil
 }
 
+func NullableString(s string) *string {
+
+	if s == "" {
+		return nil
+	}
+
+	return &s
+}
+
 func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Metadata, error) {
 
 	Company_metadata := models.CompanyDeed_Metadata{
 		CompanyId:            record["company_id"],
 		Name:                 record["company_name"],
-		Employee_count_range: record["company_size"],
-		Industry:             record["industry"],
-		Revenue:              record["revenue"],
-		Description:          record["description"],
-		Url:                  record["company_url"],
+		Employee_count_range: NullableString(record["company_size"]),
+		Industry:             NullableString(record["industry"]),
+		Revenue:              NullableString(record["revenue"]),
+		Description:          NullableString(record["description"]),
+		Url:                  NullableString(record["company_url"]),
 	}
 
 	return Company_metadata, nil
