@@ -13,6 +13,10 @@ while IFS= read -r file; do
     
     elif [ "$type" = "JOBDESCRIPTIONIND" ]; then
         ./start insert $file JOB_DESCRIPTION_DEED
+    
+    elif [ "$type" = "COMPANYIND" ]; then
+        ./start insert $file COMPANY_METADATA_DEED
+
     fi 
 
 done < <(jq -r '.[][][]' keys_deed.json)
