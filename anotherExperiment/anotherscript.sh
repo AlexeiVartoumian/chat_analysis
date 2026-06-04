@@ -28,3 +28,17 @@ pg_dump -h localhost -U postgres -d interview   | gzip   | aws s3 cp - s3://****
 #copy from s3 bucket to dest
 gunzip /tmp/dump.sql.gz
 #docker exec -i "containter-id" psql -U postgres -d interview < /tmp/dump.sql
+
+
+
+#memory management
+#check var usage on logs vacuuim
+sudo du -sh /var/* | sort -rh | head -10
+sudo journalctl --vacuum-size=50M
+sudo apt clean  # cached installer files on every update .
+
+dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -rn | head -20 # check installed packages by size . i.e old isntalled kernels /lib/modules lying around
+
+# sudo apt remove --purge linux-modules-6.17.0-1012-aws linux-modules-6.17.0-1013-aws # IF REMOVING OLD KERNELS BE SURE TO CHECK LATEST ONE BEING USEDS with 
+# uname -r
+df -h /
