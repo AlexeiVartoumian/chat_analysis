@@ -16,5 +16,5 @@ type CompanyDeed_Metadata struct {
 	Industry             *string `json:"industry,omitempty" db:"industry"`
 	Revenue              *string `json:"revenue,omitempty" db:"revenue"`
 	Description          *string `json:"description,omitempty" db:"description"`
-	Url                  *string `json:"company_url,omitempty" db:"company_url"`
+	Url                  *string `json:"company_url,omitempty" db:"url"`
 }
