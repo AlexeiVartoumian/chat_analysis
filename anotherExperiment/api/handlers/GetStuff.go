@@ -602,6 +602,23 @@ func SendToScroller(SearchTerms []sqlconnect.SearchTerm) {
 	//return payload
 }
 
+func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
+	//payload, _ := json.Marshal(SearchTerms)
+	search_term := SearchTerms[0].Search_term
+	search_term_id := strconv.Itoa(SearchTerms[0].Search_term_id)
+
+	cmd := exec.Command("python3", "/home/ubuntu/scrollerv3.py", search_term, search_term_id)
+
+	//cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("scrollerv2.py failed %v", err)
+	}
+	//return payload
+}
+
 func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
@@ -654,7 +671,8 @@ func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("here is your data", SearchTerms, len(SearchTerms))
 
-	SendToScroller(SearchTerms)
+	//SendToScroller(SearchTerms)
+	SendToScrollersqs(SearchTerms)
 
 	w.Header().Set("Content-Type", "application/json")
 
