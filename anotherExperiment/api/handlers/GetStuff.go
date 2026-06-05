@@ -614,7 +614,7 @@ func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		log.Printf("scrollerv2.py failed %v", err)
+		log.Printf("scrollerv3.py failed %v", err)
 	}
 	//return payload
 }
