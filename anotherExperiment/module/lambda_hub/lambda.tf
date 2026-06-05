@@ -84,8 +84,8 @@ resource "aws_lambda_function" "orchestrator_deed" {
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]
     environment {
         variables = {
-            account_pool_table= var.account_pool_table
-            file_pool_table = var.file_pool_table
+            account_pool_table_deed= var.account_pool_table_deed
+            file_pool_table_deed= var.file_pool_table_deed
         }
     }
 
