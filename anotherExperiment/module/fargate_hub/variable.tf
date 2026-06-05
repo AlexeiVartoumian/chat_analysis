@@ -12,7 +12,9 @@ variable "iam_role_main_arn" {
 #     type = string
 # }
 
-
+variable "spoke_accounts" {
+    type = list(string)
+}
 
 
 

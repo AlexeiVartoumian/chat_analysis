@@ -3,7 +3,7 @@
 {% for account in enabled_accounts %}
 module "iam_spoke_{{ account }}" {
     source = "./module/iam_spoke"
-
+    iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     providers = {
       aws = aws.spoke-{{ account }}
     }
@@ -15,8 +15,11 @@ module "iam_spoke_attachments_{{ account }}" {
     sqs_queue_2 = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_name
     sqs_queue_3 = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_name
     bucket_reader_spoke = module.iam_spoke_{{ account }}.iam_spoke_role_name
+    fargate_spoke = module.iam_spoke_{{ account }}.iam_fargate_task_execution_role_name
     hub_account = var.hub_account
 
+    fargate_invoker_name = module.iam_spoke_{{ account }}.iam_fargate_invoker_role_name
+    fargate_invoker_arn = module.iam_spoke_{{ account }}.iam_fargate_invoker_role_arn
     providers = {
       aws = aws.spoke-{{ account }}
     }
@@ -51,6 +54,17 @@ module "lambda_spoke_{{ account }}" {
     providers = {
       aws = aws.spoke-{{ account }}
     }
+}
+
+module "fargate_spoke_{{ account }}"{
+    source = "./module/fargate_spoke"
+    task_role_arn = module.iam_spoke_{{ account }}.iam_spoke_role_arn
+    execution_role_arn = module.iam_spoke_{{ account }}.iam_fargate_task_execution_spoke_role_arn
+
+    providers = {
+      aws = aws.spoke-{{ account }}
+    }
+
 }
 
 {% endfor %}

@@ -6,6 +6,7 @@ resource "aws_ecs_cluster" "scroller_cluster" {
   name = "scroller-cluster"
 }
 
+#I DONT THINK IM USING THE below since dpulling in variable role . 
 resource "aws_iam_role" "ecs_task_role" {
   name = "ecs_reader_task_role"
 
@@ -135,4 +136,32 @@ resource "aws_cloudwatch_log_group" "scroller_task" {
 resource "aws_cloudwatch_log_group" "reader_task" {
   name              = "/ecs/backfill-task"
   retention_in_days = 7
+}
+
+
+#arn:aws:ecr:eu-west-2:390746273208:repository/scroller
+
+resource "aws_ecr_repository_policy" "hub_ecr_policy" {
+
+  repository = "scroller"
+
+  policy = jsonencode({
+     Version = "2012-10-17"
+     Statement = [
+      {
+        Sid    = "AllowSpokeTaskExecutionRolePull"
+        Effect = "Allow"
+        Principal = {
+          AWS = [for id in var.spoke_accounts : 
+            "arn:aws:iam::${id}:role/ecs_reader_task_execution_role"
+          ]
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+      }
+    ]
+  })
 }

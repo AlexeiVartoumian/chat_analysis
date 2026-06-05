@@ -129,4 +129,23 @@ resource "aws_iam_role_policy_attachment" "lambda_exec" {
   policy_arn = data.aws_iam_policy.lambda_basic_execution.arn
 }
 
+
+resource "aws_iam_policy" "hub_assume_spoke_invoker" {
+  name = var.bucket_reader_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AssumeSpokeinvokerRole"
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
+        Resource = [
+          for acct in var.spoke_accounts :
+          "arn:aws:iam::${acct}:role/ecs_task_invoker_role"
+        ]
+      }
+    ]
+  })
+}
  
