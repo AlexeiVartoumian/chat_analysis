@@ -82,6 +82,8 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     hub_account = var.hub_account
     filepool_table = var.file_pool_table
     accountpool_table = var.account_pool_table
+    filepool_table_deed = var.file_pool_table_deed
+    accountpool_table_deed = var.account_pool_table_deed 
   })
 }
 
@@ -117,7 +119,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:GetQueueAttributes",
           "sqs:SendMessage"
         ]
-        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed]  # pass the actual SQS ARN directly
       }
     ]
   })

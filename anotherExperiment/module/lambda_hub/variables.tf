@@ -13,3 +13,16 @@ variable "account_pool_table"{
 variable "file_pool_table"{
     type = string
 }
+
+
+variable "account_pool_table_deed"{
+    type = string
+}
+
+variable "file_pool_table_deed"{
+    type = string
+}
+
+variable "sqs_cordinator_deed_arn" {
+    type = string
+}

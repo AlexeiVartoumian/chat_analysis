@@ -30,3 +30,8 @@ output "deadletter_sqs_queue_arn" {
     description = "sqs arn"
     value = aws_sqs_queue.deadletter_requests.arn   
 }
+
+output "coordinator_deed_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_deed.arn   
+}

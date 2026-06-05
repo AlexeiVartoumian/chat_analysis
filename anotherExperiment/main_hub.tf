@@ -31,11 +31,15 @@ module "s3" {
 
 module "lambda_hub"{
     source = "./module/lambda_hub"
-    sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn   
+    sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn  
+    sqs_cordinator_deed_arn = module.sqs_hub.coordinator_deed_sqs_queue_arn 
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name
-     providers = {
+    file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
+    account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
+
+         providers = {
         aws = aws.hub
     }
 }
@@ -53,6 +57,9 @@ module "iam_hub_attachments" {
     bucket_reader_main_arn = module.iam_hub.aws_iam_role_main_arn
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn
     sqs_deadletter_arn = module.sqs_hub.deadletter_sqs_queue_arn
+    sqs_coordinator_arn_deed = module.sqs_hub.coordinator_deed_sqs_queue_arn
+    file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
+    account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     providers = {
         aws = aws.hub
     }
