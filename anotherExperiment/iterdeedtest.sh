@@ -10,6 +10,7 @@ while IFS= read -r file; do
     if [ "$type" = "PROCESSEDJOBSIND" ]; then 
         ./start insert $file COMPANY_DEED
         ./start insert $file JOBS_DEED
+        ./start insert $file JOB_LIFECYCLE_DEED
     
     elif [ "$type" = "JOBDESCRIPTIONIND" ]; then
         ./start insert $file JOB_DESCRIPTION_DEED
