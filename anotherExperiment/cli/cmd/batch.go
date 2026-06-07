@@ -79,6 +79,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_LIFECYCLE_DEED" && len(records) > 0 {
+		Jobs_LifecycleDeedLoader(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -543,6 +548,31 @@ func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepat
 	}
 
 }
+
+func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
+
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsInd-")[1], ".csv")[0], "_")
+
+	timestamp, err := parseTimestamp(meta_data[1])
+
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+
+	for index, record := range records {
+
+		value, err := Jobs_LifecycleDeedmodel(record, timestamp)
+
+		if err != nil {
+			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		AddNewRow(value, "JOB_LIFECYCLE_DEED")
+
+	}
+
+}
+
 func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.JobLifeCycle, error) {
 
 	job_id, err := strconv.Atoi(record["job_id"])
@@ -559,6 +589,21 @@ func Jobs_Lifecyclemodel(record map[string]string, timestamp time.Time) (models.
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
 		SuspendedCount:   0,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleDeedmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleDeed, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleDeed{
+		JobId:            record["job_id"],
+		JobState:         record["job_state"],
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
 	}
 
 	return Job_lifeCycle, nil
