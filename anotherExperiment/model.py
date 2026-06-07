@@ -304,6 +304,22 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_DEED (
+                job_id               BIGINT          PRIMARY KEY,
+                job_state            VARCHAR(256)    NOT NULL,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_DEED (job_id)
+                    ON DELETE CASCADE
+        );
+        """)
+
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS FILE_KEYS_DEED (
                 file_name            VARCHAR(256) PRIMARY KEY
             );
