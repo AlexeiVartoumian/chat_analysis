@@ -35,7 +35,8 @@ def main():
         MessageBody=json.dumps({
             "search_term_id": None,
             "search_term": None,
-            "workflow_type": "company"
+            "workflow_type": "company",
+            "workflow_id": workflow_id
         })
         )
         print(search_term_id)
@@ -50,7 +51,8 @@ def main():
         MessageBody=json.dumps({
             "search_term_id": search_term_id,
             "search_term": search_term,
-            "workflow_type": "search_term"
+            "workflow_type": "search_term",
+            "workflow_id": workflow_id
         })
         )
         print(search_term_id)
