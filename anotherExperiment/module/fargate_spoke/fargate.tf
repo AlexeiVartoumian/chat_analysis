@@ -33,12 +33,9 @@ resource "aws_ecs_task_definition" "scroller_task" {
         }
       ]
 
-      # environment = [
-      #   { name = "s3_source_bucket", value = var.s3_source_name},
-      #   { name = "file_store", value = var.s3_output_store_name},
-      #   { name = "file_id", value = "cookies-grouped-remi"},
-       
-      # ]
+      environment = [
+        { name = "RoleArn", value = var.iam_role_main_arn},
+      ]
       logConfiguration = {
         logDriver = "awslogs"
         options = {

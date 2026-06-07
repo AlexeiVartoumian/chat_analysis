@@ -60,6 +60,7 @@ module "fargate_spoke_{{ account }}"{
     source = "./module/fargate_spoke"
     task_role_arn = module.iam_spoke_{{ account }}.iam_spoke_role_arn
     execution_role_arn = module.iam_spoke_{{ account }}.iam_fargate_task_execution_spoke_role_arn
+    iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
 
     providers = {
       aws = aws.spoke-{{ account }}

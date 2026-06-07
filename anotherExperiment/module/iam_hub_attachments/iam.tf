@@ -58,6 +58,25 @@ resource "aws_iam_role_policy" "send_spoke_sqs" {
   })
 }
 
+resource "aws_iam_role_policy" "esc_invoke" {
+  name = "assume-ecs-invoker-role"
+  role = var.bucket_reader_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "sts:AssumeRole"
+        Resource = [
+          for account_id in var.spoke_accounts :
+          "arn:aws:iam::${account_id}:role/ecs_task_invoker_role"
+        ]
+      }
+    ]
+  })
+}
+
 # resource "aws_iam_role_policy" "send_spoke_sqs" {
 #   role = var.bucket_reader_role_name
 #   policy = templatefile("${path.module}/send_spoke_sqs.tpl" , {

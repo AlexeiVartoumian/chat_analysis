@@ -10,11 +10,18 @@ resource "aws_iam_role" "bucket_reader_spoke" {
         Effect    = "Allow"
         Principal = { Service = "lambda.amazonaws.com" }
         Action    = "sts:AssumeRole"
-      }
+      },
+    {
+      Effect    = "Allow"
+      Principal = { Service = "ecs-tasks.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }
     ]
   })
 
 }
+
+
 
 resource "aws_iam_role" "ecs_task_execution_role" {
   name = "ecs_reader_task_execution_role"

@@ -10,3 +10,10 @@ variable "execution_role_arn" {
     description = "responsible for getting the container up and running"
 }
 
+
+
+variable "iam_role_main_arn" {
+    type = string
+
+    description = "main role arn"
+}
