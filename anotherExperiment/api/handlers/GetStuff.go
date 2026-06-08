@@ -602,20 +602,42 @@ func SendToScroller(SearchTerms []sqlconnect.SearchTerm) {
 	//return payload
 }
 
+// func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
+// 	//payload, _ := json.Marshal(SearchTerms)
+
+// 	search_term := SearchTerms[0].Search_term
+// 	search_term_id := strconv.Itoa(SearchTerms[0].Search_term_id)
+
+// 	cmd := exec.Command("python3", "/home/ubuntu/scrollerv3.py", search_term, search_term_id)
+
+// 	//cmd.Stdin = bytes.NewReader(payload)
+// 	cmd.Stdout = os.Stdout
+// 	cmd.Stderr = os.Stderr
+
+// 	if err := cmd.Run(); err != nil {
+// 		log.Printf("scrollerv3.py failed %v", err)
+// 	}
+// 	//return payload
+// }
+
 func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
 	//payload, _ := json.Marshal(SearchTerms)
-	search_term := SearchTerms[0].Search_term
-	search_term_id := strconv.Itoa(SearchTerms[0].Search_term_id)
 
-	cmd := exec.Command("python3", "/home/ubuntu/scrollerv3.py", search_term, search_term_id)
+	for _, term := range SearchTerms {
+		search_term := term.Search_term
+		search_term_id := strconv.Itoa(term.Search_term_id)
+		cmd := exec.Command("python3", "/home/ubuntu/scrollerv3.py", search_term, search_term_id)
 
-	//cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+		//cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 
-	if err := cmd.Run(); err != nil {
-		log.Printf("scrollerv3.py failed %v", err)
+		if err := cmd.Run(); err != nil {
+			log.Printf("scrollerv3.py failed %v", err)
+		}
+		time.Sleep(3 * time.Second)
 	}
+
 	//return payload
 }
 
