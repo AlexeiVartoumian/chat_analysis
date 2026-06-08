@@ -296,5 +296,30 @@ SELECT COMPANY_METADATA.name , industry , COMPANY_METADATA.description ,JOBS.sea
 SELECT sum(net_new_jobs) FROM  (SELECT net_new_jobs FROM SEARCH_WORKFLOW order by run_at DESC limit 63);
 
 --winner winner chicken dinner
-SELECT net_new_jobs , SEARCH_WORKFLOW.search_term_id , term  FROM  SEARCH_WORKFLOW join SEARCH_TERM ON SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id where net_new_jobs 
+SELECT net_new_jobs , SEARCH_WORKFLOW.search_term_id , term ,run_at FROM  SEARCH_WORKFLOW join SEARCH_TERM ON SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id where workflow_id in (
+    SELECT workflow_id FROM SEARCH_WORKFLOW ORDER BY run_at DESC LIMIT 63
+  )
+  AND net_new_jobs 
 =  ( Select Max(net_new_jobs) FROM (Select net_new_jobs from SEARCH_WORKFLOW order by run_at DESC limit 63) AS recent);
+
+-- hilarious cte
+WITH best_run AS ( SELECT SEARCH_WORKFLOW.workflow_id, net_new_jobs, run_at, SEARCH_WORKFLOW.search_term_id, term  
+  FROM SEARCH_WORKFLOW 
+  JOIN SEARCH_TERM ON SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id 
+  WHERE workflow_id IN (
+    SELECT workflow_id FROM SEARCH_WORKFLOW ORDER BY run_at DESC LIMIT 63
+  )
+  AND net_new_jobs = (
+    SELECT MAX(net_new_jobs) 
+    FROM (
+      SELECT net_new_jobs FROM SEARCH_WORKFLOW ORDER BY run_at DESC LIMIT 63
+    ) AS recent
+  )
+) 
+SELECT JOBS.job_id,JOBS.title,JOBS.location, JOBS.salary, JOBS.job_url, JOBS.easy_apply, JOB_LIFECYCLE.job_state, JOB_LIFECYCLE.first_seen_at,JOB_LIFECYCLE.visited,best_run.term
+FROM best_run JOIN JOB_SEARCH_TERM jst ON jst.workflow_id = best_run.workflow_id JOIN JOBS ON JOBS.job_id = jst.job_id
+JOIN JOB_LIFECYCLE ON JOB_LIFECYCLE.job_id = jst.job_id
+  AND JOB_LIFECYCLE.first_seen_at = JOB_LIFECYCLE.last_seen_listed_at
+WHERE JOB_LIFECYCLE.first_seen_at >= best_run.run_at - INTERVAL '3 hours'
+AND JOB_LIFECYCLE.job_state = 'LISTED'
+ORDER BY JOB_LIFECYCLE.first_seen_at ASC
