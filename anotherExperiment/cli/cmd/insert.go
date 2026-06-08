@@ -18,6 +18,16 @@ var InsertCmd = &cobra.Command{
 	},
 }
 
+var CorrelateCmd = &cobra.Command{
+	Use:   "correlate",
+	Short: "post work after insertion",
+	Run: func(cmd *cobra.Command, args []string) {
+		fmt.Printf("Post work correlation \n")
+		Corellation()
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(InsertCmd)
+	rootCmd.AddCommand(CorrelateCmd)
 }
