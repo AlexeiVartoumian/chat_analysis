@@ -14,3 +14,8 @@ type COMPANY_DEED struct {
 	Name         string `json:"company_name,omitempty" db:"name"`
 	Employer_url string `json:"employer_url,omitempty" db:"employer_url"`
 }
+
+type CompanyDetail struct {
+	Company_id   int    `json:"company_id"`
+	Company_name string `json:"name"`
+}

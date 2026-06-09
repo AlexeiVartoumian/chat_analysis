@@ -710,7 +710,7 @@ func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func seekAutoCompany(w http.ResponseWriter, r *http.Request) {
+func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -723,15 +723,39 @@ func seekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
 		return
 	}
-	type CompanyDetail struct {
-		Company_id   int    `json:"company_id"`
-		Company_name string `json:"name"`
-	}
-	var CompaniesDeets []CompanyDetail
+	// TODO make automatic
 	if string(body) == "True" {
 		//then its automatic
+
+		response := struct {
+			Status     string `json:"status"`
+			StatusCode int
+		}{
+			Status:     fmt.Sprintf(" please implement"),
+			StatusCode: 200,
+		}
+
+		json.NewEncoder(w).Encode(response)
 	} else {
 
-	}
+		var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
 
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+
+		payload, _ := json.Marshal(CompaniesDeets)
+		auto := "false"
+
+		cmd := exec.Command("python3", "/home/ubuntu/details.py", auto)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+	}
 }

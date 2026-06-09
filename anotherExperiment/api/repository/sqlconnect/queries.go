@@ -525,3 +525,36 @@ func SeekCompanyChecker() ([]models.COMPANY_DEED, error) {
 
 	return results, nil
 }
+
+func GetCompanyDeets() ([]models.CompanyDetail, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	rows, err := db.Query(`
+	SELECT company_id , name from COMPANY where NOT EXISTS (SELECT * from COMPANY_DETAIL WHERE COMPANY.company_id = COMPANY_DETAIL.company_id) LIMIT 100;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on CompanyDeets")
+	}
+	defer rows.Close()
+
+	var output []models.CompanyDetail
+
+	for rows.Next() {
+
+		var res models.CompanyDetail
+
+		err = rows.Scan(&res.Company_id, &res.Company_name)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on companydetails")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+
+}
