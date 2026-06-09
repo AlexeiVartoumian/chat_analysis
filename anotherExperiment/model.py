@@ -64,6 +64,24 @@ def create_tables(conn) -> None:
                     ON DELETE CASCADE
             );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_DETAIL (
+                company_id           BIGINT          PRIMARY KEY,
+                name                 VARCHAR(128),
+                company_slug         VARCHAR(64),
+                company_url          VARCHAR(256),
+                specialties          JSONB,
+                locations            JSONB,
+                extended_description TEXT,
+                staff_count          INTEGER,
+                headquarter_city     VARCHAR(64),
+                created_at           TIMESTAMPTZ,
+                CONSTRAINT fk_company_detail_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOBS (
