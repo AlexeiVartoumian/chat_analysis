@@ -42,3 +42,9 @@ dpkg-query -Wf '${Installed-Size}\t${Package}\n' | sort -rn | head -20 # check i
 # sudo apt remove --purge linux-modules-6.17.0-1012-aws linux-modules-6.17.0-1013-aws # IF REMOVING OLD KERNELS BE SURE TO CHECK LATEST ONE BEING USEDS with 
 # uname -r
 df -h /
+
+
+# chop and dice check the memory slice
+aws s3api list-objects-v2 --bucket "GLORIOUS BUCKET" \
+  --query 'sort_by(Contents, &Size)[:10].{Key: Key, Size: Size}' \
+  --output table
