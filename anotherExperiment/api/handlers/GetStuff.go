@@ -709,3 +709,29 @@ func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+
+func seekAutoCompany(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
+		return
+	}
+	type CompanyDetail struct {
+		Company_id   int    `json:"company_id"`
+		Company_name string `json:"name"`
+	}
+	var CompaniesDeets []CompanyDetail
+	if string(body) == "True" {
+		//then its automatic
+	} else {
+
+	}
+
+}
