@@ -88,6 +88,10 @@ for page in pages2 :
                     timelinecheck[year_month_date].add("e")
                     timelineindexcount.append(year_month_date)
                 
+                if base.startswith("companyDetail"):
+                    timelinecheck[year_month_date].add("c")
+                    timelineindexcount.append(year_month_date)
+                
                 new_keys_to_upload.append(check)
                 keys.append(key) ##will need to actually download
 
@@ -161,6 +165,11 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
                 back_fill_timeline =  datetime.strftime(timeline ,date_format)
                 output[f"{back_fill_timeline}_suspendedRoles"] = [{}]
                 print(f"{back_fill_timeline}_suspendedRoles" , "yup" , output[f"{back_fill_timeline}_suspendedRoles"])
+            
+            if "c" in timelinecheck[timeline]:
+                back_fill_timeline =  datetime.strftime(timeline ,date_format)
+                output[f"{back_fill_timeline}_companyDetail"] = [{}]
+                print(f"{back_fill_timeline}_companyDetail" , "yuppy" , output[f"{back_fill_timeline}_companyDetail"])
     
     for index , key  in enumerate(new_keys_to_upload):
         #we extract matching date from filename and use that
@@ -215,6 +224,10 @@ with open("keys.json" , "w" , encoding="utf-8" ) as f:
            
             dblforgive(unique ,output[f"{timeline_key}_suspendedRoles"][0])
             output[f"{timeline_key}_suspendedRoles"][0][unique][0] = document
+        
+        if document.startswith("companyDetail"):
+            dblforgive(unique ,output[f"{timeline_key}_companyDetail"][0])
+            output[f"{timeline_key}_companyDetail"][0][unique][0] = document
     json.dump(output, f)
   
 
@@ -223,7 +236,7 @@ for index ,key in enumerate(keys):
     sanitizekey = new_keys[index]
     # print(sanitizekey)
     # print("here we go \n")
-    if key.startswith("suspended") or key.startswith("expired")  or key.startswith("live") :
+    if key.startswith("suspended") or key.startswith("expired")  or key.startswith("live") or key.startswith("companyDetail"):
         
         with open (sanitizekey , "wb" ) as f :
             client.download_fileobj('backfill-store-390746273208', key, f)
