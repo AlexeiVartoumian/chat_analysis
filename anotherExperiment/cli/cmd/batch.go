@@ -265,7 +265,7 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTION_DEED":
 		return Jobs_DescriptionDeedLoader(record)
 
-	case "COMPANYDETAIL":
+	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
 	default:
 		return nil, nil
@@ -379,18 +379,21 @@ func CompanyDetailLoader(record map[string]string) (models.CompanyDetail, error)
 		return models.CompanyDetail{}, ErrorHandler(err, "uh oh error parsing company id")
 	}
 
-	createdAt, err := time.Parse(time.RFC3339, record["created_at"])
+	ms, err := strconv.ParseInt(record["created_at"], 10, 64)
 	if err != nil {
 		return models.CompanyDetail{}, ErrorHandler(err, "uh oh error parsing created_at")
 	}
+	createdAt := time.Unix(ms/1000, 0).UTC()
 
 	companyDetail := models.CompanyDetail{
-		CompanyId:           companyId,
-		Name:                record["company_name"],
-		CompanySlug:         record["company_slug"],
-		CompanyUrl:          record["company_url"],
-		Specialties:         json.RawMessage(record["specialties"]),
-		Locations:           json.RawMessage(record["locations"]),
+		CompanyId:   companyId,
+		Name:        record["company_name"],
+		CompanySlug: record["company_slug"],
+		CompanyUrl:  record["company_url"],
+		// Specialties:         json.RawMessage(record["specialties"]),
+		// Locations:           json.RawMessage(record["locations"]),
+		Specialties:         json.RawMessage(strings.ReplaceAll(record["specialties"], "'", "\"")),
+		Locations:           json.RawMessage(strings.ReplaceAll(record["locations"], "'", "\"")),
 		ExtendedDescription: record["extended_description"],
 		StaffCount:          staffCount,
 		HeadquarterCity:     record["headquarter_city"],
