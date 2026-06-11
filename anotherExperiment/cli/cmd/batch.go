@@ -264,6 +264,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Jobs_DescriptionLoader(record)
 	case "JOB_DESCRIPTION_DEED":
 		return Jobs_DescriptionDeedLoader(record)
+
+	case "COMPANYDETAIL":
+		return CompanyDetailLoader(record)
 	default:
 		return nil, nil
 	}
@@ -362,6 +365,39 @@ func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Me
 	}
 
 	return Company_metadata, nil
+}
+
+func CompanyDetailLoader(record map[string]string) (models.CompanyDetail, error) {
+
+	staffCount, err := strconv.Atoi(record["staff_count"])
+	if err != nil {
+		return models.CompanyDetail{}, ErrorHandler(err, "uh oh error parsing employee count ")
+	}
+
+	companyId, err := strconv.Atoi(record["company_id"])
+	if err != nil {
+		return models.CompanyDetail{}, ErrorHandler(err, "uh oh error parsing company id")
+	}
+
+	createdAt, err := time.Parse(time.RFC3339, record["created_at"])
+	if err != nil {
+		return models.CompanyDetail{}, ErrorHandler(err, "uh oh error parsing created_at")
+	}
+
+	companyDetail := models.CompanyDetail{
+		CompanyId:           companyId,
+		Name:                record["company_name"],
+		CompanySlug:         record["company_slug"],
+		CompanyUrl:          record["company_url"],
+		Specialties:         json.RawMessage(record["specialties"]),
+		Locations:           json.RawMessage(record["locations"]),
+		ExtendedDescription: record["extended_description"],
+		StaffCount:          staffCount,
+		HeadquarterCity:     record["headquarter_city"],
+		Created_at:          createdAt,
+	}
+
+	return companyDetail, nil
 }
 
 func CompanyLoader(record map[string]string) (models.COMPANY, error) {
