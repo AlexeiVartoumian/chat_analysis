@@ -23,5 +23,8 @@ while IFS= read -r file; do
     elif [ "$type" = "SUSPENDED" ]; then
         ./start insert $file JOB_LIFECYCLE_UPDATE_SUSPENDED
     
+    elif [ "$type" = "COMPANYDETAIL" ]; then
+        ./start insert $file COMPANY_DETAIL
+    
     fi
 done < <(jq -r '.[][][][]' keys.json)
