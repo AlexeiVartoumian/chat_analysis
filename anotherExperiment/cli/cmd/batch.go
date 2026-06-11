@@ -367,6 +367,17 @@ func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Me
 	return Company_metadata, nil
 }
 
+func toJSONB(s string) *json.RawMessage {
+	if s == "" {
+		return nil
+	}
+	s = strings.ReplaceAll(s, "'", "\"")
+	s = strings.ReplaceAll(s, "None", "null")
+	s = strings.ReplaceAll(s, "True", "true")
+	s = strings.ReplaceAll(s, "False", "false")
+	raw := json.RawMessage(s)
+	return &raw
+}
 func CompanyDetailLoader(record map[string]string) (models.CompanyDetail, error) {
 
 	staffCount, err := strconv.Atoi(record["staff_count"])
@@ -392,8 +403,8 @@ func CompanyDetailLoader(record map[string]string) (models.CompanyDetail, error)
 		CompanyUrl:  record["company_url"],
 		// Specialties:         json.RawMessage(record["specialties"]),
 		// Locations:           json.RawMessage(record["locations"]),
-		Specialties:         json.RawMessage(strings.ReplaceAll(record["specialties"], "'", "\"")),
-		Locations:           json.RawMessage(strings.ReplaceAll(record["locations"], "'", "\"")),
+		Specialties:         toJSONB(record["specialties"]),
+		Locations:           toJSONB(record["locations"]),
 		ExtendedDescription: record["extended_description"],
 		StaffCount:          staffCount,
 		HeadquarterCity:     record["headquarter_city"],

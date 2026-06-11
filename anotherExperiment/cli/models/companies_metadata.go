@@ -15,16 +15,16 @@ type Company_Metadata struct {
 }
 
 type CompanyDetail struct {
-	CompanyId           int             `json:"company_id,omitempty" db:"company_id"`
-	Name                string          `json:"name,omitempty" db:"name"`
-	CompanySlug         string          `json:"company_slug,omitempty" db:"company_slug"`
-	CompanyUrl          string          `json:"company_url,omitempty" db:"company_url"`
-	Specialties         json.RawMessage `json:"specialties,omitempty" db:"specialties"`
-	Locations           json.RawMessage `json:"locations,omitempty" db:"locations"`
-	ExtendedDescription string          `json:"extended_description,omitempty" db:"extended_description"`
-	StaffCount          int             `json:"staff_count,omitempty" db:"staff_count"`
-	HeadquarterCity     string          `json:"headquarter_city,omitempty" db:"headquarter_city"`
-	Created_at          time.Time       `json:"created_at,omitempty" db:"created_at"`
+	CompanyId           int              `json:"company_id,omitempty" db:"company_id"`
+	Name                string           `json:"name,omitempty" db:"name"`
+	CompanySlug         string           `json:"company_slug,omitempty" db:"company_slug"`
+	CompanyUrl          string           `json:"company_url,omitempty" db:"company_url"`
+	Specialties         *json.RawMessage `json:"specialties,omitempty" db:"specialties"`
+	Locations           *json.RawMessage `json:"locations,omitempty" db:"locations"`
+	ExtendedDescription string           `json:"extended_description,omitempty" db:"extended_description"`
+	StaffCount          int              `json:"staff_count,omitempty" db:"staff_count"`
+	HeadquarterCity     string           `json:"headquarter_city,omitempty" db:"headquarter_city"`
+	Created_at          time.Time        `json:"created_at,omitempty" db:"created_at"`
 }
 type CompanyDeed_Metadata struct {
 	CompanyId            string  `json:"company_id,omitempty" db:"company_id"`
