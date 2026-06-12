@@ -266,11 +266,14 @@ def create_tables(conn) -> None:
             );
         """)
 
+        
         cur.execute("""
             CREATE TABLE IF NOT EXISTS COMPANY_CORRELATION (
                 company_link_id          BIGINT      NOT NULL REFERENCES COMPANY(company_id) ON DELETE CASCADE,
                 company_deed_id          TEXT      NOT NULL REFERENCES COMPANY_DEED(company_id) ON DELETE CASCADE,
-                
+                company_name             VARCHAR(128),
+                company_link_url         TEXT,
+                company_deed_url         TEXT,
                 PRIMARY KEY (company_link_id , company_deed_id)
             );
         """)
