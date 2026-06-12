@@ -30,7 +30,6 @@ func Corellation() error {
 	SELECT
 	c.company_id as company_id,                          
     cd.company_id as deed_id,
-    cd.name as deed_name,
     c.name as company_name,
     cm.company_url as company_url,
     cdm.url as deed_url
