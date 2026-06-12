@@ -26,11 +26,10 @@ func Corellation() error {
 	// JOIN COMPANY c ON c.name LIKE '%' || cd.name || '%'
 	//    OR cd.name LIKE '%' || c.name || '%'
 	// ORDER BY cd.company_id
-
 	rows, err := db.Query(`
-	SELECT                          
+	SELECT
+	c.company_id as company_id,                          
     cd.company_id as deed_id,
-    c.company_id as company_id,
     cd.name as deed_name,
     c.name as company_name,
     cm.company_url as company_url,
