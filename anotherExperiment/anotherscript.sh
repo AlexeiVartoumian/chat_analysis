@@ -48,3 +48,6 @@ df -h /
 aws s3api list-objects-v2 --bucket "GLORIOUS BUCKET" \
   --query 'sort_by(Contents, &Size)[:10].{Key: Key, Size: Size}' \
   --output table
+
+#file integrity management
+ls /home/ubuntu | grep -oP '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}' | sort | uniq -c | sort -rn | head -20
