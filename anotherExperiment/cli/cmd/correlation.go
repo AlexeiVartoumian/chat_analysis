@@ -28,7 +28,17 @@ func Corellation() error {
 	// ORDER BY cd.company_id
 
 	rows, err := db.Query(`
-	SELECT cd.company_id, c.company_id FROM COMPANY_DEED cd JOIN COMPANY c ON c.name LIKE '%' || cd.name || '%' OR cd.name LIKE '%' || c.name || '%'
+	SELECT                          
+    cd.company_id as deed_id,
+    c.company_id as company_id,
+    cd.name as deed_name,
+    c.name as company_name,
+    cm.company_url as company_url,
+    cdm.url as deed_url
+FROM COMPANY_DEED cd
+JOIN COMPANY c ON c.name LIKE '%' || cd.name || '%'
+   OR cd.name LIKE '%' || c.name || '%' JOIN COMPANY_DETAIL cm ON c.company_id =cm.company_id JOIN COMPANY_METADATA_DEED cdm ON cd.company_id=cdm.company_id
+ORDER BY cd.company_id;
 	`)
 
 	if err != nil {
