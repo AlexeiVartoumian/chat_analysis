@@ -37,7 +37,9 @@ func Corellation() error {
     cdm.url as deed_url
 FROM COMPANY_DEED cd
 JOIN COMPANY c ON c.name LIKE '%' || cd.name || '%'
-   OR cd.name LIKE '%' || c.name || '%' JOIN COMPANY_DETAIL cm ON c.company_id =cm.company_id JOIN COMPANY_METADATA_DEED cdm ON cd.company_id=cdm.company_id
+   OR cd.name LIKE '%' || c.name || '%' 
+LEFT JOIN COMPANY_DETAIL cm ON c.company_id = cm.company_id 
+LEFT JOIN COMPANY_METADATA_DEED cdm ON cd.company_id = cdm.company_id
 ORDER BY cd.company_id;
 	`)
 
@@ -52,7 +54,7 @@ ORDER BY cd.company_id;
 
 		var res models.CompanyCorrelation
 
-		rows.Scan(&res.Company_deed_id, &res.Company_link_id)
+		rows.Scan(&res.Company_link_id, &res.Company_deed_id, &res.Company_name, &res.Company_link_url, &res.Company_deed_url)
 
 		AddNewRow(res, "COMPANY_CORRELATION")
 	}
