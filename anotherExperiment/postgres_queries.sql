@@ -323,3 +323,19 @@ JOIN JOB_LIFECYCLE ON JOB_LIFECYCLE.job_id = jst.job_id
 WHERE JOB_LIFECYCLE.first_seen_at >= best_run.run_at - INTERVAL '3 hours'
 AND JOB_LIFECYCLE.job_state = 'LISTED'
 ORDER BY JOB_LIFECYCLE.first_seen_at ASC
+
+
+
+WITH best_run AS ( SELECT SEARCH_WORKFLOW.workflow_id, net_new_jobs, run_at, SEARCH_WORKFLOW.search_term_id, term  
+  FROM SEARCH_WORKFLOW 
+  JOIN SEARCH_TERM ON SEARCH_WORKFLOW.search_term_id = SEARCH_TERM.search_term_id 
+  WHERE workflow_id IN (
+    SELECT workflow_id FROM SEARCH_WORKFLOW where search_term_id = 57 ORDER BY run_at DESC LIMIT 63
+  )
+ order BY run_at desc limit 1
+) SELECT JOBS.job_id,JOBS.title,JOBS.job_url, JOB_LIFECYCLE.job_state, JOB_LIFECYCLE.first_seen_at,JOB_LIFECYCLE.last_seen_listed_at,best_run.term
+FROM best_run JOIN JOB_SEARCH_TERM jst ON jst.workflow_id = best_run.workflow_id JOIN JOBS ON JOBS.job_id = jst.job_id
+JOIN JOB_LIFECYCLE ON JOB_LIFECYCLE.job_id = jst.job_id
+   AND JOB_LIFECYCLE.first_seen_at = JOB_LIFECYCLE.last_seen_listed_at;
+
+where jst.workflow_id = best_run.workflow_id and is_new_job =TRUE;
