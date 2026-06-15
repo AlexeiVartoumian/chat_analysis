@@ -18,11 +18,13 @@ type SearchWorkflow struct {
 type JOB_SEARCH_TERM struct {
 	Job_id      int    `json:"id,omitempty" db:"job_id"`
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
 }
 
 type JOB_SEARCH_TERM_DEED struct {
 	Job_id      string `json:"id,omitempty" db:"job_id"`
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
 }
 
 type File_key struct {

@@ -208,6 +208,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 			JobSearchWorkflow := models.JOB_SEARCH_TERM_DEED{
 				Job_id:      value.Job_id,
 				Workflow_id: workflowid,
+				Is_new_job:  skipped == 0,
 			}
 			AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_DEED")
 		}
@@ -232,6 +233,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 			JobSearchWorkflow := models.JOB_SEARCH_TERM{
 				Job_id:      value.Job_id,
 				Workflow_id: workflowid,
+				Is_new_job:  skipped == 0,
 			}
 			AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM")
 		}
