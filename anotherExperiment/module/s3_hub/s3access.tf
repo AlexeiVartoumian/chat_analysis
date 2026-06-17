@@ -168,3 +168,5 @@ resource "aws_s3_bucket_logging" "source_store" {
   target_bucket = aws_s3_bucket.source_store_logs.id
   target_prefix = "logs/"
 }
+
+
