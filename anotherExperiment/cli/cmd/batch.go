@@ -4,6 +4,7 @@ import (
 	"cli/models"
 	"database/sql"
 	"encoding/json"
+	"log"
 
 	"bufio"
 	"fmt"
@@ -373,10 +374,10 @@ func toJSONB(s string) *json.RawMessage {
 	if s == "" {
 		return nil
 	}
-	s = strings.ReplaceAll(s, "'", "\"")
-	s = strings.ReplaceAll(s, "None", "null")
-	s = strings.ReplaceAll(s, "True", "true")
-	s = strings.ReplaceAll(s, "False", "false")
+	if !json.Valid([]byte(s)) {
+		log.Printf("invalid JSON, skipping: %q", s)
+		return nil
+	}
 	raw := json.RawMessage(s)
 	return &raw
 }
