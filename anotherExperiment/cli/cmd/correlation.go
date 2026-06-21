@@ -26,6 +26,8 @@ func Corellation() error {
 	// JOIN COMPANY c ON c.name LIKE '%' || cd.name || '%'
 	//    OR cd.name LIKE '%' || c.name || '%'
 	// ORDER BY cd.company_id
+
+	//this query sucks
 	rows, err := db.Query(`
 	SELECT
 	c.company_id as company_id,                          
@@ -40,7 +42,14 @@ LEFT JOIN COMPANY_DETAIL cm ON c.company_id = cm.company_id
 LEFT JOIN COMPANY_METADATA_DEED cdm ON cd.company_id = cdm.company_id
 ORDER BY cd.company_id;
 	`)
-
+	// 	SELECT
+	//     c.name as company_name,
+	//     cm.company_url as company_url,
+	//     cdm.url as deed_url
+	// FROM COMPANY_DEED cd
+	// JOIN COMPANY c ON c.name = cd.name
+	// LEFT JOIN COMPANY_DETAIL cm ON c.company_id = cm.company_id
+	// LEFT JOIN COMPANY_METADATA_DEED cdm ON cd.company_id = cdm.company_id;
 	if err != nil {
 		return ErrorHandler(err, "db scan error")
 	}
@@ -60,3 +69,13 @@ ORDER BY cd.company_id;
 	return nil
 
 }
+
+// SELECT
+//     COMPANY.name as company_name,
+//     COMPANY_DETAIL.company_url as company_url,
+//     COMPANY_METADATA_DEED.url as deed_url , JOB_METADATA.company_apply_url , JOBS_DEED.job_url
+// FROM COMPANY_DEED
+// JOIN COMPANY  ON COMPANY.name = COMPANY_DEED.name
+// JOIN JOBS on JOBS.company_id = COMPANY.company_id
+// LEFT JOIN COMPANY_DETAIL  ON COMPANY.company_id = COMPANY_DETAIL.company_id
+// LEFT JOIN COMPANY_METADATA_DEED ON COMPANY_DEED.company_id = COMPANY_METADATA_DEED.company_id JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id  join JOBS_DEED on JOBS_DEED.company_id = COMPANY_DEED.company_id ;
