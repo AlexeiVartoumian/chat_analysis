@@ -759,3 +759,54 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func RedirectIndLinker(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "problem readinf could be unexpected format", http.StatusBadRequest)
+	}
+
+	if string(body) == "True" {
+		//then its automatic
+
+		response := struct {
+			Status     string `json:"status"`
+			StatusCode int
+		}{
+			Status:     fmt.Sprintf(" please implement"),
+			StatusCode: 200,
+		}
+
+		json.NewEncoder(w).Encode(response)
+	} else {
+
+		var JobRedirect_DEED, err = sqlconnect.RedirectInd()
+
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+
+		payload, _ := json.Marshal(JobRedirect_DEED)
+		auto := "false"
+
+		cmd := exec.Command("python3", "/home/ubuntu/redirecter.py", auto)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("redirecter.py failed %v", err)
+		}
+
+	}
+
+}

@@ -83,5 +83,8 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekAutoCompany),
 	))
 
+	mux.Handle("POST /redirectInd", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.RedirectIndLinker),
+	))
 	return mux
 }
