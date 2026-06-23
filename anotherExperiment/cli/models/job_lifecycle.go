@@ -20,3 +20,8 @@ type JobLifeCycleDeed struct {
 	FirstSeenClosedAt *time.Time `json:"first_seen_closed_at,omitempty" db:"first_seen_closed_at"`
 	NextScanAt        *time.Time `json:"next_scan_at,omitempty" db:"next_scan_at"`
 }
+
+type RedirectDeed struct {
+	JobId   string `json:"job_id,omitempty" db:"job_id"`
+	Job_url string `json:"job_url,omitempty" db:"job_url"`
+}

@@ -270,6 +270,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
+
+	case "REDIRECT_DEED":
+		return RedirectDeedLoader(record)
 	default:
 		return nil, nil
 	}
@@ -455,6 +458,15 @@ func CompanyDeedLoader(record map[string]string) (models.COMPANY_DEED, error) {
 		Employer_url: record["employer_url"],
 	}
 	return company, nil
+}
+
+func RedirectDeedLoader(record map[string]string) (models.RedirectDeed, error) {
+
+	redirect := models.RedirectDeed{
+		JobId:   record["job_id"],
+		Job_url: record["job_url"],
+	}
+	return redirect, nil
 }
 
 func JobLoader(record map[string]string) (models.JOBS, error) {
