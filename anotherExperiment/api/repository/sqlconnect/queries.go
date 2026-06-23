@@ -567,8 +567,11 @@ func RedirectInd() ([]models.JobRedirect_DEED, error) {
 		return nil, utils.ErrorHandler(err, "dbconn err")
 	}
 
+	// rows, err := db.Query(`
+	// SELECT job_id , job_url FROM jobs_deed limit 100;
+	// `)
 	rows, err := db.Query(`
-	SELECT job_id , job_url FROM jobs_deed limit 100;
+		SELECT job_id , job_url from JOBS_DEED where NOT EXISTS (SELECT * from REDIRECT_DEED WHERE JOBS_DEED.job_id = REDIRECT_DEED.job_id) LIMIT 100;
 	`)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "error on upload")
