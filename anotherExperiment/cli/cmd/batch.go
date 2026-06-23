@@ -659,10 +659,19 @@ func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, fil
 
 				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
 
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
+
 			} else {
 
 				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, record["job_id"])
 
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for still live job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
 			}
 		}
 
