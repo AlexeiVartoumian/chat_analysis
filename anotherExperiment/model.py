@@ -343,6 +343,17 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
+            CREATE TABLE IF NOT EXISTS REDIRECT_DEED(
+                job_id               TEXT            PRIMARY KEY,
+                job_url              VARCHAR(256)    NOT NULL,
+                CONSTRAINT fk_job_link_deed
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_DEED (job_id)
+                    ON DELETE CASCADE 
+        );
+        """)
+
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS FILE_KEYS_DEED (
                 file_name            VARCHAR(256) PRIMARY KEY
             );
