@@ -604,23 +604,55 @@ func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepat
 
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
-	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsInd-")[1], ".csv")[0], "_")
+	if strings.HasPrefix(filepath, "processedJobsInd") {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsInd-")[1], ".csv")[0], "_")
 
-	timestamp, err := parseTimestamp(meta_data[1])
-
-	if err != nil {
-		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
-	}
-
-	for index, record := range records {
-
-		value, err := Jobs_LifecycleDeedmodel(record, timestamp)
+		timestamp, err := parseTimestamp(meta_data[1])
 
 		if err != nil {
-			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
-			continue
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
 		}
-		AddNewRow(value, "JOB_LIFECYCLE_DEED")
+
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleDeedmodel(record, timestamp)
+
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_DEED")
+
+		}
+	} else {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
+		timestamp, err := parseTimestamp(meta_data[1])
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		db, err := ConnectDb()
+		if err != nil {
+			fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		defer db.Close()
+
+		for index, record := range records {
+
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+
+			if record["job_state"] == "TRUE" {
+
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
+
+			} else {
+
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, record["job_id"])
+
+			}
+		}
 
 	}
 
