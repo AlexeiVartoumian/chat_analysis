@@ -654,8 +654,8 @@ func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, fil
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			fmt.Println("this is job state", record["job_state"])
-			if record["job_state"] == "TRUE" {
+			//fmt.Println("this is job state", record["job_state"])
+			if record["job_state"] == "True" {
 
 				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
 
