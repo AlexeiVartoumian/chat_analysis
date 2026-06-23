@@ -345,7 +345,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS REDIRECT_DEED(
                 job_id               TEXT            PRIMARY KEY,
-                job_url              VARCHAR(256)    NOT NULL,
+                job_url              VARCHAR(512)    NOT NULL,
                 CONSTRAINT fk_job_link_deed
                     FOREIGN KEY (job_id)
                     REFERENCES JOBS_DEED (job_id)
