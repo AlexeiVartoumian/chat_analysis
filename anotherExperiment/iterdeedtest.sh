@@ -18,6 +18,9 @@ while IFS= read -r file; do
     elif [ "$type" = "COMPANYIND" ]; then
         ./start insert $file COMPANY_METADATA_DEED
 
+    elif [  "$type" = "REDIRECTLINKSIND"]; then
+        ./start insert $file REDIRECT_DEED
+        ./start insert $file JOB_LIFECYCLE_DEED
     fi 
 
 done < <(jq -r '.[][][][]' keys_deed.json)
