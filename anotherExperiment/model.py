@@ -345,7 +345,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS REDIRECT_DEED(
                 job_id               TEXT            PRIMARY KEY,
-                job_url              VARCHAR(512)    NOT NULL,
+                job_url              VARCHAR(1024)    NOT NULL,
                 CONSTRAINT fk_job_link_deed
                     FOREIGN KEY (job_id)
                     REFERENCES JOBS_DEED (job_id)
@@ -379,3 +379,7 @@ def enable_vector_extension():
 enable_vector_extension() 
 with get_connection() as conn :
     create_tables(conn)
+
+
+
+https://careers.bcg.com/global/en/job/BCG1US56701EXTERNALENGLOBAL/Global-IT-Enterprise-Architect-Senior-Manager-GenAI?rx_a=1&rx_c=emesa---boost&rx_ch=jobp4p&rx_group=525627&rx_id=2a5e0119-0370-11f1-b500-47bbcc4035c8&rx_job=56701&rx_medium=cpc&rx_r=none&rx_source=Indeed&rx_ts=20260623T122813Z&rx_vp=cpc&utm_campaign=EMESP102025-EME-global_recruitics_emesa-boost&utm_medium=EMESP102025-EME&utm_source=jobboard_indeed&codes=1-INDEED&rx_p=Y3VGRXKBAI&rx_viewer=1b5f77b26f0f11f190406d9124723d6315c45f7261e440a5a14ac66a445c01d6
