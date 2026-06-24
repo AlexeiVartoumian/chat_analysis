@@ -275,6 +275,8 @@ def create_tables(conn) -> None:
                 company_name             VARCHAR(128),
                 company_link_url         TEXT,
                 company_deed_url         TEXT,
+                company_apply_url        TEXT,
+                job_deed_url             TEXT;
                 PRIMARY KEY (company_link_id , company_deed_id)
             );
         """)
