@@ -68,8 +68,12 @@ LEFT JOIN COMPANY_METADATA_DEED ON COMPANY_DEED.company_id = COMPANY_METADATA_DE
 
 		var res models.CompanyCorrelation
 
-		rows.Scan(&res.Company_link_id, &res.Company_deed_id, &res.Company_name, &res.Company_link_url, &res.Company_deed_url)
+		err := rows.Scan(&res.Company_link_id, &res.Company_deed_id, &res.Company_name, &res.Company_link_url, &res.Company_deed_url, &res.Company_apply_url, &res.JobDeed_url)
 
+		if err != nil {
+			ErrorHandler(err, "db scan error")
+			continue
+		}
 		AddNewRow(res, "COMPANY_CORRELATION")
 	}
 
