@@ -45,15 +45,16 @@ func Corellation() error {
 
 	rows, err := db.Query(`
 	SELECT
-		COMPANY.name as company_name,
-		COMPANY_DETAIL.company_url as company_url,
-		COMPANY_METADATA_DEED.url as deed_url , JOB_METADATA.company_apply_url , JOBS_DEED.job_url
-	FROM COMPANY_DEED
-	JOIN COMPANY  ON COMPANY.name = COMPANY_DEED.name
-	JOIN JOBS on JOBS.company_id = COMPANY.company_id
-	LEFT JOIN COMPANY_DETAIL  ON COMPANY.company_id = COMPANY_DETAIL.company_id
-	LEFT JOIN COMPANY_METADATA_DEED ON COMPANY_DEED.company_id = COMPANY_METADATA_DEED.company_id JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id  join JOBS_DEED on JOBS_DEED.company_id = COMPANY_DEED.company_id ;
-
+	COMPANY.company_id as company_link_id,
+	COMPANY_DEED.company_id as company_deed_id,
+    COMPANY.name as company_name,
+    COMPANY_DETAIL.company_url as company_url,
+    COMPANY_METADATA_DEED.url as deed_url , JOB_METADATA.company_apply_url , JOBS_DEED.job_url
+FROM COMPANY_DEED
+JOIN COMPANY  ON COMPANY.name = COMPANY_DEED.name
+JOIN JOBS on JOBS.company_id = COMPANY.company_id
+LEFT JOIN COMPANY_DETAIL  ON COMPANY.company_id = COMPANY_DETAIL.company_id
+LEFT JOIN COMPANY_METADATA_DEED ON COMPANY_DEED.company_id = COMPANY_METADATA_DEED.company_id JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id  join JOBS_DEED on JOBS_DEED.company_id = COMPANY_DEED.company_id;
 	`)
 
 	if err != nil {
