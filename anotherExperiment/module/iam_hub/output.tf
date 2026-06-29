@@ -7,3 +7,8 @@ output "aws_iam_role_main_name" {
     value = aws_iam_role.bucket_reader_main.name
 }
 
+
+output "aws_iam_role_scroller_profile" {
+    value = aws_iam_instance_profile.scroller_profile.name
+}
+

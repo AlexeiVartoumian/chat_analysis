@@ -77,3 +77,10 @@ module "fargate_hub"{
         aws = aws.hub
     }
 }
+
+module "ec2_hub"{
+    source = "./module/ec2_hub"
+    scroller_profile = module.iam_hub.aws_iam_role_scroller_profile
+    ami_id = var.ami_id
+    keys = var.keys
+}

@@ -8,7 +8,7 @@ resource "aws_iam_role" "bucket_reader_main" {
       {
         Effect = "Allow"
         Principal = {
-          Service = ["lambda.amazonaws.com", "ecs-tasks.amazonaws.com" ]
+          Service = ["lambda.amazonaws.com", "ecs-tasks.amazonaws.com" , "ec2.amazonaws.com"]
           AWS = [
             for acct in var.spoke_accounts :
             "arn:aws:iam::${acct}:role/the_bucket_dealer_spoke"
@@ -27,6 +27,21 @@ resource "aws_iam_role" "bucket_reader_main" {
     ]
   })
 }
+
+resource "aws_iam_role_policy_attachment" "ssm_core" {
+  role       = aws_iam_role.bucket_reader_main.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+resource "aws_iam_instance_profile" "scroller_profile" {
+  name = "scroller-profile"
+  role = aws_iam_role.bucket_reader_main.name
+}
+resource "aws_iam_role_policy_attachment" "cloudwatch_agent" {
+  role       = aws_iam_role.bucket_reader_main.name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+}
+
 # resource "aws_iam_role" "bucket_reader_main" {
 
 #     name = "the_bucket_dealer"
