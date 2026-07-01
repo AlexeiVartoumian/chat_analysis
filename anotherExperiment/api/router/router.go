@@ -79,6 +79,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.DeedBlaster),
 	))
 
+	mux.Handle("POST /spotdeed", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SpotDeedBlaster),
+	))
+
 	mux.Handle("POST /seekAutoCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekAutoCompany),
 	))

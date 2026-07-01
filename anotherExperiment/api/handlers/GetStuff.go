@@ -641,6 +641,90 @@ func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
 	//return payload
 }
 
+// summon the elector counts!
+func SummonSpot(term sqlconnect.SearchTerm, instance_id string, firstrun string) error {
+
+	search_term := term.Search_term
+	search_term_id := strconv.Itoa(term.Search_term_id)
+
+	if firstrun == "yes" {
+		// then instance id is None
+		cmd := exec.Command("python3", "/home/ubuntu/sendssm.py", "yes", search_term, search_term_id, "None")
+
+		if err := cmd.Run(); err != nil {
+			return utils.ErrorHandler(err, "program did not execute")
+		}
+
+		return nil
+	}
+	cmd := exec.Command("python3", "/home/ubuntu/sendssm.py", "no", search_term, search_term_id, instance_id)
+
+	if err := cmd.Run(); err != nil {
+		return utils.ErrorHandler(err, "program did not execute")
+	}
+
+	return nil
+}
+
+type BlastRequest struct {
+	FirstRun       bool   `json:"first_run"`
+	NumberAccounts int    `json:"number_accounts"`
+	InstanceID     string `json:"instance_id,omitempty"`
+}
+
+// like deed blaster but for spot
+func SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed ", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid Request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	SearchTerms, err := sqlconnect.GetSearchTerms(req.FirstRun, req.NumberAccounts, "SEARCH_TERM_DEED")
+
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if SearchTerms == nil {
+		fmt.Println("Job Done either second last run or last run ")
+		return
+	}
+
+	fmt.Println("here is your data", SearchTerms, len(SearchTerms))
+
+	//SendToScroller(SearchTerms)
+	//SendToScrollersqs(SearchTerms)
+	firstRunStr := "no"
+	if req.FirstRun {
+		firstRunStr = "yes"
+	}
+	if err := SummonSpot(SearchTerms[0], req.InstanceID, firstRunStr); err != nil {
+		log.Println(err)
+		http.Error(w, "Problem summoning spot instance", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted summonspot. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
 func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
