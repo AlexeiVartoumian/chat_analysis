@@ -649,7 +649,7 @@ func SummonSpot(term sqlconnect.SearchTerm, instance_id string, firstrun string)
 
 	if firstrun == "yes" {
 		// then instance id is None
-		cmd := exec.Command("python3", "/home/ubuntu/sendssm.py", "yes", search_term, search_term_id, "None")
+		cmd := exec.Command("python3", "/home/ubuntu/sendssm.py", "yes", search_term, search_term_id, "")
 
 		if err := cmd.Run(); err != nil {
 			return utils.ErrorHandler(err, "program did not execute")
