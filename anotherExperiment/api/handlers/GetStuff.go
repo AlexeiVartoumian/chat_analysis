@@ -641,7 +641,7 @@ func SendToScrollersqs(SearchTerms []sqlconnect.SearchTerm) {
 	//return payload
 }
 
-// summon the elector counts!
+// summon the elector counts! //change this to array and pass in as stdin
 func SummonSpot(term sqlconnect.SearchTerm, instance_id string, firstrun string) error {
 
 	search_term := term.Search_term
@@ -664,6 +664,34 @@ func SummonSpot(term sqlconnect.SearchTerm, instance_id string, firstrun string)
 	}
 
 	return nil
+}
+
+func SummonSpotv2(SearchTerms []sqlconnect.SearchTerm, instance_id string, firstrun string) ([]byte , error) {
+
+	payload, _ := json.Marshal(SearchTerms)
+
+	if firstrun == "yes" {
+		// then instance id is None
+		cmd := exec.Command("python3", "/home/ubuntu/sendssm2.py", "yes",  "")
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			return nil , utils.ErrorHandler(err, "program did not execute")
+		}
+
+		return payload , nil
+	}
+	cmd := exec.Command("python3", "/home/ubuntu/sendssm2.py", "no",  instance_id)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		return nil , utils.ErrorHandler(err, "program did not execute")
+	}
+
+	return  payload,nil
 }
 
 type BlastRequest struct {
@@ -708,11 +736,18 @@ func SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
 	if req.FirstRun {
 		firstRunStr = "yes"
 	}
-	if err := SummonSpot(SearchTerms[0], req.InstanceID, firstRunStr); err != nil {
+	// if err := SummonSpot(SearchTerms[0], req.InstanceID, firstRunStr); err != nil {
+	// 	log.Println(err)
+	// 	http.Error(w, "Problem summoning spot instance", http.StatusInternalServerError)
+	// 	return
+	// }
+	if payload, err := SummonSpotv2(SearchTerms, req.InstanceID, firstRunStr); err != nil {
 		log.Println(err)
 		http.Error(w, "Problem summoning spot instance", http.StatusInternalServerError)
 		return
 	}
+	log.printf("blasted the spot" len(payload) )
+
 	w.Header().Set("Content-Type", "application/json")
 
 	response := struct {
