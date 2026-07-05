@@ -931,3 +931,55 @@ func RedirectIndLinker(w http.ResponseWriter, r *http.Request) {
 	}
 
 }
+
+func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	var roles []string
+
+	roles, err := sqlconnect.SeekExpiredAutoDeed(req.FirstRun)
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Internal server error", http.StatusBadRequest)
+		return
+	}
+
+	if roles == nil {
+		fmt.Println("Job done")
+		return
+	}
+
+	payload, _ := json.Marshal(roles)
+
+	numberof := strconv.Itoa(req.NumberAccounts)
+	cmd := exec.Command("python3", "/home/ubuntu/deedbackfill.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("deedbackfill.py failed %v", err)
+	}
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status: fmt.Sprintf("Successfully sent autodeed. have a nice day %d", len(roles)),
+	}
+
+	json.NewEncoder(w).Encode(response)
+
+}

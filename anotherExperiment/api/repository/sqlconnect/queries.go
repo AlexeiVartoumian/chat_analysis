@@ -595,3 +595,63 @@ func RedirectInd() ([]models.JobRedirect_DEED, error) {
 	return output, nil
 
 }
+
+func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	if firstrun == true {
+		_, err := db.Exec(`
+		UPDATE JOB_LIFECYCLE_DEED SET visited = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+
+	rows, err := db.Query(`SELECT job_id FROM JOB_LIFECYCLE_DEED where job_state LIKE 'False' ORDER by last_seen_listed_at ASC limit 100;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "query on payload messed up ")
+	}
+	defer rows.Close()
+
+	var output []string
+	for rows.Next() {
+
+		var res string
+
+		rows.Scan(&res)
+
+		output = append(output, res)
+	}
+
+	fmt.Println(len(output))
+
+	if len(output) == 0 {
+
+		_, err := db.Exec(
+			`UPDATE JOB_LIFECYCLE_DEED SET visited = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " last run update error on visited")
+		}
+	}
+
+	for index := range output {
+
+		job_id := output[index]
+
+		_, err := db.Exec(`UPDATE JOB_LIFECYCLE_DEED SET visited = TRUE where job_id = $1`, job_id)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "update error on lifecycle visited workflow")
+		}
+	}
+
+	return output, nil
+}
