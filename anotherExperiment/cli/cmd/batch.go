@@ -29,6 +29,33 @@ func parseTimestamp(ts string) (time.Time, error) {
 	iso := ts[:10] + "T" + ts[11:13] + ":" + ts[14:16] + ":" + ts[17:19] + ts[19:22] + ":" + ts[23:]
 	return time.Parse(time.RFC3339, iso)
 }
+
+func extractTimestampStr(filepath string) (string, error) {
+	markers := []string{"redirectlinksInd-", "live-roles-deed-", "expired-roles-deed-"}
+
+	var rest string
+	found := false
+	for _, m := range markers {
+		if idx := strings.Index(filepath, m); idx != -1 {
+			rest = filepath[idx+len(m):]
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		return "", fmt.Errorf("filepath does not contain a recognised marker: %s", filepath)
+	}
+
+	rest = strings.Split(rest, ".csv")[0]
+	parts := strings.Split(rest, "_")
+
+	if len(parts) < 2 {
+		return "", fmt.Errorf("filepath missing workflowid_timestamp structure: %s", filepath)
+	}
+
+	return parts[1], nil
+}
 func CsvFile(filepath string, tablename string) error {
 	// func CsvFile(filepath string, item chan<- models.COMPANY) {
 	//jobModel := jobs.model models.JOBS{}
@@ -637,8 +664,13 @@ func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, fil
 
 		}
 	} else {
-		meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
-		timestamp, err := parseTimestamp(meta_data[1])
+		//meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
+		timestampStr, err := extractTimestampStr(filepath)
+		if err != nil {
+			fmt.Println("could not extract timestamp from filepath", ErrorHandler(err, "you brought this on yourself"))
+			return // or continue
+		}
+		timestamp, err := parseTimestamp(timestampStr)
 		if err != nil {
 			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
 		}
