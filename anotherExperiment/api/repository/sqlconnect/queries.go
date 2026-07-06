@@ -613,7 +613,7 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 		}
 	}
 
-	rows, err := db.Query(`SELECT job_id FROM JOB_LIFECYCLE_DEED where job_state LIKE 'False' ORDER by last_seen_listed_at ASC limit 100;`)
+	rows, err := db.Query(`SELECT job_id FROM JOB_LIFECYCLE_DEED where job_state LIKE 'False' and visited = FALSE ORDER by last_seen_listed_at ASC limit 100;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "query on payload messed up ")
