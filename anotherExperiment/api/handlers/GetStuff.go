@@ -880,8 +880,52 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 
-func RedirectIndLinker(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	//then its automatic
+	var JobRedirect_DEED, err = sqlconnect.RedirectIndAuto(req.FirstRun)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
+		return
+	}
+
+	payload, _ := json.Marshal(JobRedirect_DEED)
+	numberof := strconv.Itoa(req.NumberAccounts)
+	cmd := exec.Command("python3", "/home/ubuntu/redirecterauto.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Run(); err != nil {
+		log.Printf("redirectireerauto.py failed %v", err)
+	}
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" please implement"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func RedirectIndLinkerold(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)

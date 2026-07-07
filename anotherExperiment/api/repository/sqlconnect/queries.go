@@ -558,6 +558,36 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 	return output, nil
 
 }
+func RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	if firstrun == true {
+		_, err := db.Exec(`
+		UPDATE JOBS_DEED SET VISITD = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "first run update error")
+		}
+
+	}
+	rows, err := db.Query(`WITH candidate AS ( 
+    SELECT job_id , job_url , JOBS_DEED.visited from JOBS_DEED where NOT EXISTS (SELECT REDIRECT_DEED.job_id from REDIRECT_DEED WHERE JOBS_DEED.job_id = REDIRECT_DEED.job_id) LIMIT 100
+) SELECT candidate.job_id , candidate.job_url  FROM candidate 
+JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where job_state LIKE 'False' and candidate.visited = False; 
+`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "query on payload messed up ")
+	}
+	defer rows.Close()
+
+	return output, nil
+}
 
 func RedirectInd() ([]models.JobRedirect_DEED, error) {
 
