@@ -260,6 +260,7 @@ def create_tables(conn) -> None:
                 is_repost       BOOLEAN,
                 is_latest       BOOLEAN,
                 company_id      TEXT          NOT NULL,
+                visited         BOOLEAN         NOT NULL DEFAULT FALSE,
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_DEED (company_id)
