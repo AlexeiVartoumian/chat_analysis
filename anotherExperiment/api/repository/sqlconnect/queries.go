@@ -568,13 +568,15 @@ func RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
 
 	if firstrun == true {
 		_, err := db.Exec(`
-		UPDATE JOBS_DEED SET VISITD = FALSE`)
+		UPDATE JOBS_DEED SET VISITED = FALSE`)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "first run update error")
 		}
 
 	}
+	// what we say below is give me jobs that point to real page that are still live
+	// and the work for it has not been done for it
 	rows, err := db.Query(`WITH candidate AS ( 
     SELECT job_id , job_url , JOBS_DEED.visited from JOBS_DEED where NOT EXISTS (SELECT REDIRECT_DEED.job_id from REDIRECT_DEED WHERE JOBS_DEED.job_id = REDIRECT_DEED.job_id) LIMIT 100
 ) SELECT candidate.job_id , candidate.job_url  FROM candidate 
@@ -586,6 +588,36 @@ JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where j
 	}
 	defer rows.Close()
 
+	var output []models.JobRedirect_DEED
+
+	for rows.Next() {
+
+		var res models.JobRedirect_DEED
+		rows.Scan(&res.JobId, &res.JobUrl)
+
+		_, err := db.Exec(
+			`UPDATE JOBS_DEED SET VISITED = TRUE where job_id = $1`, res.JobId)
+
+		if err != nil {
+			fmt.Println(utils.ErrorHandler(err, "bad job"))
+			continue
+		}
+		output = append(output, res)
+
+	}
+	fmt.Println(len(output))
+	if len(output) == 0 {
+
+		_, err := db.Exec(`
+		UPDATE JOBS_DEED SET visited = FALSE`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " last run errored on db output yes")
+		}
+		return nil, nil
+	}
+	//todo refrence the jobs-deed table to update the visited
+	// then work on script
 	return output, nil
 }
 

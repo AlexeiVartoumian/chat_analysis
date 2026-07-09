@@ -902,6 +902,9 @@ func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if JobRedirect_DEED == nil {
+		return
+	}
 	payload, _ := json.Marshal(JobRedirect_DEED)
 	numberof := strconv.Itoa(req.NumberAccounts)
 	cmd := exec.Command("python3", "/home/ubuntu/redirecterauto.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
