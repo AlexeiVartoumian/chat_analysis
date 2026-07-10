@@ -37,6 +37,7 @@ docker run -d \
   -p 5432:5432 \
   pgvector/pgvector:pg16
 
+sudo apt install -y awscli
 
 sudo mv chat_analysis/anotherExperiment/model.py /home/ubuntu/model.py
 sudo mv chat_analysis/anotherExperiment/update_search.py /home/ubuntu/update_search.py
@@ -45,8 +46,27 @@ sudo mv chat_analysis/anotherExperiment/listbucketv2.py /home/ubuntu/listbucketv
 sudo mv chat_analysis/anotherExperiment/backfill.py /home/ubuntu/backfill.py
 sudo mv chat_analysis/anotherExperiment/itertest.sh /home/ubuntu/itertest.sh
 sudo mv chat_analysis/anotherExperiment/backfilloutputbucket.py /home/ubuntu/backfilloutputbucket.py
-
+sudo mv chat_analysis/anotherExperiment/listbucketdeed.py /home/ubuntu/listbucketdeed.py
+sudo mv chat_analysis/anotherExperiment/redirecterauto.py /home/ubuntu/redirecterauto.py
+sudo mv chat_analysis/anotherExperiment/sendcommandv2.py /home/ubuntu/sendcommandv2.py
+sudo mv chat_analysis/anotherExperiment/backfilltest.sh /home/ubuntu/backfilltest.sh
+sudo mv chat_analysis/anotherExperiment/iterdeedtest.sh   /home/ubuntu/iterdeedtest.sh
+sudo mv chat_analysis/anotherExperiment/scroller.py   /home/ubuntu/scroller.py
+sudo mv chat_analysis/anotherExperiment/sendssm.py /home/ubuntu/sendssm.py
+sudo mv chat_analysis/anotherExperiment/backfilldeed.py  /home/ubuntu/backfilldeed.py
+sudo mv chat_analysis/anotherExperiment/backfilldeed.sh  /home/ubuntu/backfilldeed.sh
+sudo mv chat_analysis/anotherExperiment/scrollerv2.py  /home/ubuntu/scrollerv2.py
+sudo mv chat_analysis/anotherExperiment/deedbackfill.py  /home/ubuntu/deedbackfill.py
+sudo mv chat_analysis/anotherExperiment/sqsblaster.py  /home/ubuntu/sqsblaster.py
+sudo mv chat_analysis/anotherExperiment/scrollerv3.py  /home/ubuntu/scrollerv3.py
 sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
+
+
+
+
+
+zcat backup.dump | docker exec -i postgres psql -U "cannotname" -d voldemort
+
 my_ip=$(curl http://checkip.amazonaws.com)
 
 python3 hosted.py $my_ip
@@ -59,6 +79,13 @@ cd /home/ubuntu/chat_analysis/anotherExperiment/cli/
 sudo GOOS=linux GOARCH=amd64 go build -o start main.go
 sudo mv start /home/ubuntu/start && cd /home/ubuntu/
 sudo chmod +x start
+sudo chmod +x itertest.sh
+sudo chmod +x backfilltest.sh
+sudo chmod +x iterdeedtest.sh
+sudo chmod +x backfilldeed.sh
+
+
+docker exec postgres psql -U "cannotname" -d voldemort -t -A -c "SELECT top_secret_filename FROM FILE_KEYS;" > keys.txt
 
 python3 listbucket.py #todo this should be triggered by something else
 sudo chmod +x itertest.sh
