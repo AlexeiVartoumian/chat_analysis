@@ -64,6 +64,7 @@ sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
 
 
 sudo apt install postgresql-client-common
+sudo apt install postgresql-client-common postgresql-client -y
 
 zcat backup.dump | docker exec -i postgres psql -U "cannotname" -d voldemort
 
