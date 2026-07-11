@@ -1032,35 +1032,42 @@ func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func SeekAshLead(w http.ResponseWriter, r *http.Request) {
-
-	if r.Method != http.MethodPost {
-		http.Error(w, r.Method, http.StatusBadRequest)
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
-
-	// dont expect this to be a recurring op send once but resuse
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Println(err)
 		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
 	}
-
 	defer r.Body.Close()
 
-	// resuse jobs_redirect model since same type
-	var JobAshLead, err = sqlconnect.RedirectAshLead()
-
+	//dont expect this to be a recurring job
+	JobAshLead, err := sqlconnect.RedirectAshLead()
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "problem Reading from db could be unxpected format", http.StatusInternalServerError)
+		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+		return
 	}
 
-	payload, _ := json.Marshal(JobAshLead)
+	payload, err := json.Marshal(JobAshLead)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+		return
+	}
+
 	numberof := strconv.Itoa(req.NumberAccounts)
 	cmd := exec.Command("python3", "/home/ubuntu/ashlead.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 	cmd.Stdin = bytes.NewReader(payload)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		log.Println(err)
+		http.Error(w, "failed to start job", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
