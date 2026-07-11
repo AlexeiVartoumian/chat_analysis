@@ -1030,3 +1030,37 @@ func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+
+func SeekAshLead(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	// dont expect this to be a recurring op send once but resuse
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+	}
+
+	defer r.Body.Close()
+
+	// resuse jobs_redirect model since same type
+	var JobAshLead, err = sqlconnect.RedirectAshLead()
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "problem Reading from db could be unxpected format", http.StatusInternalServerError)
+	}
+
+	payload, _ := json.Marshal(JobAshLead)
+	numberof := strconv.Itoa(req.NumberAccounts)
+	cmd := exec.Command("python3", "/home/ubuntu/ashlead.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+}

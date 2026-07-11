@@ -717,3 +717,38 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 
 	return output, nil
 }
+
+func RedirectAshLead() ([]models.JobRedirect_DEED, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "dbconn err")
+	}
+
+	rows, err := db.Query(`
+	SELECT job_id , job_url FROM REDIRECT_DEED where job_url LIKE '%ashby%' and visited =FALSE;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+
+	defer rows.Close()
+
+	var output []models.JobRedirect_DEED
+	for rows.Next() {
+
+		var res models.JobRedirect_DEED
+
+		err = rows.Scan(&res.JobId, &res.JobUrl)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+
+}

@@ -94,5 +94,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 	mux.Handle("POST /seekExpiredAutoDeed", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekExpiredAutoDeed),
 	))
+
+	mux.Handle("POST /seekAshLead", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SeekAshLead),
+	))
+
 	return mux
 }
