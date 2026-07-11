@@ -349,6 +349,7 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS REDIRECT_DEED(
                 job_id               TEXT            PRIMARY KEY,
                 job_url              VARCHAR(1024)    NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
                 CONSTRAINT fk_job_link_deed
                     FOREIGN KEY (job_id)
                     REFERENCES JOBS_DEED (job_id)
