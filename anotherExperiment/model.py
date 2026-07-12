@@ -434,6 +434,27 @@ def create_tables(conn) -> None:
                     ON DELETE CASCADE
         );
         """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_ASH (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_DEED (
+                job_id              TEXT      NOT NULL,
+                workflow_id         UUID       NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_ASH (job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_ASH (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
         
 
 
