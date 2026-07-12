@@ -118,6 +118,7 @@ func CsvFile(filepath string, tablename string) error {
 	}
 	if tablename == "JOB_LIFECYCLE_ASH" && len(records) > 0 {
 		Jobs_LifecycleAshLoader(records, tablename, filepath)
+		return nil
 	}
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
