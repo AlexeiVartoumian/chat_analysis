@@ -380,7 +380,7 @@ def create_tables(conn) -> None:
 
         cur.execute("""
                         
-            CREATE TABLE IF NOT EXISTS JOBS_ash (
+            CREATE TABLE IF NOT EXISTS JOBS_ASH (
                 job_id              TEXT          PRIMARY KEY,   
                 title               TEXT          NOT NULL,
                 is_listed           BOOLEAN,
@@ -417,6 +417,22 @@ def create_tables(conn) -> None:
                 REFERENCES JOBS_ash (job_id)
                 ON DELETE CASCADE
             );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_ASH (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN,        NOT NULL,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_ASH (job_id)
+                    ON DELETE CASCADE
+        );
         """)
         
 
