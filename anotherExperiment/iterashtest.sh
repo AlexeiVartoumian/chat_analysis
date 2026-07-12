@@ -17,4 +17,4 @@ while IFS= read -r file; do
     
     fi 
 
-done < <(jq -r '.[][][][]' keys_deed.json)
+done < <(jq -r '.[][][][]' keys_ash.json)
