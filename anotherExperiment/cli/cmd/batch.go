@@ -102,6 +102,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOBS_ASH" && len(records) > 0 {
+		Job_and_search_loader_ash(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE" && len(records) > 0 {
 		Jobs_LifecycleLoader(records, tablename, filepath)
 		return nil
@@ -111,7 +116,9 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifecycleDeedLoader(records, tablename, filepath)
 		return nil
 	}
-
+	if tablename == "JOB_LIFECYCLE_ASH" && len(records) > 0 {
+		Jobs_LifecycleAshLoader(records, tablename, filepath)
+	}
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -274,6 +281,58 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
 }
 
+func Job_and_search_loader_ash(records []map[string]string, tablename string, filepath string) {
+
+	var meta_data []string
+
+	meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+	workflowid := meta_data[0]
+	timestamp, err := parseTimestamp(meta_data[1])
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	//InsertTime := time.Now()
+
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflow{
+		Workflow_id:      workflowid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_ASH")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return
+	}
+
+	for index, record := range records {
+		value, err := JobLoaderAsh(record)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		//skipped, _ := AddNewRow(value, tablename)
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_DEED{
+			Job_id:      value.JobID,
+			Workflow_id: workflowid,
+			Is_new_job:  skipped == 0,
+		}
+		AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
+	}
+
+	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+
+}
+
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
 
 	switch tablename {
@@ -290,8 +349,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "COMPANY_ASH":
 		return Company_AshLoader(record)
 
-	case "JOBS_ASH":
-		return JobLoaderAsh(record)
+	// case "JOBS_ASH":
+	// 	return JobLoaderAsh(record)
 	// case "JOBS":
 	// 	return JobLoader(record)
 	case "JOB_METADATA":
@@ -711,7 +770,6 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 
 		for index, record := range records {
 
-			value, err := Jobs_LifecycleDeedmodel(record, timestamp)
 			value, err := Jobs_LifecycleAshmodel(record, timestamp)
 			if err != nil {
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
@@ -721,48 +779,49 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 
 		}
 	} else {
+		fmt.Println("please implement")
 		//meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
-		timestampStr, err := extractTimestampStr(filepath)
-		if err != nil {
-			fmt.Println("could not extract timestamp from filepath", ErrorHandler(err, "you brought this on yourself"))
-			return // or continue
-		}
-		timestamp, err := parseTimestamp(timestampStr)
-		if err != nil {
-			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
-		}
-		db, err := ConnectDb()
-		if err != nil {
-			fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
-		}
-		defer db.Close()
+		// timestampStr, err := extractTimestampStr(filepath)
+		// if err != nil {
+		// 	fmt.Println("could not extract timestamp from filepath", ErrorHandler(err, "you brought this on yourself"))
+		// 	return // or continue
+		// }
+		// timestamp, err := parseTimestamp(timestampStr)
+		// if err != nil {
+		// 	fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		// }
+		// db, err := ConnectDb()
+		// if err != nil {
+		// 	fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		// }
+		// defer db.Close()
 
-		for index, record := range records {
+		// for index, record := range records {
 
-			if err != nil {
-				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
-				continue
-			}
-			fmt.Println("this is job state", record["job_state"])
-			if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
+		// 	if err != nil {
+		// 		fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+		// 		continue
+		// 	}
+		// 	fmt.Println("this is job state", record["job_state"])
+		// 	if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
 
-				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
+		// 		_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
 
-				if err != nil {
-					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
-					fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
-				}
+		// 		if err != nil {
+		// 			//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+		// 			fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+		// 		}
 
-			} else {
+		// 	} else {
 
-				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, record["job_id"])
+		// 		_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, record["job_id"])
 
-				if err != nil {
-					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
-					fmt.Println("record at index ", index, " for still live job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
-				}
-			}
-		}
+		// 		if err != nil {
+		// 			//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+		// 			fmt.Println("record at index ", index, " for still live job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+		// 		}
+		// 	}
+		// }
 
 	}
 
@@ -1073,7 +1132,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		return ErrorHandler(err, "db conn error")
 	}
 	defer db.Close()
-	if tablename != "JOBS" {
+	switch tablename {
+	case "JOBS":
 
 		_, err = db.Exec(`
         UPDATE SEARCH_WORKFLOW_DEED 
@@ -1081,7 +1141,13 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
         WHERE workflow_id = $3
     `, totalJobs, netNew, workflowid)
 
-	} else {
+	case "JOBS_ASH":
+		_, err = db.Exec(`
+        UPDATE SEARCH_WORKFLOW_ASH
+        SET total_jobs_found = $1, net_new_jobs = $2
+        WHERE workflow_id = $3
+    `, totalJobs, netNew, workflowid)
+	default:
 
 		_, err = db.Exec(`
         UPDATE SEARCH_WORKFLOW 
