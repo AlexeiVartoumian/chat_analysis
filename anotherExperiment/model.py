@@ -422,7 +422,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_ASH (
                 job_id               TEXT            PRIMARY KEY,
-                job_state            BOOLEAN,        NOT NULL,
+                job_state            BOOLEAN        NOT NULL,
                 first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 first_seen_closed_at TIMESTAMPTZ,
