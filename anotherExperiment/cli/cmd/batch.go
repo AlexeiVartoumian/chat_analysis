@@ -369,6 +369,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTION_DEED":
 		return Jobs_DescriptionDeedLoader(record)
 
+	case "JOB_DESCRIPTIONS_ASH":
+		return Jobs_DescriptionAshLoader(record)
+
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
 
@@ -402,6 +405,16 @@ func Jobs_DescriptionDeedLoader(record map[string]string) (models.JobDescription
 	Job_Description := models.JobDescription_DEED{
 		JobId:          job_id,
 		JobDescription: record["job_description"],
+	}
+	return Job_Description, nil
+}
+func Jobs_DescriptionAshLoader(record map[string]string) (models.JobDescription_Ash, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Ash{
+		JobId:          job_id,
+		JobDescription: record["descriptionHtml"],
 	}
 	return Job_Description, nil
 }

@@ -13,3 +13,8 @@ type JobDescription_DEED struct {
 	JobId          string `json:"job_id,omitempty" db:"job_id"`
 	JobDescription string `json:"job_description,omitempty" db:"job_description"`
 }
+
+type JobDescription_Ash struct {
+	JobId          string `json:"job_id,omitempty" db:"job_id"`
+	JobDescription string `json:"descriptionHtml,omitempty" db:"description_html"`
+}
