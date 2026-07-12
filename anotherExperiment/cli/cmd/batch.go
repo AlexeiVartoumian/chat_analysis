@@ -475,6 +475,9 @@ func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Me
 
 func Company_AshLoader(record map[string]string) (models.COMPANY_ASH, error) {
 
+	for k, v := range record {
+		fmt.Printf("key=%q value=%q\n", k, v)
+	}
 	Company_Ash := models.COMPANY_ASH{
 		CompanyId:         record["organizationId"],
 		Name:              record["companyName"],
