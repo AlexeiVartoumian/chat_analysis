@@ -14,3 +14,13 @@ type COMPANY_DEED struct {
 	Name         string `json:"company_name,omitempty" db:"name"`
 	Employer_url string `json:"employer_url,omitempty" db:"employer_url"`
 }
+
+type COMPANY_ASH struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	CompanyId         string  `json:"organizationId,omitempty" db:"company_id"`
+	Name              string  `json:"companyName,omitempty" db:"name"`
+	Public_website    *string `json:"publicWebsite,omitempty" db:"public_website"`
+	CustomJobsPageUrl *string `json:"customJobsPageUrl,omitempty" db:"job_page_url"`
+	Timezone          *string `json:"timezone,omitempty" db:"timezone"`
+	Company_url       *string `json:"company_url,omitempty" db:"company_url"`
+}

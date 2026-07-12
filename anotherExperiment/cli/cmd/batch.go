@@ -281,11 +281,17 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return CompanyLoader(record)
 	case "COMPANY_DEED":
 		return CompanyDeedLoader(record)
+
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
-
 	case "COMPANY_METADATA_DEED":
 		return Company_MetadataDeedLoader(record)
+
+	case "COMPANY_ASH":
+		return Company_AshLoader(record)
+
+	case "JOBS_ASH":
+		return JobLoaderAsh(record)
 	// case "JOBS":
 	// 	return JobLoader(record)
 	case "JOB_METADATA":
@@ -398,6 +404,20 @@ func Company_MetadataDeedLoader(record map[string]string) (models.CompanyDeed_Me
 	}
 
 	return Company_metadata, nil
+}
+
+func Company_AshLoader(record map[string]string) (models.COMPANY_ASH, error) {
+
+	Company_Ash := models.COMPANY_ASH{
+		CompanyId:         record["organizationId"],
+		Name:              record["company_name"],
+		Public_website:    NullableString(record["publicWebsite"]),
+		CustomJobsPageUrl: NullableString(record["customJobsPageUrl"]),
+		Timezone:          NullableString(record["timezone"]),
+		Company_url:       NullableString(record["Company_url"]),
+	}
+
+	return Company_Ash, nil
 }
 
 func toJSONB(s string) *json.RawMessage {
@@ -617,6 +637,43 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 
 }
 
+func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
+
+	is_listed, err := strconv.ParseBool(record["isListed"])
+	if err != nil {
+		return models.JobAsh{}, ErrorHandler(err, "uh oh is_listed fail bool parse")
+	}
+
+	// "4/16/2026" -> M/D/YYYY, no zero-padding guaranteed
+	datePub, err := time.Parse("1/2/2006", record["publishedDate"])
+	if err != nil {
+		return models.JobAsh{}, ErrorHandler(err, "uh oh published_date fail time parse")
+	}
+
+	// "2026-05-19T15:40:48.707Z" -> RFC3339 with milliseconds
+	updatedAt, err := time.Parse(time.RFC3339Nano, record["updatedAt"])
+	if err != nil {
+		return models.JobAsh{}, ErrorHandler(err, "uh oh updated_at fail time parse")
+	}
+
+	job := models.JobAsh{
+		JobID:          record["job_id"],
+		Title:          record["title"],
+		IsListed:       &is_listed,
+		PublishedDate:  datePub,
+		UpdatedAt:      updatedAt,
+		JobURL:         record["job_url"],
+		TeamName:       NullableString(record["teamName"]),
+		DepartmentName: NullableString(record["DepartmentName"]),
+		LocationName:   NullableString(record["locationName"]),
+		EmploymentType: NullableString(record["employmentType"]),
+		WorkplaceType:  NullableString(record["workplaceType"]),
+		Salary:         NullableString(record["salary"]),
+		CompanyID:      record["organizationId"],
+		OriginLinkID:   NullableString(record["origin_link_id"]),
+	}
+	return job, nil
+}
 func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepath string) {
 
 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
@@ -641,6 +698,75 @@ func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepat
 
 }
 
+func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, filepath string) {
+
+	if strings.HasPrefix(filepath, "processedJobsAsh") {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+
+		timestamp, err := parseTimestamp(meta_data[1])
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleDeedmodel(record, timestamp)
+			value, err := Jobs_LifecycleAshmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+		}
+	} else {
+		//meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
+		timestampStr, err := extractTimestampStr(filepath)
+		if err != nil {
+			fmt.Println("could not extract timestamp from filepath", ErrorHandler(err, "you brought this on yourself"))
+			return // or continue
+		}
+		timestamp, err := parseTimestamp(timestampStr)
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		db, err := ConnectDb()
+		if err != nil {
+			fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		defer db.Close()
+
+		for index, record := range records {
+
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			fmt.Println("this is job state", record["job_state"])
+			if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
+
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
+
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
+
+			} else {
+
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET last_seen_listed_at = $1 WHERE job_id = $2", timestamp, record["job_id"])
+
+				if err != nil {
+					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+					fmt.Println("record at index ", index, " for still live job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+				}
+			}
+		}
+
+	}
+
+}
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -739,6 +865,20 @@ func Jobs_LifecycleDeedmodel(record map[string]string, timestamp time.Time) (mod
 	Job_lifeCycle := models.JobLifeCycleDeed{
 		JobId:            record["job_id"],
 		JobState:         record["job_state"],
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+func Jobs_LifecycleAshmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleAsh, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleAsh{
+		JobId:            record["job_id"],
+		Job_state:        record["isListed"],
 		FirstSeenAt:      timestamp,
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
