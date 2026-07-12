@@ -461,8 +461,31 @@ def create_tables(conn) -> None:
                 file_name            VARCHAR(256) PRIMARY KEY
             );
         """)
+        #SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_ASH (
+                department_id       TEXT        PRIMARY KEY,
+                department_name     TEXT        NOT NULL,
+                company_id           TEXT        NOT NULL,
 
+                CONSTRAINT fk_department_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_ASH (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS TEAM_ASH (
+                team_id              TEXT        PRIMARY KEY,
+                team_name            TEXT        NOT NULL,
+                department_id        TEXT        NOT NULL,
+                CONSTRAINT fk_team_department
+                    FOREIGN KEY (department_id)
+                    REFERENCES DEPARTMENT_ASH (department_id)
+                    ON DELETE CASCADE
+            );
+        """)
 def _enum_exists(cur, enum_name: str) -> bool:
     cur.execute(
         "SELECT 1 FROM pg_type WHERE typname = %s;",
