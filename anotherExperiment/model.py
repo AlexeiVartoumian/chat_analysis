@@ -456,6 +456,11 @@ def create_tables(conn) -> None:
             );                    
         """)
         
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_ASH (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
 
 
 def _enum_exists(cur, enum_name: str) -> bool:
