@@ -706,7 +706,6 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 	return job, nil
 
 }
-
 func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 
 	is_listed, err := strconv.ParseBool(record["isListed"])
@@ -714,8 +713,9 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		return models.JobAsh{}, ErrorHandler(err, "uh oh is_listed fail bool parse")
 	}
 
-	// "4/16/2026" -> M/D/YYYY, no zero-padding guaranteed
-	datePub, err := time.Parse("1/2/2006", record["publishedDate"])
+	// "2026-04-16" -> YYYY-MM-DD
+	datePub, err := time.Parse("2006-01-02", record["publishedDate"])
+
 	if err != nil {
 		return models.JobAsh{}, ErrorHandler(err, "uh oh published_date fail time parse")
 	}
