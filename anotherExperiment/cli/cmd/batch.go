@@ -283,6 +283,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 
 func Job_and_search_loader_ash(records []map[string]string, tablename string, filepath string) {
 
+	db, err := ConnectDb() //awful
 	var meta_data []string
 
 	meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
@@ -326,7 +327,14 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			Workflow_id: workflowid,
 			Is_new_job:  skipped == 0,
 		}
-		AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
+
+		if err == nil && value.OriginLinkID != nil {
+
+			_, err = db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", value.OriginLinkID)
+
+		}
+
 	}
 
 	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
