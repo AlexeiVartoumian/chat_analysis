@@ -363,6 +363,63 @@ def create_tables(conn) -> None:
             );
         """)
 
+        #********************************************************************************
+        
+        
+        #here starts ash
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_ash (
+                company_id          TEXT        PRIMARY KEY,  
+                name                TEXT        NOT NULL,      
+                public_website       TEXT,                      
+                job_page_url         TEXT,                      
+                timezone             VARCHAR(64),              
+                company_url          TEXT                       
+            );
+        """)
+
+        cur.execute("""
+                        
+            CREATE TABLE IF NOT EXISTS JOBS_ash (
+                job_id              TEXT          PRIMARY KEY,   
+                title               TEXT          NOT NULL,
+                is_listed           BOOLEAN,
+                department_name     VARCHAR(64),
+                team_name           VARCHAR(64),
+                location_name       VARCHAR(64),
+                employment_type     VARCHAR(32),
+                workplace_type      VARCHAR(32),
+                published_date      TIMESTAMPTZ   NOT NULL,
+                updated_at          TIMESTAMPTZ   NOT NULL,
+                salary              VARCHAR(128),
+                job_url             TEXT          NOT NULL,
+                company_id          TEXT          NOT NULL,      
+                origin_link_id      TEXT,
+
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_ash (company_id)
+                    ON DELETE CASCADE,
+
+                CONSTRAINT fk_jobs_origin
+                    FOREIGN KEY (origin_link_id)
+                    REFERENCES REDIRECT_DEED (job_id)
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_ash (
+                job_id              TEXT          PRIMARY KEY,
+                description_html    TEXT          NOT NULL,
+
+            CONSTRAINT fk_description_job
+                FOREIGN KEY (job_id)
+                REFERENCES JOBS_ash (job_id)
+                ON DELETE CASCADE
+            );
+        """)
+        
+
 
 def _enum_exists(cur, enum_name: str) -> bool:
     cur.execute(
