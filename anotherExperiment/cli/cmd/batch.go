@@ -296,7 +296,7 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 
 	InsertTime := timestamp
 	DuplicateCount := 0
-	SearchWorkflow := models.SearchWorkflow{
+	SearchWorkflow := models.SearchWorkflowAsh{
 		Workflow_id:      workflowid,
 		Run_at:           InsertTime,
 		Total_jobs_found: 0,
