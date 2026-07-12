@@ -444,7 +444,7 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_DEED (
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_ASH(
                 job_id              TEXT      NOT NULL,
                 workflow_id         UUID       NOT NULL,
                 is_new_job          BOOLEAN     NOT NULL DEFAULT false,
