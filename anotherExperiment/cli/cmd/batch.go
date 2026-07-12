@@ -477,11 +477,11 @@ func Company_AshLoader(record map[string]string) (models.COMPANY_ASH, error) {
 
 	Company_Ash := models.COMPANY_ASH{
 		CompanyId:         record["organizationId"],
-		Name:              record["company_name"],
+		Name:              record["companyName"],
 		Public_website:    NullableString(record["publicWebsite"]),
 		CustomJobsPageUrl: NullableString(record["customJobsPageUrl"]),
 		Timezone:          NullableString(record["timezone"]),
-		Company_url:       NullableString(record["Company_url"]),
+		Company_url:       NullableString(record["company_url"]),
 	}
 
 	return Company_Ash, nil
