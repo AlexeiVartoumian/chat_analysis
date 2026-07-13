@@ -19,3 +19,11 @@ type CompanyDetail struct {
 	Company_id   int    `json:"company_id"`
 	Company_name string `json:"name"`
 }
+
+type AshCompany struct {
+	Teamname       string
+	DepartmentName string
+	LocationName   string
+	CompanyUrl     string
+	CompanyId      string
+}

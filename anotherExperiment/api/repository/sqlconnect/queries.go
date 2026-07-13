@@ -752,3 +752,37 @@ func RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 	return output, nil
 
 }
+
+// TODO ADD TIMESTAMP ON TABLE FOR LASTSCAN
+func SeekAshCompany() ([]models.AshCompany, error) {
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "dbconn err")
+	}
+
+	rows, err := db.Query(`
+	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+
+	defer rows.Close()
+
+	var output []models.AshCompany
+	for rows.Next() {
+
+		var res models.AshCompany
+
+		err = rows.Scan(&res.Teamname, &res.DepartmentName, &res.LocationName, &res.CompanyUrl, &res.CompanyId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+}

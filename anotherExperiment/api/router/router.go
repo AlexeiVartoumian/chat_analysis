@@ -99,5 +99,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekAshLead),
 	))
 
+	mux.Handle("POST /seekAshCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SeekAshCompany),
+	))
+
 	return mux
 }
