@@ -85,6 +85,8 @@ resource "aws_iam_role_policy" "esc_invoke" {
 # }
 
 
+
+
 resource "aws_iam_role_policy" "bucket_permissions" {
   role = var.bucket_reader_role_name
   policy = templatefile("${path.module}/bucket_permissions.tpl" , {
@@ -92,6 +94,10 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_file_bucket_arn = var.s3_file_bucket_arn
     s3_output_bucket_arn = var.s3_output_bucket_arn
     s3_backfill_bucket_arn = var.s3_backfill_bucket_arn
+    s3_output_bucket_ash_cache_arn = var.s3_output_bucket_ash_cache_arn
+    s3_output_bucket_ash_store_arn = var.s3_output_bucket_ash_store_arn
+    s3_output_bucket_deed_cache_arn = var.s3_output_bucket_deed_cache_arn
+    s3_output_bucket_deed_store_arn = var.s3_output_bucket_deed_store_arn
   })
 }
 

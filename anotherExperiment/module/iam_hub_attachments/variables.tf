@@ -63,3 +63,19 @@ variable sqs_coordinator_arn_deed {
 variable sqs_deadletter_arn {
     type = string
 }
+
+
+variable s3_output_bucket_ash_cache_arn {
+    type =string
+}
+
+variable s3_output_bucket_ash_store_arn {
+    type = string
+}
+variable s3_output_bucket_deed_cache_arn {
+    type =string
+}
+
+variable s3_output_bucket_deed_store_arn {
+    type = string
+}

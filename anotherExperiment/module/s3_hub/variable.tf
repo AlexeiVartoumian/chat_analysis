@@ -26,3 +26,28 @@ variable "s3_bucket_name_backfill" {
 
     default = "backfill-store"
 }
+
+variable "s3_bucket_name_output_ash_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-ash-cache"
+}
+
+variable "s3_bucket_name_output_ash_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-ash-store"
+}
+
+variable "s3_bucket_name_output_deed_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-deed-cache"
+}
+
+variable "s3_bucket_name_output_deed_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-deed-store"
+}
+

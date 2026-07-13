@@ -18,8 +18,15 @@
                 "${s3_output_bucket_arn}",
                 "${s3_output_bucket_arn}/*",
                 "${s3_backfill_bucket_arn}",
-                "${s3_backfill_bucket_arn}/*"
-              
+                "${s3_backfill_bucket_arn}/*",
+                "${s3_output_bucket_ash_cache_arn}", 
+                "${s3_output_bucket_ash_cache_arn}/*", 
+                "${s3_output_bucket_ash_store_arn}",
+                "${s3_output_bucket_ash_store_arn}/*",
+                "${s3_output_bucket_deed_cache_arn}", 
+                "${s3_output_bucket_deed_cache_arn}/*", 
+                "${s3_output_bucket_deed_store_arn}",
+                "${s3_output_bucket_deed_store_arn}/*" 
             ]
         }
     ]

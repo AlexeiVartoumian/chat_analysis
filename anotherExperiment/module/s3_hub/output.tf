@@ -61,3 +61,61 @@ output "s3_bucket_backfill_name" {
     value = aws_s3_bucket.backfill_store.bucket
 }
 
+
+
+output "s3_bucket_output_ash_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_cache.arn
+}
+output "s3_bucket_output_ash_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_cache.id
+}
+
+output "s3_bucket_output_ash_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_cache.bucket
+}
+
+output "s3_bucket_output_ash_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_store.arn
+}
+output "s3_bucket_output_ash_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_store.id
+}
+output "s3_bucket_output_ash_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_ash_store.bucket
+}
+
+
+
+
+output "s3_bucket_output_deed_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_cache.arn
+}
+output "s3_bucket_output_deed_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_cache.id
+}
+
+output "s3_bucket_output_deed_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_cache.bucket
+}
+
+output "s3_bucket_output_deed_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_store.arn
+}
+output "s3_bucket_output_deed_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_store.id
+}
+output "s3_bucket_output_deed_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_deed_store.bucket
+}

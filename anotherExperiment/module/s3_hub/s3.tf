@@ -21,4 +21,27 @@ resource "aws_s3_bucket" "backfill_store" {
 }
 
 
+resource "aws_s3_bucket" "output_store_ash_cache" {
 
+    bucket = "${local.s3_bucket_name_output_ash_cache}-${data.aws_caller_identity.current.account_id}"
+
+}
+
+resource "aws_s3_bucket" "output_store_ash_store" {
+
+    bucket = "${local.s3_bucket_name_output_ash_store }-${data.aws_caller_identity.current.account_id}"
+
+}
+
+
+resource "aws_s3_bucket" "output_store_deed_cache" {
+
+    bucket = "${local.s3_bucket_name_output_deed_cache}-${data.aws_caller_identity.current.account_id}"
+
+}
+
+resource "aws_s3_bucket" "output_store_deed_store" {
+
+    bucket = "${local.s3_bucket_name_output_deed_store }-${data.aws_caller_identity.current.account_id}"
+
+}

@@ -60,6 +60,12 @@ module "iam_hub_attachments" {
     sqs_coordinator_arn_deed = module.sqs_hub.coordinator_deed_sqs_queue_arn
     file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
+    
+    s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn
+    s3_output_bucket_ash_store_arn = module.s3.s3_bucket_output_ash_store_arn
+
+    s3_output_bucket_deed_cache_arn = module.s3.s3_bucket_output_deed_cache_arn
+    s3_output_bucket_deed_store_arn = module.s3.s3_bucket_output_deed_store_arn
     providers = {
         aws = aws.hub
     }
