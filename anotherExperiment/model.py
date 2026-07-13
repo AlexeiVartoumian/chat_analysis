@@ -480,10 +480,17 @@ def create_tables(conn) -> None:
                 team_id              TEXT        PRIMARY KEY,
                 team_name            TEXT        NOT NULL,
                 department_id        TEXT        NOT NULL,
+                parent_team_id        TEXT,       -- nullable: top-level teams have no parent
+
                 CONSTRAINT fk_team_department
                     FOREIGN KEY (department_id)
                     REFERENCES DEPARTMENT_ASH (department_id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+
+                CONSTRAINT fk_team_parent
+                    FOREIGN KEY (parent_team_id)
+                    REFERENCES TEAM_ASH (team_id)
+                    ON DELETE SET NULL
             );
         """)
 def _enum_exists(cur, enum_name: str) -> bool:
