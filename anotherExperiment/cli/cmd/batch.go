@@ -284,7 +284,10 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 	// 	DuplicateCount = AddJobToDb(records, tablename, DuplicateCount, workflowid, JobLoaderDeed)
 	// }
 
-	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	if err := UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename); err != nil {
+		fmt.Println("failed to update workflow counts:", err)
+	}
 }
 
 func Job_and_search_loader_ash(records []map[string]string, tablename string, filepath string) {
@@ -1164,28 +1167,13 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 	defer db.Close()
 	switch tablename {
 	case "JOBS":
-
-		_, err = db.Exec(`
-        UPDATE SEARCH_WORKFLOW_DEED 
-        SET total_jobs_found = $1, net_new_jobs = $2
-        WHERE workflow_id = $3
-    `, totalJobs, netNew, workflowid)
-
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_ASH":
-		_, err = db.Exec(`
-        UPDATE SEARCH_WORKFLOW_ASH
-        SET total_jobs_found = $1, net_new_jobs = $2
-        WHERE workflow_id = $3
-    `, totalJobs, netNew, workflowid)
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ASH SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
-
-		_, err = db.Exec(`
-        UPDATE SEARCH_WORKFLOW 
-        SET total_jobs_found = $1, net_new_jobs = $2
-        WHERE workflow_id = $3
-    `, totalJobs, netNew, workflowid)
-
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
+
 	if err != nil {
 		return ErrorHandler(err, "update search workflow counts error")
 	}
