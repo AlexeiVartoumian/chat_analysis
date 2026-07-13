@@ -48,7 +48,7 @@ sudo mv chat_analysis/anotherExperiment/itertest.sh /home/ubuntu/itertest.sh
 sudo mv chat_analysis/anotherExperiment/backfilloutputbucket.py /home/ubuntu/backfilloutputbucket.py
 sudo mv chat_analysis/anotherExperiment/listbucketdeed.py /home/ubuntu/listbucketdeed.py
 sudo mv chat_analysis/anotherExperiment/redirecterauto.py /home/ubuntu/redirecterauto.py
-sudo mv chat_analysis/anotherExperiment/sendcommandv2.py /home/ubuntu/sendcommandv2.py
+sudo mv chat_analysis/anotherExperiment/sendssm2.py /home/ubuntu/sendssm2.py
 sudo mv chat_analysis/anotherExperiment/backfilltest.sh /home/ubuntu/backfilltest.sh
 sudo mv chat_analysis/anotherExperiment/iterdeedtest.sh   /home/ubuntu/iterdeedtest.sh
 sudo mv chat_analysis/anotherExperiment/scroller.py   /home/ubuntu/scroller.py
