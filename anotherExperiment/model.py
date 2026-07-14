@@ -481,6 +481,7 @@ def create_tables(conn) -> None:
                 team_name            TEXT        NOT NULL,
                 department_id        TEXT        NOT NULL,
                 parent_team_id        TEXT,       -- nullable: top-level teams have no parent
+                team_external_name    TEXT
 
                 CONSTRAINT fk_team_department
                     FOREIGN KEY (department_id)
