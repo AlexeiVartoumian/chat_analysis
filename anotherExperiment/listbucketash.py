@@ -11,9 +11,9 @@ client = boto3.client('s3')
 paginator = client.get_paginator('list_objects_v2')
 
 
-resp = client.list_objects(Bucket='alexeitranscribefile')
+resp = client.list_objects(Bucket='output-store-ash-cache-390746273208')
 
-pages = paginator.paginate(Bucket='alexeitranscribefile')
+pages = paginator.paginate(Bucket='output-store-ash-cache-390746273208')
 
 
 #TODO keys.txt should come from db
@@ -148,6 +148,9 @@ with open("keys_ash.json" , "w" , encoding="utf-8" ) as f:
             forgive(unique ,output[timeline_key][0])
             output[timeline_key][0][unique][2] = document
         
+        if document.startswith("AshJobsByCompany"):
+            forgive(unique , output[timeline_key][0])
+            output[timeline_key][0][unique][3] = document
       
        
     json.dump(output, f)
