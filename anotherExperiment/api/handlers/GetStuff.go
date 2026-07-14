@@ -1112,3 +1112,45 @@ func SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func SeekGreenLead(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	//dont expect this to be a recurring job
+
+	JobAshLead, err := sqlconnect.RedirectGreenLead()
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+		return
+	}
+
+	payload, err := json.Marshal(JobAshLead)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+		return
+	}
+
+	numberof := strconv.Itoa(req.NumberAccounts)
+	cmd := exec.Command("python3", "/home/ubuntu/greenlead.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		log.Println(err)
+		http.Error(w, "failed to start job", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

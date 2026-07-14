@@ -103,5 +103,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 		http.HandlerFunc(handlers.SeekAshCompany),
 	))
 
+	mux.Handle("POST /seekGreenLead", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(handlers.SeekGreenLead),
+	))
+
 	return mux
 }
