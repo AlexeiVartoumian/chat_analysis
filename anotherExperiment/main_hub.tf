@@ -66,6 +66,9 @@ module "iam_hub_attachments" {
 
     s3_output_bucket_deed_cache_arn = module.s3.s3_bucket_output_deed_cache_arn
     s3_output_bucket_deed_store_arn = module.s3.s3_bucket_output_deed_store_arn
+
+    s3_output_bucket_green_cache_arn = module.s3.s3_bucket_output_green_cache_arn
+    s3_output_bucket_green_store_arn = module.s3.s3_bucket_output_green_store_arn
     providers = {
         aws = aws.hub
     }

@@ -45,3 +45,16 @@ resource "aws_s3_bucket" "output_store_deed_store" {
     bucket = "${local.s3_bucket_name_output_deed_store }-${data.aws_caller_identity.current.account_id}"
 
 }
+
+
+resource "aws_s3_bucket" "output_store_green_cache" {
+
+    bucket = "${local.s3_bucket_name_output_green_cache}-${data.aws_caller_identity.current.account_id}"
+
+}
+
+resource "aws_s3_bucket" "output_store_green_store" {
+
+    bucket = "${local.s3_bucket_name_output_green_store }-${data.aws_caller_identity.current.account_id}"
+
+}

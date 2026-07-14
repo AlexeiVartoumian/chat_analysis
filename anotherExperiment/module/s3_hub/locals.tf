@@ -12,4 +12,7 @@ locals{
 
     s3_bucket_name_output_deed_cache = var.s3_bucket_name_output_deed_cache
     s3_bucket_name_output_deed_store = var.s3_bucket_name_output_deed_store
+
+    s3_bucket_name_output_green_cache = var.s3_bucket_name_output_green_cache
+    s3_bucket_name_output_green_store = var.s3_bucket_name_output_green_store
 }

@@ -51,3 +51,15 @@ variable "s3_bucket_name_output_deed_store" {
     default = "output-store-deed-store"
 }
 
+
+variable "s3_bucket_name_output_green_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-green-cache"
+}
+
+variable "s3_bucket_name_output_green_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-green-store"
+}

@@ -26,7 +26,11 @@
                 "${s3_output_bucket_deed_cache_arn}", 
                 "${s3_output_bucket_deed_cache_arn}/*", 
                 "${s3_output_bucket_deed_store_arn}",
-                "${s3_output_bucket_deed_store_arn}/*" 
+                "${s3_output_bucket_deed_store_arn}/*",
+                "${s3_output_bucket_green_cache_arn}", 
+                "${s3_output_bucket_green_cache_arn}/*", 
+                "${s3_output_bucket_green_store_arn}",
+                "${s3_output_bucket_green_store_arn}/*" 
             ]
         }
     ]

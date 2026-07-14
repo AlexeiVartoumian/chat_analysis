@@ -98,6 +98,8 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_ash_store_arn = var.s3_output_bucket_ash_store_arn
     s3_output_bucket_deed_cache_arn = var.s3_output_bucket_deed_cache_arn
     s3_output_bucket_deed_store_arn = var.s3_output_bucket_deed_store_arn
+    s3_output_bucket_green_cache_arn = var.s3_output_bucket_green_cache_arn
+    s3_output_bucket_green_store_arn = var.s3_output_bucket_green_store_arn
   })
 }
 
