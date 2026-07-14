@@ -24,3 +24,17 @@ type COMPANY_ASH struct {
 	Timezone          *string `json:"timezone,omitempty" db:"timezone"`
 	Company_url       *string `json:"company_url,omitempty" db:"company_url"`
 }
+
+type COMPANY_ASH_DEPARTMENT struct {
+	DepartmentId    string `json:"departmentId,omitempty" db:"department_id"`
+	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
+	CompanyId       string `json:"organizationId,omitempty" db:"company_id"`
+}
+
+type COMPANY_ASH_TEAM struct {
+	TeamId           string  `json:"teamId,omitempty" db:" team_id"`
+	TeamName         string  `json:"teamName,omitempty" db:"team_name"`
+	DepartmentId     string  `json:"departmentId,omitempty" db:"department_id"`
+	ParentTeamId     *string `json:"parentTeamId,omitempty" db:"parent_team_id"`
+	TeamExternalName *string `json:"teamExternalName,omitempty" db:"team_external_name"`
+}

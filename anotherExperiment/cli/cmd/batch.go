@@ -294,8 +294,11 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 
 	db, err := ConnectDb() //awful
 	var meta_data []string
-
-	meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+	if strings.HasPrefix(filepath, "processedJobsAsh") {
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+	} else {
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+	}
 	workflowid := meta_data[0]
 	timestamp, err := parseTimestamp(meta_data[1])
 	if err != nil {
@@ -331,7 +334,7 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			break
 		}
 		DuplicateCount += skipped
-		JobSearchWorkflow := models.JOB_SEARCH_TERM_DEED{
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_ASH{
 			Job_id:      value.JobID,
 			Workflow_id: workflowid,
 			Is_new_job:  skipped == 0,
@@ -385,6 +388,11 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "REDIRECT_DEED":
 		return RedirectDeedLoader(record)
+
+	case "TEAM_ASH":
+		return TeamAshLoader(record)
+	case "DEPARTMENT_ASH":
+		return DepartmentAshLoader(record)
 	default:
 		return nil, nil
 	}
@@ -406,6 +414,28 @@ func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, er
 	return Job_Description, nil
 }
 
+func DepartmentAshLoader(record map[string]string) (models.COMPANY_ASH_DEPARTMENT, error) {
+
+	AshDepartment := models.COMPANY_ASH_DEPARTMENT{
+		DepartmentId:    record["departmentId"],
+		Department_name: record["DepartmentName"],
+		CompanyId:       record["organizationId"],
+	}
+	return AshDepartment, nil
+
+}
+
+func TeamAshLoader(record map[string]string) (models.COMPANY_ASH_TEAM, error) {
+
+	Ashteam := models.COMPANY_ASH_TEAM{
+		TeamId:           record["teamId"],
+		TeamName:         record["teamName"],
+		DepartmentId:     record["departmentId"],
+		ParentTeamId:     NullableString(record["parentTeamId"]),
+		TeamExternalName: NullableString(record["teamExternalName"]),
+	}
+	return Ashteam, nil
+}
 func Jobs_DescriptionDeedLoader(record map[string]string) (models.JobDescription_DEED, error) {
 
 	job_id := record["job_id"]
@@ -728,6 +758,8 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 	return job, nil
 
 }
+
+// add boolean to determine what to pass
 func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 
 	is_listed, err := strconv.ParseBool(record["isListed"])
@@ -811,8 +843,27 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 			AddNewRow(value, "JOB_LIFECYCLE_ASH")
 
 		}
+	} else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+		timestamp, err := parseTimestamp(meta_data[1])
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleAshmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+		}
 	} else {
 		fmt.Println("please implement")
+
 		//meta_data := strings.Split(strings.Split(strings.Split(filepath, "redirectlinksInd-")[1], ".csv")[0], "_")
 		// timestampStr, err := extractTimestampStr(filepath)
 		// if err != nil {
