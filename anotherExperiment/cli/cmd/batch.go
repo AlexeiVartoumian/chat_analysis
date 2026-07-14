@@ -1253,15 +1253,27 @@ func Team_loader_ash(records []map[string]string, tablename string, filepath str
 	var teams []models.COMPANY_ASH_TEAM
 
 	for _, record := range records {
+		// child team (the team this job posting is directly tagged with)
 		team, err := TeamAshLoader(record)
 		if err != nil {
 			return ErrorHandler(err, "team parse failed")
 		}
-		if team.TeamId == "" || seen[team.TeamId] {
-			continue
+		if team.TeamId != "" && !seen[team.TeamId] {
+			seen[team.TeamId] = true
+			teams = append(teams, team)
 		}
-		seen[team.TeamId] = true
-		teams = append(teams, team)
+
+		// parent team — same row gives us its real id + name, add it too
+		parentID := record["parentTeamId"]
+		if parentID != "" && !seen[parentID] {
+			seen[parentID] = true
+			teams = append(teams, models.COMPANY_ASH_TEAM{
+				TeamId:       parentID,
+				TeamName:     record["parentTeam"],
+				DepartmentId: record["departmentId"],
+				ParentTeamId: nil,
+			})
+		}
 	}
 
 	for _, t := range teams {
