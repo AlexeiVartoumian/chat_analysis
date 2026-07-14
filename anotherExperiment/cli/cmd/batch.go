@@ -129,6 +129,10 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
 	}
+	if tablename == "TEAM_ASH" && len(records) > 0 {
+		Team_loader_ash(records, tablename, filepath)
+		return nil
+	}
 	fmt.Println("records length:", len(records))
 	if tablename == "JOB_LIFECYCLE_UPDATE_SUSPENDED" && len(records) > 0 {
 		Jobs_LifeCycleSuspendedRolesUpdater(records, filepath)
@@ -389,8 +393,6 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "REDIRECT_DEED":
 		return RedirectDeedLoader(record)
 
-	case "TEAM_ASH":
-		return TeamAshLoader(record)
 	case "DEPARTMENT_ASH":
 		return DepartmentAshLoader(record)
 	default:
@@ -1230,4 +1232,60 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 	}
 
 	return nil
+}
+
+// two pass logic on every row needed for self referencing parent id that might not exist yet . set null then set if exists.
+func Team_loader_ash(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "team loader db connection failed")
+	}
+	defer db.Close()
+
+	tx, err := db.Begin()
+	if err != nil {
+		return ErrorHandler(err, "team loader begin tx failed")
+	}
+	defer tx.Rollback()
+
+	seen := make(map[string]bool)
+	var teams []models.COMPANY_ASH_TEAM
+
+	for _, record := range records {
+		team, err := TeamAshLoader(record)
+		if err != nil {
+			return ErrorHandler(err, "team parse failed")
+		}
+		if team.TeamId == "" || seen[team.TeamId] {
+			continue
+		}
+		seen[team.TeamId] = true
+		teams = append(teams, team)
+	}
+
+	for _, t := range teams {
+		_, err := tx.Exec(`
+            INSERT INTO TEAM_ASH (team_id, team_name, department_id, team_external_name)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (team_id) DO NOTHING
+        `, t.TeamId, t.TeamName, t.DepartmentId, t.TeamExternalName)
+		if err != nil {
+			return ErrorHandler(err, "team insert (pass 1) failed")
+		}
+	}
+
+	for _, t := range teams {
+		if t.ParentTeamId == nil {
+			continue
+		}
+		_, err := tx.Exec(`
+            UPDATE TEAM_ASH SET parent_team_id = $1 WHERE team_id = $2
+        `, t.ParentTeamId, t.TeamId)
+		if err != nil {
+			return ErrorHandler(err, "team parent backfill (pass 2) failed")
+		}
+	}
+
+	return tx.Commit()
 }
