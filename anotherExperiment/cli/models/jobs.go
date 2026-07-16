@@ -53,7 +53,7 @@ type JobGreen struct {
 	CompanyID     int       `json:"company_id" db:"company_id"`
 	Company_name  string    `json:"company_name,omitempty" db:"company_name"`
 	JobURL        string    `json:"job_url" db:"job_url"`
-	RedirectURL   *string   `json:"redirect_url" db:"job_url"`
+	RedirectURL   *string   `json:"redirect_url" db:"redirect_url"`
 	PublishedDate time.Time `json:"publishedDate" db:"published_date"`
 	Salary        *string   `json:"salary,omitempty" db:"salary"`
 	OriginLinkID  *string   `json:"origin_link_id,omitempty" db:"origin_link_id"`
