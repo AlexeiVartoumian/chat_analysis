@@ -532,7 +532,7 @@ def create_tables(conn) -> None:
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_GREEN (company_id)
-                    ON DELETE CASCADE,
+                    ON DELETE CASCADE
             );
         """)
         cur.execute("""
