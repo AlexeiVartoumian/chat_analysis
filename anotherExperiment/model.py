@@ -524,8 +524,8 @@ def create_tables(conn) -> None:
                 company_name            VARCHAR(128)    NOT NULL,    
                 job_url                 TEXT            NOT NULL,
                 redirect_url            TEXT,
-                location_name           VARCHAR(64),                  
-                salary                  VARCHAR(64),
+                location_name           TEXT,                  
+                salary                  TEXT,
                 published_date          TIMESTAMPTZ   NOT NULL,
                 origin_link_id          TEXT,
 
