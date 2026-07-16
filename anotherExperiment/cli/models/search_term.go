@@ -22,6 +22,13 @@ type SearchWorkflowAsh struct {
 	Net_new_found    int       `json:"net_new_jobs,omitempty" db:"net_new_jobs"`
 }
 
+type SearchWorkflowGreen struct {
+	Workflow_id      string    `json:"workflow_id,omitempty" db:"workflow_id"`
+	Run_at           time.Time `json:"run_at,omitempty" db:"run_at"`
+	Total_jobs_found int       `json:"total_jobs_found,omitempty" db:"total_jobs_found"`
+	Net_new_found    int       `json:"net_new_jobs,omitempty" db:"net_new_jobs"`
+}
+
 type JOB_SEARCH_TERM struct {
 	Job_id      int    `json:"id,omitempty" db:"job_id"`
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
@@ -39,6 +46,13 @@ type JOB_SEARCH_TERM_ASH struct {
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
 	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
 }
+
+type JOB_SEARCH_TERM_GREEN struct {
+	Job_id      int    `json:"id,omitempty" db:"job_id"`
+	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`

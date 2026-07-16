@@ -76,6 +76,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_GREEN" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -112,6 +117,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOBS_GREEN" && len(records) > 0 {
+		Job_and_search_loader_green(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE" && len(records) > 0 {
 		Jobs_LifecycleLoader(records, tablename, filepath)
 		return nil
@@ -123,6 +133,10 @@ func CsvFile(filepath string, tablename string) error {
 	}
 	if tablename == "JOB_LIFECYCLE_ASH" && len(records) > 0 {
 		Jobs_LifecycleAshLoader(records, tablename, filepath)
+		return nil
+	}
+	if tablename == "JOB_LIFECYCLE_GREEN" && len(records) > 0 {
+		Jobs_LifecycleGreenLoader(records, tablename, filepath)
 		return nil
 	}
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
@@ -356,6 +370,65 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
 
 }
+func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) {
+
+	db, err := ConnectDb() //awful
+	var meta_data []string
+	if strings.HasPrefix(filepath, "processedJobsGreen") {
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
+	} // else {
+	// 	meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+	// }
+
+	workflowid := meta_data[0]
+	timestamp, err := parseTimestamp(meta_data[1])
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflowGreen{
+		Workflow_id:      workflowid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_GREEN")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return
+	}
+
+	for index, record := range records {
+		value, err := JobLoaderGreen(record)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		//skipped, _ := AddNewRow(value, tablename)
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_GREEN{
+			Job_id:      value.JobID,
+			Workflow_id: workflowid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_GREEN")
+
+		if err == nil && value.OriginLinkID != nil {
+
+			_, err = db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", value.OriginLinkID)
+
+		}
+		UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+
+	}
+}
 
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
 
@@ -364,14 +437,15 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return CompanyLoader(record)
 	case "COMPANY_DEED":
 		return CompanyDeedLoader(record)
+	case "COMPANY_GREEN":
+		return Company_GreenLoader(record)
+	case "COMPANY_ASH":
+		return Company_AshLoader(record)
 
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
 	case "COMPANY_METADATA_DEED":
 		return Company_MetadataDeedLoader(record)
-
-	case "COMPANY_ASH":
-		return Company_AshLoader(record)
 
 	// case "JOBS_ASH":
 	// 	return JobLoaderAsh(record)
@@ -386,6 +460,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "JOB_DESCRIPTIONS_ASH":
 		return Jobs_DescriptionAshLoader(record)
+
+	case "JOB_DESCRIPTIONS_GREEN":
+		return Jobs_DescriptionGreenLoader(record)
 
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
@@ -455,6 +532,23 @@ func Jobs_DescriptionAshLoader(record map[string]string) (models.JobDescription_
 	Job_Description := models.JobDescription_Ash{
 		JobId:          job_id,
 		JobDescription: record["descriptionHtml"],
+	}
+	return Job_Description, nil
+}
+
+func Jobs_DescriptionGreenLoader(record map[string]string) (models.JobDescription_Green, error) {
+
+	job_id, err := strconv.Atoi(record["job_id"])
+
+	if err != nil {
+		return models.JobDescription_Green{}, ErrorHandler(err, "whoops")
+	}
+
+	Job_Description := models.JobDescription_Green{
+		JobId:                    job_id,
+		JobDescription:           record["job_description"],
+		JobDescriptionConclusion: NullableString(record["job_description_conclusion"]),
+		Company_about:            NullableString(record["company_about"]),
 	}
 	return Job_Description, nil
 }
@@ -542,6 +636,26 @@ func Company_AshLoader(record map[string]string) (models.COMPANY_ASH, error) {
 	}
 
 	return Company_Ash, nil
+}
+
+func Company_GreenLoader(record map[string]string) (models.COMPANY_GREEN, error) {
+
+	company_id, err := strconv.Atoi(record["company_id"])
+
+	if err != nil {
+		fmt.Println("timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		return models.COMPANY_GREEN{}, ErrorHandler(err, "whoops")
+	}
+	Company_Green := models.COMPANY_GREEN{
+		CompanyId:         company_id,
+		CompanyName:       record["company_name"],
+		JobBoardPublicUrl: NullableString(record["job_board_public_url"]),
+		DomainUrl:         NullableString(record["domainurl"]),
+		Company_url:       NullableString(record["company_url"]),
+		CompanyAbout:      NullableString(record["company_about"]),
+	}
+
+	return Company_Green, nil
 }
 
 func toJSONB(s string) *json.RawMessage {
@@ -800,6 +914,44 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 	}
 	return job, nil
 }
+
+func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
+
+	job_id, err := strconv.Atoi(record["job_id"])
+
+	if err != nil {
+		fmt.Println("jobid conversion went wrong", ErrorHandler(err, "you brought this on yourself"))
+		return models.JobGreen{}, ErrorHandler(err, "whoops")
+	}
+
+	company_id, err := strconv.Atoi(record["company_id"])
+
+	if err != nil {
+		fmt.Println("companyid extraction went wrong", ErrorHandler(err, "you brought this on yourself"))
+		return models.JobGreen{}, ErrorHandler(err, "whoops")
+	}
+
+	// "2026-05-19T15:40:48.707Z" -> RFC3339 with milliseconds
+	datePub, err := time.Parse(time.RFC3339Nano, record["publishedDate"])
+	if err != nil {
+		return models.JobGreen{}, ErrorHandler(err, "uh oh updated_at fail time parse")
+	}
+
+	job := models.JobGreen{
+		JobID:         job_id,
+		Title:         record["title"],
+		LocationName:  NullableString(record["locationName"]),
+		CompanyID:     company_id,
+		Company_name:  record["company_name"],
+		JobURL:        record["job_url"],
+		RedirectURL:   NullableString(record["redirect_url"]),
+		PublishedDate: datePub,
+		Salary:        NullableString(record["salary"]),
+		OriginLinkID:  NullableString(record["origin_link_id"]),
+	}
+	return job, nil
+}
+
 func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepath string) {
 
 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
@@ -912,6 +1064,50 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 	}
 
 }
+func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, filepath string) {
+	if strings.HasPrefix(filepath, "processedJobsGreen") {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
+
+		timestamp, err := parseTimestamp(meta_data[1])
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleGreenmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_GREEN")
+
+		}
+	} else {
+		fmt.Println("please implement")
+	}
+	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+	// 	timestamp, err := parseTimestamp(meta_data[1])
+
+	// 	if err != nil {
+	// 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	// 	}
+	// 	for index, record := range records {
+
+	// 		value, err := Jobs_LifecycleAshmodel(record, timestamp)
+	// 		if err != nil {
+	// 			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+	// 			continue
+	// 		}
+	// 		AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+	// 	}
+
+}
+
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -1024,6 +1220,27 @@ func Jobs_LifecycleAshmodel(record map[string]string, timestamp time.Time) (mode
 	Job_lifeCycle := models.JobLifeCycleAsh{
 		JobId:            record["job_id"],
 		Job_state:        record["isListed"],
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleGreenmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleGreen, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	job_id, err := strconv.Atoi(record["job_id"])
+	if err != nil {
+		fmt.Println("something wrong", ErrorHandler(err, "you brought this on yourself"))
+		return models.JobLifeCycleGreen{}, ErrorHandler(err, "whoops")
+	}
+
+	//TODO  jobstate is default true will have to update on consequrn riuns
+	Job_lifeCycle := models.JobLifeCycleGreen{
+		JobId:            job_id,
 		FirstSeenAt:      timestamp,
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
@@ -1223,6 +1440,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_ASH":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ASH SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_GREEN":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_GREEN SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}

@@ -46,6 +46,19 @@ type JobAsh struct {
 	OriginLinkID   *string   `json:"origin_link_id,omitempty" db:"origin_link_id"`
 }
 
+type JobGreen struct {
+	JobID         int       `json:"job_id" db:"job_id"`
+	Title         string    `json:"title" db:"title"`
+	LocationName  *string   `json:"locationName,omitempty" db:"location_name"`
+	CompanyID     int       `json:"company_id" db:"company_id"`
+	Company_name  string    `json:"company_name,omitempty" db:"company_name"`
+	JobURL        string    `json:"job_url" db:"job_url"`
+	RedirectURL   *string   `json:"redirect_url" db:"job_url"`
+	PublishedDate time.Time `json:"publishedDate" db:"published_date"`
+	Salary        *string   `json:"salary,omitempty" db:"salary"`
+	OriginLinkID  *string   `json:"origin_link_id,omitempty" db:"origin_link_id"`
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

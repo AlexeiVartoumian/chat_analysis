@@ -18,3 +18,10 @@ type JobDescription_Ash struct {
 	JobId          string `json:"job_id,omitempty" db:"job_id"`
 	JobDescription string `json:"descriptionHtml,omitempty" db:"description_html"`
 }
+
+type JobDescription_Green struct {
+	JobId                    int     `json:"job_id,omitempty" db:"job_id"`
+	JobDescription           string  `json:"job_description,omitempty" db:"job_description"`
+	JobDescriptionConclusion *string `json:"job_description_conclusion,omitempty" db:"job_description_conclusion"`
+	Company_about            *string `json:"company_about,omitempty" db:"company_about"`
+}

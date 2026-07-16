@@ -25,6 +25,16 @@ type COMPANY_ASH struct {
 	Company_url       *string `json:"company_url,omitempty" db:"company_url"`
 }
 
+type COMPANY_GREEN struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	CompanyId         int     `json:"company_id,omitempty" db:"company_id"`
+	CompanyName       string  `json:"companyName,omitempty" db:"name"`
+	JobBoardPublicUrl *string `json:"job_board_public_url,omitempty" db:"job_board_public_url"`
+	DomainUrl         *string `json:"customJobsPageUrl,omitempty" db:"domainurl"`
+	Company_url       *string `json:"company_url,omitempty" db:"company_url"`
+	CompanyAbout      *string `json:"companyAbout,omitempty" db:"company_about"`
+}
+
 type COMPANY_ASH_DEPARTMENT struct {
 	DepartmentId    string `json:"departmentId,omitempty" db:"department_id"`
 	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
