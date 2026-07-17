@@ -15,7 +15,9 @@
                 "ecr:BatchGetImage",
                 "ecr:BatchCheckLayerAvailability"
             ],
-            "Resource": "arn:aws:ecr:eu-west-2:${hub_account}:repository/scroller"
+            "Resource": ["arn:aws:ecr:eu-west-2:${hub_account}:repository/scroller",
+                         "arn:aws:ecr:eu-west-2:${hub_account}:repository/reader"  
+             ]
         },
         {
             "Sid": "WriteLogs",

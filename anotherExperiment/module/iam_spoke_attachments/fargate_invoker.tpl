@@ -5,7 +5,9 @@
             "Sid": "RunECSTasks",
             "Effect": "Allow",
             "Action": "ecs:RunTask",
-            "Resource":  "arn:aws:ecs:eu-west-2:${spoke_account_id}:task-definition/scroller-task:*"
+            "Resource":  [ "arn:aws:ecs:eu-west-2:${spoke_account_id}:task-definition/scroller-task:*",
+                            "arn:aws:ecs:eu-west-2:${spoke_account_id}:task-definition/reader-task:*"
+             ]
 
         },
         {
