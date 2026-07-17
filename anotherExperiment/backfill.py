@@ -44,8 +44,7 @@ def main():
                           "search_type" : search_type , "workflow_id" : workflow_id ,"auto" :auto })
     response = lamdba_client.invoke(
     FunctionName='backfill_orchestrator',
-    Payload=payload,
-    Qualifier='1',
+    Payload=payload
     )
 
     print(response)
