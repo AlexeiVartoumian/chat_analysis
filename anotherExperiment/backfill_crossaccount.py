@@ -43,7 +43,7 @@ def main():
     payload = json.dumps({"s3_source_bucket": source_store ,"output_store": output_store, 
                           "search_type" : search_type , "workflow_id" : workflow_id ,"auto" :auto })
     response = lamdba_client.invoke(
-    FunctionName='backfill-orchestrator',
+    FunctionName='backfill_orchestrator',
     Payload=payload,
     Qualifier='1',
     )
