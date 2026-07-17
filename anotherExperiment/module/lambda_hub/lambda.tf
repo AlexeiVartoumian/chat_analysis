@@ -20,6 +20,12 @@ data "archive_file" "orchestrator_path_deed" {
     output_path = "${path.root}/module/sources/orchestrator_deed/orchestrator_deed.zip"
 }
 
+data "archive_file" "orchestrator_path_backfill" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/backfill_orchestrator/backfill_orchestrator.py"
+    output_path = "${path.root}/module/sources/backfill_orchestrator/backfill_orchestrator.zip"
+}
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -91,6 +97,28 @@ resource "aws_lambda_function" "orchestrator_deed" {
 
     #depends_on = [aws_cloudwatch_log_group.orchestrator]
 }
+
+resource "aws_lambda_function" "orchestrator_backfill" {
+    
+    filename = data.archive_file.orchestrator_path_backfill.output_path
+    source_code_hash = data.archive_file.orchestrator_path_backfill.output_base64sha256
+
+    function_name = "backfill_orchestrator"
+    role = var.aws_iam_role_main_arn
+    handler = "backfill_orchestrator.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 60
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    environment {
+        variables = {
+            account_pool_table_deed= var.account_pool_table_deed
+            file_pool_table = var.file_pool_table
+        }
+    }
+
+    #depends_on = [aws_cloudwatch_log_group.orchestrator]
+}
+
 
 
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
