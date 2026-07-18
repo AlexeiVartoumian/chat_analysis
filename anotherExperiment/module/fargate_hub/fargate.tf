@@ -165,3 +165,28 @@ resource "aws_ecr_repository_policy" "hub_ecr_policy" {
     ]
   })
 }
+
+resource "aws_ecr_repository_policy" "hub_ecr_policy_reader" {
+
+  repository = "reader"
+
+  policy = jsonencode({
+     Version = "2012-10-17"
+     Statement = [
+      {
+        Sid    = "AllowSpokeTaskExecutionRolePull"
+        Effect = "Allow"
+        Principal = {
+          AWS = [for id in var.spoke_accounts : 
+            "arn:aws:iam::${id}:role/ecs_reader_task_execution_role"
+          ]
+        }
+        Action = [
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:BatchCheckLayerAvailability"
+        ]
+      }
+    ]
+  })
+}
