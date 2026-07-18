@@ -400,6 +400,10 @@ def create_tables(conn) -> None:
                         FOREIGN KEY (company_id)
                         REFERENCES COMPANY_ash (company_id)
                         ON DELETE CASCADE,
+                    
+                    CONSTRAINT fk_jobs_origin_deed
+                        FOREIGN KEY (origin_deed_id)
+                        REFERENCES REDIRECT_DEED (job_id),
 
                     CONSTRAINT fk_jobs_origin
                         FOREIGN KEY (origin_link_id)
@@ -533,10 +537,16 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_GREEN (company_id)
                     ON DELETE CASCADE,
-
-                CONSTRAINT fk_jobs_origin
+                
+                CONSTRAINT fk_jobs_origin_deed
+                    FOREIGN KEY (origin_deed_id)
+                    REFERENCES REDIRECT_DEED (job_id),
+                
+                    CONSTRAINT fk_jobs_origin
                     FOREIGN KEY (origin_link_id)
                     REFERENCES JOBS (job_id)
+                
+               
             );  
         """)
         cur.execute("""
