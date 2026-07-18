@@ -1209,7 +1209,7 @@ func SeekAshLeadLink(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	//dont expect this to be a recurring job
-	JobAshLead, err := sqlconnect.RedirectAshLead()
+	JobAshLead, err := sqlconnect.RedirectLinkAsh()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
