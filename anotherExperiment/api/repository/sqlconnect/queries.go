@@ -809,7 +809,7 @@ func RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 	for rows.Next() {
 
 		var res models.JobRedirect_DEED
-
+		res.Origin = "deed"
 		err = rows.Scan(&res.JobId, &res.JobUrl)
 
 		if err != nil {
@@ -821,3 +821,97 @@ func RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 	return output, nil
 
 }
+
+func RedirectGreenLinkLead() ([]models.JobRedirect_LinkGreen, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "dbconn err")
+	}
+
+	rows, err := db.Query(`
+	SELECT jg.job_id, jg.company_apply_url
+		FROM JOB_METADATA jg
+		JOIN JOB_LIFECYCLE jl 
+			ON jg.job_id = jl.job_id
+		WHERE jg.company_apply_url LIKE '%greenhouse%'
+		AND jl.job_state = 'LISTED'
+		AND NOT EXISTS (
+			SELECT 1 
+			FROM JOBS_ASH ja 
+			WHERE ja.origin_link_id = jg.job_id
+		);
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+
+	defer rows.Close()
+
+	var output []models.JobRedirect_LinkGreen
+	for rows.Next() {
+
+		var res models.JobRedirect_LinkGreen
+
+		err = rows.Scan(&res.JobId, &res.JobUrl)
+		res.Origin = "link"
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+
+}
+
+func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
+
+	db, err := ConnectDb()
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "dbconn err")
+	}
+
+	rows, err := db.Query(`
+	SELECT jg.job_id, jg.company_apply_url
+		FROM JOB_METADATA jg
+		JOIN JOB_LIFECYCLE jl 
+			ON jg.job_id = jl.job_id
+		WHERE jg.company_apply_url LIKE '%ashby%'
+		AND jl.job_state = 'LISTED'
+		AND NOT EXISTS (
+			SELECT 1 
+			FROM JOBS_ASH ja 
+			WHERE ja.origin_link_id = jg.job_id
+		) limit 100;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+
+	defer rows.Close()
+
+	var output []models.JobRedirect_LinkAsh
+	for rows.Next() {
+
+		var res models.JobRedirect_LinkAsh
+
+		err = rows.Scan(&res.JobId, &res.JobUrl)
+		res.Origin = "link"
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+
+}
+
+// SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
+
+// SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';

@@ -17,4 +17,17 @@ type JobDescription_DEED struct {
 type JobRedirect_DEED struct {
 	JobId  string `json:"job_id,omitempty" db:"job_id"`
 	JobUrl string `json:"job_url,omitempty" db:"job_url"`
+	Origin string `json:"origin,omitempty" db:"origin"`
+}
+
+type JobRedirect_LinkGreen struct {
+	JobId  string `json:"job_id,omitempty" db:"job_id"`
+	JobUrl string `json:"job_url,omitempty" db:"job_url"`
+	Origin string `json:"origin,omitempty" db:"origin"`
+}
+
+type JobRedirect_LinkAsh struct {
+	JobId  string `json:"job_id,omitempty" db:"job_id"`
+	JobUrl string `json:"job_url,omitempty" db:"job_url"`
+	Origin string `json:"origin,omitempty" db:"origin"`
 }
