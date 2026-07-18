@@ -603,7 +603,7 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-            CREATE TABLE redirect_link (
+              CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
                 visited_green BOOLEAN DEFAULT FALSE,
                 visited_ash   BOOLEAN DEFAULT FALSE
