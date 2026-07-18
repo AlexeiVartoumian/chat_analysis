@@ -603,10 +603,12 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-              CREATE TABLE redirect_link (
+            CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
-                visited_green BOOLEAN DEFAULT FALSE,
-                visited_ash   BOOLEAN DEFAULT FALSE
+                status_green  VARCHAR(16) DEFAULT 'pending'
+                            CHECK (status_green IN ('pending', 'in_progress', 'done', 'failed')),
+                status_ash    VARCHAR(16) DEFAULT 'pending'
+                            CHECK (status_ash IN ('pending', 'in_progress', 'done', 'failed'))
             );
         """)
 
