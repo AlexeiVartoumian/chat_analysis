@@ -839,8 +839,8 @@ func RedirectGreenLinkLead() ([]models.JobRedirect_LinkGreen, error) {
 		AND jl.job_state = 'LISTED'
 		AND NOT EXISTS (
 			SELECT 1 
-			FROM JOBS_ASH ja 
-			WHERE ja.origin_link_id = jg.job_id
+			FROM JOBS_GREEN jgn 
+			WHERE jgn.origin_link_id = jg.job_id
 		);
 	`)
 
