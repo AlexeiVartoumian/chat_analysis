@@ -113,7 +113,7 @@ for count in range(numberof):
     if first_run == "true":
         workflow_id = str(uuid.uuid4())
         file = acquire_lock(workflow_id)
-        scroller_worker = f"ashlead-{scroller_count}"
+        scroller_worker = f"greenlead-{scroller_count}"
         scroller_count+=1
         response = ec2_client.run_instances(LaunchTemplate={'LaunchTemplateId': 'lt-0989cbde3348f9e83', 'Version': '$Latest'} ,MinCount=1,MaxCount=1, TagSpecifications=[{'ResourceType': 'instance','Tags': [{'Key': 'Name', 'Value': f'{scroller_worker}'}]}])
 
