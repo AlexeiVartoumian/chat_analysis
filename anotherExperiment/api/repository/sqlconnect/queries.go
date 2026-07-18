@@ -821,8 +821,7 @@ func RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 	return output, nil
 
 }
-
-func RedirectGreenLinkLead() ([]models.JobRedirect_LinkGreen, error) {
+func RedirectLinkGreen() ([]models.JobRedirect_LinkGreen, error) {
 
 	db, err := ConnectDb()
 
@@ -831,23 +830,19 @@ func RedirectGreenLinkLead() ([]models.JobRedirect_LinkGreen, error) {
 	}
 
 	rows, err := db.Query(`
-	SELECT jg.job_id, jg.company_apply_url
-		FROM JOB_METADATA jg
-		JOIN JOB_LIFECYCLE jl 
-			ON jg.job_id = jl.job_id
+		SELECT rl.job_id, jg.company_apply_url
+		FROM redirect_link rl
+		JOIN JOB_METADATA jg ON jg.job_id = rl.job_id
+		JOIN JOB_LIFECYCLE jl ON jg.job_id = jl.job_id
 		WHERE jg.company_apply_url LIKE '%greenhouse%'
 		AND jl.job_state = 'LISTED'
-		AND NOT EXISTS (
-			SELECT 1 
-			FROM JOBS_GREEN jgn 
-			WHERE jgn.origin_link_id = jg.job_id
-		);
+		AND rl.status_green = 'pending'
+		LIMIT 100;
 	`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "error on upload")
 	}
-
 	defer rows.Close()
 
 	var output []models.JobRedirect_LinkGreen
@@ -863,8 +858,25 @@ func RedirectGreenLinkLead() ([]models.JobRedirect_LinkGreen, error) {
 
 		output = append(output, res)
 	}
-	return output, nil
 
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "rows iteration error")
+	}
+	rows.Close() // done reading, free the connection before issuing updates
+
+	for _, job := range output {
+		_, err := db.Exec(`
+			UPDATE redirect_link
+			SET status_green = 'in_progress'
+			WHERE job_id = $1;
+		`, job.JobId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "error updating status to in_progress")
+		}
+	}
+
+	return output, nil
 }
 
 func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
@@ -876,23 +888,19 @@ func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
 	}
 
 	rows, err := db.Query(`
-	SELECT jg.job_id, jg.company_apply_url
-		FROM JOB_METADATA jg
-		JOIN JOB_LIFECYCLE jl 
-			ON jg.job_id = jl.job_id
+		SELECT rl.job_id, jg.company_apply_url
+		FROM redirect_link rl
+		JOIN JOB_METADATA jg ON jg.job_id = rl.job_id
+		JOIN JOB_LIFECYCLE jl ON jg.job_id = jl.job_id
 		WHERE jg.company_apply_url LIKE '%ashby%'
 		AND jl.job_state = 'LISTED'
-		AND NOT EXISTS (
-			SELECT 1 
-			FROM JOBS_ASH ja 
-			WHERE ja.origin_link_id = jg.job_id
-		) limit 100;
+		AND rl.status_ash = 'pending'
+		LIMIT 100;
 	`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "error on upload")
 	}
-
 	defer rows.Close()
 
 	var output []models.JobRedirect_LinkAsh
@@ -908,8 +916,24 @@ func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
 
 		output = append(output, res)
 	}
-	return output, nil
 
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "rows iteration error")
+	}
+	rows.Close()
+	for _, job := range output {
+		_, err := db.Exec(`
+			UPDATE redirect_link
+			SET status_ash = 'in_progress'
+			WHERE job_id = $1;
+		`, job.JobId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "error updating status to in_progress")
+		}
+	}
+
+	return output, nil
 }
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
