@@ -380,21 +380,19 @@ def create_tables(conn) -> None:
 
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS JOBS_ASH (
-                    job_id              TEXT          PRIMARY KEY,   
+                    job_id              TEXT          PRIMARY KEY,
                     title               TEXT          NOT NULL,
                     is_listed           BOOLEAN,
                     department_name     VARCHAR(64),
-                    team_name           VARCHAR(64),
+                    team_name           JSONB,
                     location_name       VARCHAR(64),
                     employment_type     VARCHAR(32),
                     workplace_type      VARCHAR(32),
-                    published_date      TIMESTAMPTZ   NOT NULL,
-                    updated_at          TIMESTAMPTZ   NOT NULL,
                     salary              VARCHAR(128),
                     job_url             TEXT          NOT NULL,
-                    company_id          TEXT          NOT NULL,      
+                    company_id          TEXT          NOT NULL,
                     origin_deed_id      TEXT,
-                    origin_link_id      BIGINT,
+                    origin_link_id      BIGINT
 
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
