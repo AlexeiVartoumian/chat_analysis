@@ -39,6 +39,7 @@ for term in search_terms:
 
         print(f"Message sent to queue: {response['MessageId']}")
 
+        time.sleep(2)
 
 
 
