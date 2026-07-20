@@ -307,7 +307,6 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 		fmt.Println("failed to update workflow counts:", err)
 	}
 }
-
 func Job_and_search_loader_ash(records []map[string]string, tablename string, filepath string) {
 
 	db, err := ConnectDb() //awful
@@ -352,23 +351,36 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			break
 		}
 		DuplicateCount += skipped
+
+		// job row is persisted at this point — safe to mark redirect status done
+		if value.OriginLinkID != nil {
+			if _, err := db.Exec(
+				`UPDATE redirect_link SET status_ash = 'done' WHERE job_id = $1 AND status_ash = 'in_progress'`,
+				*value.OriginLinkID,
+			); err != nil {
+				fmt.Println("failed to update redirect_link for job_id", *value.OriginLinkID, ErrorHandler(err, "redirect update failed"))
+			}
+		} else if value.Origin_deed_id != nil {
+			if _, err := db.Exec(
+				`UPDATE redirect_deed SET status_ash = 'done' WHERE job_id = $1 AND status_ash = 'in_progress'`,
+				*value.Origin_deed_id,
+			); err != nil {
+				fmt.Println("failed to update redirect_deed for job_id", *value.Origin_deed_id, ErrorHandler(err, "redirect update failed"))
+			}
+		}
+
 		JobSearchWorkflow := models.JOB_SEARCH_TERM_ASH{
 			Job_id:      value.JobID,
 			Workflow_id: workflowid,
 			Is_new_job:  skipped == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
-
-		if err == nil && value.OriginLinkID != nil {
-
-			_, err = db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", value.OriginLinkID)
-
+		if err != nil {
+			fmt.Println("job search term insert failed for job_id", value.JobID, ErrorHandler(err, "yep"))
 		}
-
 	}
 
 	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
-
 }
 func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) {
 
@@ -884,24 +896,45 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 	}
 
 	// "2026-04-16" -> YYYY-MM-DD
-	datePub, err := time.Parse("2006-01-02", record["publishedDate"])
+	//datePub, err := time.Parse("2006-01-02", record["publishedDate"])
 
-	if err != nil {
-		return models.JobAsh{}, ErrorHandler(err, "uh oh published_date fail time parse")
-	}
+	// if err != nil {
+	// 	return models.JobAsh{}, ErrorHandler(err, "uh oh published_date fail time parse")
+	// }
 
 	// "2026-05-19T15:40:48.707Z" -> RFC3339 with milliseconds
-	updatedAt, err := time.Parse(time.RFC3339Nano, record["updatedAt"])
-	if err != nil {
-		return models.JobAsh{}, ErrorHandler(err, "uh oh updated_at fail time parse")
-	}
+	//updatedAt, err := time.Parse(time.RFC3339Nano, record["updatedAt"])
+	// if err != nil {
+	// 	return models.JobAsh{}, ErrorHandler(err, "uh oh updated_at fail time parse")
+	// }
+	var originLinkID *int64
+	var originDeedID *string
 
+	origin := record["origin"]
+
+	switch origin {
+	case "link":
+		raw := strings.TrimSpace(record["origin_link_id"])
+		if raw != "" {
+			v, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil {
+				log.Printf("invalid origin_link_id %q: %v", raw, err)
+			} else {
+				originLinkID = &v
+			}
+		}
+	default:
+		raw := strings.TrimSpace(record["origin_deed_id"])
+		if raw != "" {
+			originDeedID = &raw
+		}
+	}
 	job := models.JobAsh{
-		JobID:          record["job_id"],
-		Title:          record["title"],
-		IsListed:       &is_listed,
-		PublishedDate:  datePub,
-		UpdatedAt:      updatedAt,
+		JobID:    record["job_id"],
+		Title:    record["title"],
+		IsListed: &is_listed,
+		// PublishedDate:  datePub,
+		// UpdatedAt:      updatedAt,
 		JobURL:         record["job_url"],
 		TeamName:       NullableString(record["teamName"]),
 		DepartmentName: NullableString(record["DepartmentName"]),
@@ -910,7 +943,8 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		WorkplaceType:  NullableString(record["workplaceType"]),
 		Salary:         NullableString(record["salary"]),
 		CompanyID:      record["organizationId"],
-		OriginLinkID:   NullableString(record["origin_link_id"]),
+		OriginLinkID:   originLinkID,
+		Origin_deed_id: originDeedID,
 	}
 	return job, nil
 }
