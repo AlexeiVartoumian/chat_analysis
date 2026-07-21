@@ -112,6 +112,9 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	// if tablename == "DEADLINK" && len(records) > 0 {
+	// 	RedirectTableUpdate(records)
+	// }
 	if tablename == "JOBS_ASH" && len(records) > 0 {
 		Job_and_search_loader_ash(records, tablename, filepath)
 		return nil
@@ -317,7 +320,25 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 
 	db, err := ConnectDb() //awful
 	var meta_data []string
-	if strings.HasPrefix(filepath, "processedJobsAsh") {
+	if strings.HasPrefix(filepath, "deadlink") {
+
+		if err != nil {
+			fmt.Println("record at index: has not been saved")
+		}
+		for _, record := range records {
+
+			origin := record["origin"]
+
+			switch origin {
+			case "link":
+				job_id, _ := strconv.Atoi(record["job_id"])
+				db.Exec("UPDATE REDIRECT_LINK SET status_ash ='done' WHERE job_id = $1", job_id)
+			default:
+				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
+			}
+		}
+		return
+	} else if strings.HasPrefix(filepath, "processedJobsAsh") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
 	} else {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
@@ -368,7 +389,7 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			}
 		} else if value.Origin_deed_id != nil {
 			if _, err := db.Exec(
-				`UPDATE redirect_deed SET status_ash = 'done' WHERE job_id = $1 AND status_ash = 'in_progress'`,
+				`UPDATE redirect_deed SET VISITED = TRUE WHERE job_id = $1`,
 				*value.Origin_deed_id,
 			); err != nil {
 				fmt.Println("failed to update redirect_deed for job_id", *value.Origin_deed_id, ErrorHandler(err, "redirect update failed"))
@@ -392,7 +413,28 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 
 	db, err := ConnectDb() //awful
 	var meta_data []string
-	if strings.HasPrefix(filepath, "processedJobsGreen") {
+
+	if strings.HasPrefix(filepath, "deadlink") {
+
+		db, err := ConnectDb()
+
+		if err != nil {
+			fmt.Println("record at index: has not been saved")
+		}
+		for _, record := range records {
+
+			origin := record["origin"]
+
+			switch origin {
+			case "link":
+				job_id, _ := strconv.Atoi(record["job_id"])
+				db.Exec("UPDATE REDIRECT_LINK SET status_ash ='done' WHERE job_id = $1", job_id)
+			default:
+				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
+			}
+		}
+		return
+	} else if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
 	} // else {
 	// 	meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
@@ -440,7 +482,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			}
 		} else if value.Origin_deed_id != nil {
 			if _, err := db.Exec(
-				`UPDATE redirect_deed SET status_green = 'done' WHERE job_id = $1 AND status_green = 'in_progress'`,
+				`UPDATE redirect_deed SET VISITED = TRUE WHERE job_id = $1 `,
 				*value.Origin_deed_id,
 			); err != nil {
 				fmt.Println("failed to update redirect_green for job_id", *value.Origin_deed_id, ErrorHandler(err, "redirect update failed"))
