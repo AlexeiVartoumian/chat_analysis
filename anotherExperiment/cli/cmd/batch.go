@@ -122,6 +122,12 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_METADATA" && len(records) > 0 {
+
+		Jobs_MetadataLoaderFill(records)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE" && len(records) > 0 {
 		Jobs_LifecycleLoader(records, tablename, filepath)
 		return nil
@@ -425,6 +431,21 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			break
 		}
 		DuplicateCount += skipped
+		if value.OriginLinkID != nil {
+			if _, err := db.Exec(
+				`UPDATE redirect_link SET status_green = 'done' WHERE job_id = $1 AND status_green = 'in_progress'`,
+				*value.OriginLinkID,
+			); err != nil {
+				fmt.Println("failed to update redirect_link for job_id", *value.OriginLinkID, ErrorHandler(err, "redirect update failed"))
+			}
+		} else if value.Origin_deed_id != nil {
+			if _, err := db.Exec(
+				`UPDATE redirect_deed SET status_green = 'done' WHERE job_id = $1 AND status_green = 'in_progress'`,
+				*value.Origin_deed_id,
+			); err != nil {
+				fmt.Println("failed to update redirect_green for job_id", *value.Origin_deed_id, ErrorHandler(err, "redirect update failed"))
+			}
+		}
 		JobSearchWorkflow := models.JOB_SEARCH_TERM_GREEN{
 			Job_id:      value.JobID,
 			Workflow_id: workflowid,
@@ -463,8 +484,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	// 	return JobLoaderAsh(record)
 	// case "JOBS":
 	// 	return JobLoader(record)
-	case "JOB_METADATA":
-		return Jobs_MetadataLoader(record)
+	// case "JOB_METADATA":
+	// 	return Jobs_MetadataLoader(record)
 	case "JOB_DESCRIPTION":
 		return Jobs_DescriptionLoader(record)
 	case "JOB_DESCRIPTION_DEED":
@@ -582,7 +603,49 @@ func Jobs_MetadataLoader(record map[string]string) (models.Jobs_metadata, error)
 
 	return Jobs_metadata, nil
 }
+func Jobs_MetadataLoaderFill(records []map[string]string) {
 
+	//sorry
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("errgh", ErrorHandler(err, "you brought this on yourself"))
+	}
+	for index, record := range records {
+
+		value, err := Jobs_MetadataLoader(record)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+
+		skipped, err := AddNewRow(value, "JOB_METADATA")
+		if err != nil {
+			fmt.Println("failed to insert JOB_METADATA for job_id", value.JobId, ErrorHandler(err, "yep"))
+			continue
+		}
+
+		if skipped == 0 {
+			if strings.Contains(value.CompanyApplyUrl, "ashby") {
+				if _, err := db.Exec(
+					`INSERT INTO redirect_link (job_id) VALUES ($1)`,
+					value.JobId,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_link for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
+			if strings.Contains(value.CompanyApplyUrl, "greenhouse") {
+				if _, err := db.Exec(
+					`INSERT INTO redirect_deed (job_id) VALUES ($1)`,
+					value.JobId,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
+		}
+	}
+}
 func Company_MetadataLoader(record map[string]string) (models.Company_Metadata, error) {
 
 	employeeCount, err := strconv.Atoi(record["employee_count"])
@@ -970,18 +1033,40 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 	if err != nil {
 		return models.JobGreen{}, ErrorHandler(err, "uh oh updated_at fail time parse")
 	}
+	var originLinkID *int64
+	var originDeedID *string
 
+	origin := record["origin"]
+
+	switch origin {
+	case "link":
+		raw := strings.TrimSpace(record["origin_link_id"])
+		if raw != "" {
+			v, err := strconv.ParseInt(raw, 10, 64)
+			if err != nil {
+				log.Printf("invalid origin_link_id %q: %v", raw, err)
+			} else {
+				originLinkID = &v
+			}
+		}
+	default:
+		raw := strings.TrimSpace(record["origin_deed_id"])
+		if raw != "" {
+			originDeedID = &raw
+		}
+	}
 	job := models.JobGreen{
-		JobID:         job_id,
-		Title:         record["title"],
-		LocationName:  NullableString(record["locationName"]),
-		CompanyID:     company_id,
-		Company_name:  record["company_name"],
-		JobURL:        record["job_url"],
-		RedirectURL:   NullableString(record["redirect_url"]),
-		PublishedDate: datePub,
-		Salary:        NullableString(record["salary"]),
-		OriginLinkID:  NullableString(record["origin_link_id"]),
+		JobID:          job_id,
+		Title:          record["title"],
+		LocationName:   NullableString(record["locationName"]),
+		CompanyID:      company_id,
+		Company_name:   record["company_name"],
+		JobURL:         record["job_url"],
+		RedirectURL:    NullableString(record["redirect_url"]),
+		PublishedDate:  datePub,
+		Salary:         NullableString(record["salary"]),
+		OriginLinkID:   originLinkID,
+		Origin_deed_id: originDeedID,
 	}
 	return job, nil
 }
