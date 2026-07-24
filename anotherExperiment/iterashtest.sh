@@ -14,7 +14,9 @@ while IFS= read -r file; do
     
     elif [ "$type" = "JOBDESCRIPTIONASH" ]; then
         ./start insert $file JOB_DESCRIPTIONS_ASH
-    
-    fi 
+
+    elif [ "$type" = "DEADLINKS" ]; then
+        ./start insert $file JOBS_ASH
+    fi
 
 done < <(jq -r '.[][][][]' keys_ash.json)
