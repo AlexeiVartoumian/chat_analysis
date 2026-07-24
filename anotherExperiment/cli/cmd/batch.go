@@ -119,6 +119,10 @@ func CsvFile(filepath string, tablename string) error {
 		Job_and_search_loader_ash(records, tablename, filepath)
 		return nil
 	}
+	if tablename == "DEADLINKS_ASH" && len(records) > 0 {
+		Job_and_search_loader_ash(records, tablename, filepath)
+		return nil
+	}
 
 	if tablename == "JOBS_GREEN" && len(records) > 0 {
 		Job_and_search_loader_green(records, tablename, filepath)
