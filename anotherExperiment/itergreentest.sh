@@ -16,6 +16,9 @@ while IFS= read -r file; do
     elif [ "$type" = "JOBDESCRIPTIONGREEN" ]; then
         ./start insert $file JOB_DESCRIPTIONS_GREEN
     
+    elif [ "$type" = "DEADLINKS" ]; then
+        ./start insert $file JOBS_GREEN
+    
     fi 
 
 done < <(jq -r '.[][][][]' keys_green.json)
