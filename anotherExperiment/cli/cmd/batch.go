@@ -129,6 +129,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "DEADLINKS_GREEN" && len(records) > 0 {
+		Job_and_search_loader_green(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_METADATA" && len(records) > 0 {
 
 		Jobs_MetadataLoaderFill(records)
@@ -432,7 +437,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			switch origin {
 			case "link":
 				job_id, _ := strconv.Atoi(record["job_id"])
-				db.Exec("UPDATE REDIRECT_LINK SET status_ash ='done' WHERE job_id = $1", job_id)
+				db.Exec("UPDATE REDIRECT_LINK SET status_green ='done' WHERE job_id = $1", job_id)
 			default:
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 			}
