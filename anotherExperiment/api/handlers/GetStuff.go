@@ -861,12 +861,12 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	payload, _ := json.Marshal(CompaniesDeets)
-	firstRunStr := "true"
+	firstRunStr := "false"
 	if req.FirstRun {
-		firstRunStr = "false"
+		firstRunStr = "true"
 	}
 
-	if firstRunStr == "yes" {
+	if firstRunStr == "true" {
 		NumberAccounts := strconv.Itoa(req.NumberAccounts)
 		cmd := exec.Command("python3", "/home/ubuntu/details.py", NumberAccounts, firstRunStr, "")
 		cmd.Stdin = bytes.NewReader(payload)
