@@ -838,47 +838,66 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
 
-	body, err := io.ReadAll(r.Body)
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+
+	var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
+
 	if err != nil {
 		log.Println(err)
-		http.Error(w, "Problem reading could be unexpected format", http.StatusBadRequest)
+		http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
 		return
 	}
-	// TODO make automatic
-	if string(body) == "True" {
-		//then its automatic
 
-		response := struct {
-			Status     string `json:"status"`
-			StatusCode int
-		}{
-			Status:     fmt.Sprintf(" please implement"),
-			StatusCode: 200,
-		}
+	if CompaniesDeets == nil {
+		fmt.Println("Job Done either second last run or last run ")
+		return
+	}
 
-		json.NewEncoder(w).Encode(response)
-	} else {
+	payload, _ := json.Marshal(CompaniesDeets)
+	firstRunStr := "true"
+	if req.FirstRun {
+		firstRunStr = "false"
+	}
 
-		var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
-
-		if err != nil {
-			log.Println(err)
-			http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
-			return
-		}
-
-		payload, _ := json.Marshal(CompaniesDeets)
-		auto := "false"
-
-		cmd := exec.Command("python3", "/home/ubuntu/details.py", auto)
+	if firstRunStr == "yes" {
+		NumberAccounts := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/details.py", NumberAccounts, firstRunStr, "")
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+	} else {
+		cmd := exec.Command("python3", "/home/ubuntu/details.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
 		if err := cmd.Run(); err != nil {
 			log.Printf("details.py failed %v", err)
 		}
 	}
+	fmt.Println("blasted the spot", len(payload))
+
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted companylinks. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+
 }
 func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 
