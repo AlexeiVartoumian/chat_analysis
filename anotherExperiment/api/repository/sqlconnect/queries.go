@@ -533,9 +533,9 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "db conn error")
 	}
-
+	//best effort if visited fails for whatever reason then can fall back on set difference
 	rows, err := db.Query(`
-	SELECT company_id , name from COMPANY where NOT EXISTS (SELECT * from COMPANY_DETAIL WHERE COMPANY.company_id = COMPANY_DETAIL.company_id) LIMIT 100;`)
+	SELECT company_id , name from COMPANY where NOT EXISTS (SELECT * from COMPANY_DETAIL , COMPANY WHERE COMPANY.company_id = COMPANY_DETAIL.company_id AND COMPANY.VISITED = FALSE) LIMIT 100;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "error on CompanyDeets")
@@ -545,18 +545,20 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 	var output []models.CompanyDetail
 
 	for rows.Next() {
-
 		var res models.CompanyDetail
-
 		err = rows.Scan(&res.Company_id, &res.Company_name)
+		_, err := db.Exec(
+			`UPDATE COMPANY SET VISITED = TRUE where company_id = $1`, res.Company_id)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Scann load error on companydetails")
 		}
 
 		output = append(output, res)
 	}
-	return output, nil
 
+	fmt.Println(len(output))
+
+	return output, nil
 }
 func RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
 
