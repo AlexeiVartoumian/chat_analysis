@@ -535,7 +535,7 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 	}
 	//best effort if visited fails for whatever reason then can fall back on set difference
 	rows, err := db.Query(`
-	SELECT company_id , name from COMPANY where NOT EXISTS (SELECT * from COMPANY_DETAIL , COMPANY WHERE COMPANY.company_id = COMPANY_DETAIL.company_id AND COMPANY.VISITED = FALSE) LIMIT 100;`)
+	SELECT company_id, name FROM COMPANY WHERE NOT EXISTS ( SELECT 1 FROM COMPANY_DETAIL WHERE COMPANY_DETAIL.company_id = COMPANY.company_id) LIMIT 100;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "error on CompanyDeets")

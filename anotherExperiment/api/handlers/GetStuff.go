@@ -847,35 +847,52 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
-
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
-		return
-	}
-
-	if CompaniesDeets == nil {
-		fmt.Println("Job Done either second last run or last run ")
-		return
-	}
-
-	payload, _ := json.Marshal(CompaniesDeets)
 	firstRunStr := "false"
 	if req.FirstRun {
 		firstRunStr = "true"
 	}
 
 	if firstRunStr == "true" {
-		NumberAccounts := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", "/home/ubuntu/details.py", NumberAccounts, firstRunStr, "")
-		cmd.Stdin = bytes.NewReader(payload)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
-			log.Printf("details.py failed %v", err)
+
+		// NumberAccounts := strconv.Itoa(req.NumberAccounts)
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+			if CompaniesDeets == nil {
+				fmt.Println("Job Done either second last run or last run ")
+				return
+			}
+
+			payload, _ := json.Marshal(CompaniesDeets)
+
+			cmd := exec.Command("python3", "/home/ubuntu/details.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
+		var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if CompaniesDeets == nil {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, _ := json.Marshal(CompaniesDeets)
 		cmd := exec.Command("python3", "/home/ubuntu/details.py", "1", firstRunStr, req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
@@ -883,8 +900,9 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		if err := cmd.Run(); err != nil {
 			log.Printf("details.py failed %v", err)
 		}
+		fmt.Println("blasted the spot", len(payload))
 	}
-	fmt.Println("blasted the spot", len(payload))
+	//fmt.Println("blasted the spot", len(payload))
 
 	w.Header().Set("Content-Type", "application/json")
 
