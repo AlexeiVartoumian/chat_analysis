@@ -20,11 +20,11 @@ import (
 
 // }
 
-func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
+func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// Public — generate a key
-	mux.HandleFunc("POST /api/keys", handlers.PostApiKey)
+	mux.HandleFunc("POST /api/keys", h.PostApiKey)
 
 	// Protected — requires valid API key
 	mux.Handle("GET /lastThreeDays", authMiddleware.Authenticate(models.ScopeRead)(
@@ -32,87 +32,88 @@ func MainRouter(authMiddleware *auth.AuthMiddleware) *http.ServeMux {
 	))
 
 	mux.Handle("POST /semanticSearch", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SemanticSearch),
+		http.HandlerFunc(h.SemanticSearch),
 	))
 
 	mux.Handle("POST /sqsBlaster", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SqsBlaster),
+		http.HandlerFunc(h.SqsBlaster),
 	))
 
 	mux.Handle("POST /Backoff", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SqsBlaster),
+		http.HandlerFunc(h.SqsBlaster),
 	))
 
 	mux.Handle("GET /onlyCompanyLinks", authMiddleware.Authenticate(models.ScopeRead)(
-		http.HandlerFunc(handlers.CompanyUrlOnly),
+		http.HandlerFunc(h.CompanyUrlOnly),
 	))
 
 	mux.Handle("GET /seekExpired", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekExpiredRoles),
+		http.HandlerFunc(h.SeekExpiredRoles),
 	))
 
 	mux.Handle("POST /seekAuto", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekExpiredAuto),
+		http.HandlerFunc(h.SeekExpiredAuto),
 	))
 
 	mux.Handle("GET /seekReopened", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekReopenedRoles),
+		http.HandlerFunc(h.SeekReopenedRoles),
 	))
 
 	mux.Handle("GET /insertDb", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.InsertToDb),
+		http.HandlerFunc(h.InsertToDb),
 	))
 
 	mux.Handle("POST /queryDb", authMiddleware.Authenticate(models.ScopeRead)(
-		http.HandlerFunc(handlers.HandleQuery),
+		http.HandlerFunc(h.HandleQuery),
 	))
 
+	//do i even need ?
 	mux.Handle("POST /scroller", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(handlers.SeekScroller),
 	))
 
 	mux.Handle("POST /seekcompanydeed", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekCompanyDeed),
+		http.HandlerFunc(h.SeekCompanyDeed),
 	))
 
 	mux.Handle("POST /deedblaster", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.DeedBlaster),
+		http.HandlerFunc(h.DeedBlaster),
 	))
 
 	mux.Handle("POST /spotdeed", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SpotDeedBlaster),
+		http.HandlerFunc(h.SpotDeedBlaster),
 	))
 
 	mux.Handle("POST /seekAutoCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekAutoCompany),
+		http.HandlerFunc(h.SeekAutoCompany),
 	))
 
 	mux.Handle("POST /redirectInd", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.RedirectIndLinkerAuto),
+		http.HandlerFunc(h.RedirectIndLinkerAuto),
 	))
 
 	mux.Handle("POST /seekExpiredAutoDeed", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekExpiredAutoDeed),
+		http.HandlerFunc(h.SeekExpiredAutoDeed),
 	))
 
 	mux.Handle("POST /seekAshLead", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekAshLead),
+		http.HandlerFunc(h.SeekAshLead),
 	))
 
 	mux.Handle("POST /seekAshCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekAshCompany),
+		http.HandlerFunc(h.SeekAshCompany),
 	))
 
 	mux.Handle("POST /seekGreenLead", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekGreenLead),
+		http.HandlerFunc(h.SeekGreenLead),
 	))
 
 	mux.Handle("POST /SeekAshLeadLink", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekAshLeadLink),
+		http.HandlerFunc(h.SeekAshLeadLink),
 	))
 
 	mux.Handle("POST /seekGreenLeadLink", authMiddleware.Authenticate(models.ScopeAdmin)(
-		http.HandlerFunc(handlers.SeekGreenLeadLink),
+		http.HandlerFunc(h.SeekGreenLeadLink),
 	))
 
 	return mux

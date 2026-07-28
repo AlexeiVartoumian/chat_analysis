@@ -2,6 +2,7 @@ package main
 
 import (
 	"api/auth"
+	"api/handlers"
 	"api/repository/sqlconnect"
 	"api/router"
 	"context"
@@ -38,7 +39,8 @@ func main() {
 	generator := auth.NewAPIKeyGenerator()
 	hasher := auth.NewKeyHasher()
 	authMiddleware := auth.NewAuthMiddleware(generator, hasher, store)
-	router := router.MainRouter(authMiddleware)
+	h := handlers.NewHandler(store)
+	router := router.MainRouter(authMiddleware, h)
 
 	//timeout againt malicious clients
 	server := &http.Server{

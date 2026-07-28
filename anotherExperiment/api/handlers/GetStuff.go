@@ -20,6 +20,14 @@ import (
 	"time"
 )
 
+type Handler struct {
+	Store *sqlconnect.PostgresStore
+}
+
+func NewHandler(store *sqlconnect.PostgresStore) *Handler {
+	return &Handler{Store: store}
+}
+
 func updateLambda(search_term string) error {
 
 	cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/update_search.py", search_term)
@@ -31,7 +39,7 @@ func updateLambda(search_term string) error {
 
 }
 
-func SemanticSearch(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SemanticSearch(w http.ResponseWriter, r *http.Request) {
 
 	//
 	if r.Method != http.MethodPost {
@@ -64,7 +72,7 @@ func SemanticSearch(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
-func CompanyUrlOnly(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) CompanyUrlOnly(w http.ResponseWriter, r *http.Request) {
 
 	CompanyLinks, err := sqlconnect.OnlyUrlOnCompanySite()
 
@@ -88,9 +96,9 @@ func CompanyUrlOnly(w http.ResponseWriter, r *http.Request) {
 }
 
 // TODO make middleware function so not anyone can do
-func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
 
-	LiveRoles, err := sqlconnect.SeekExpired()
+	LiveRoles, err := h.Store.SeekExpired()
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -111,9 +119,9 @@ func SeekExpiredRoles(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SeekReopenedRoles(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekReopenedRoles(w http.ResponseWriter, r *http.Request) {
 
-	LiveRoles, err := sqlconnect.SeekReopened()
+	LiveRoles, err := h.Store.SeekReopened()
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -134,6 +142,7 @@ func SeekReopenedRoles(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// old func
 func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 	recentJobs, err := sqlconnect.LastThreeDaysJobs()
 
@@ -156,7 +165,7 @@ func GetLastThreeDays(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func HandleQuery(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) HandleQuery(w http.ResponseWriter, r *http.Request) {
 
 	var req struct {
 		Query string        `json:"query"`
@@ -169,7 +178,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), 400)
 		return
 	}
-	results, cols, err := sqlconnect.QueryToJson(req.Query, req.Args...)
+	results, cols, err := h.Store.QueryToJson(req.Query, req.Args...)
 
 	if err != nil {
 		http.Error(w, err.Error(), 500)
@@ -184,7 +193,8 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func PostApiKey(w http.ResponseWriter, r *http.Request) {
+// risk it
+func (h *Handler) PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 	generator := auth.NewAPIKeyGenerator()
 	hasher := auth.NewKeyHasher()
@@ -277,9 +287,9 @@ func PostApiKey(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func InsertToDb(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) InsertToDb(w http.ResponseWriter, r *http.Request) {
 
-	SeenFileKeys, err := sqlconnect.GetKeys()
+	SeenFileKeys, err := h.Store.GetKeys()
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -309,7 +319,7 @@ func InsertToDb(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SqsBlaster(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -347,7 +357,7 @@ func SqsBlaster(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(first_run_and_number_accounts)
 
-	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM")
+	SearchTerms, err := h.Store.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM")
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -394,7 +404,7 @@ func SendToSqs(SearchTerms []sqlconnect.SearchTerm) []byte {
 
 // need three or two args . one is first run , bool . second is filetype
 // eg curl -H "Authorization: Bearer mykey" http://localhost/seekAuto  -d 'first live'
-func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -419,12 +429,12 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 			http.Error(w, "Problem executing first run data could be unexpected format", http.StatusBadRequest)
 		}
-		roles, err = sqlconnect.SeekExpiredAuto(filetype, first_run)
+		roles, err = h.Store.SeekExpiredAuto(filetype, first_run)
 
 	} else {
 		filetype = first_run_and_file_type
 
-		roles, err = sqlconnect.SeekExpiredAuto(filetype, first_run)
+		roles, err = h.Store.SeekExpiredAuto(filetype, first_run)
 	}
 
 	if err != nil {
@@ -461,7 +471,7 @@ func SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 }
 
 // should be expobackoff will pass fileid from lambda. for now only search term to update .
-func Backoff(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) Backoff(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -492,7 +502,7 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sqlconnect.BackoffUpdate(Search_term.Search_term_id)
+	err = h.Store.BackoffUpdate(Search_term.Search_term_id)
 
 	if err != nil {
 		log.Println(err)
@@ -507,7 +517,7 @@ func Backoff(w http.ResponseWriter, r *http.Request) {
 
 		time.AfterFunc(delay, func() {
 
-			search_term, err := sqlconnect.GetSearchTerms(false, -1, "SEARCH_TERM")
+			search_term, err := h.Store.GetSearchTerms(false, -1, "SEARCH_TERM")
 			if err != nil {
 				log.Println("error getting search terms", err)
 				return
@@ -560,9 +570,9 @@ func SeekScroller(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SeekCompanyDeed(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekCompanyDeed(w http.ResponseWriter, r *http.Request) {
 
-	FreshCompany, err := sqlconnect.SeekCompanyChecker()
+	FreshCompany, err := h.Store.SeekCompanyChecker()
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -701,7 +711,7 @@ type BlastRequest struct {
 }
 
 // like deed blaster but for spot
-func SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -716,7 +726,7 @@ func SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	SearchTerms, err := sqlconnect.GetSearchTerms(req.FirstRun, req.NumberAccounts, "SEARCH_TERM_DEED")
+	SearchTerms, err := h.Store.GetSearchTerms(req.FirstRun, req.NumberAccounts, "SEARCH_TERM_DEED")
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -762,7 +772,7 @@ func SpotDeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(response)
 }
-func DeedBlaster(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -800,7 +810,7 @@ func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(first_run_and_number_accounts)
 
-	SearchTerms, err := sqlconnect.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM_DEED")
+	SearchTerms, err := h.Store.GetSearchTerms(first_run, number_accounts, "SEARCH_TERM_DEED")
 
 	if err != nil {
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -831,7 +841,7 @@ func DeedBlaster(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -857,7 +867,7 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 		// NumberAccounts := strconv.Itoa(req.NumberAccounts)
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
+			var CompaniesDeets, err = h.Store.GetCompanyDeets()
 
 			if err != nil {
 				log.Println(err)
@@ -882,7 +892,7 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		var CompaniesDeets, err = sqlconnect.GetCompanyDeets()
+		var CompaniesDeets, err = h.Store.GetCompanyDeets()
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
@@ -917,7 +927,7 @@ func SeekAutoCompany(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
-func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -932,7 +942,7 @@ func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	//then its automatic
-	var JobRedirect_DEED, err = sqlconnect.RedirectIndAuto(req.FirstRun)
+	var JobRedirect_DEED, err = h.Store.RedirectIndAuto(req.FirstRun)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "Problem reading from db could be unexpected format", http.StatusInternalServerError)
@@ -965,7 +975,7 @@ func RedirectIndLinkerAuto(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func RedirectIndLinkerold(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) RedirectIndLinkerold(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -992,7 +1002,7 @@ func RedirectIndLinkerold(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(response)
 	} else {
 
-		var JobRedirect_DEED, err = sqlconnect.RedirectInd()
+		var JobRedirect_DEED, err = h.Store.RedirectInd()
 
 		if err != nil {
 			log.Println(err)
@@ -1016,7 +1026,7 @@ func RedirectIndLinkerold(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
 		http.Error(w, r.Method, http.StatusBadRequest)
@@ -1032,7 +1042,7 @@ func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 
 	var roles []string
 
-	roles, err := sqlconnect.SeekExpiredAutoDeed(req.FirstRun)
+	roles, err := h.Store.SeekExpiredAutoDeed(req.FirstRun)
 
 	if err != nil {
 		log.Println(err)
@@ -1068,7 +1078,7 @@ func SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func SeekAshLead(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekAshLead(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
@@ -1080,7 +1090,7 @@ func SeekAshLead(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	//dont expect this to be a recurring job
-	JobAshLead, err := sqlconnect.RedirectAshLead()
+	JobAshLead, err := h.Store.RedirectAshLead()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -1109,7 +1119,7 @@ func SeekAshLead(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func SeekAshCompany(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
@@ -1121,7 +1131,7 @@ func SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	//dont expect this to be a recurring job
-	JobAshCompany, err := sqlconnect.SeekAshCompany()
+	JobAshCompany, err := h.Store.SeekAshCompany()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -1150,7 +1160,7 @@ func SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func SeekGreenLead(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekGreenLead(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
@@ -1163,7 +1173,7 @@ func SeekGreenLead(w http.ResponseWriter, r *http.Request) {
 
 	//dont expect this to be a recurring job
 
-	JobAshLead, err := sqlconnect.RedirectGreenLead()
+	JobAshLead, err := h.Store.RedirectGreenLead()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -1192,7 +1202,7 @@ func SeekGreenLead(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func SeekGreenLeadLink(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekGreenLeadLink(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
@@ -1205,7 +1215,7 @@ func SeekGreenLeadLink(w http.ResponseWriter, r *http.Request) {
 
 	//dont expect this to be a recurring job
 
-	JobAshLead, err := sqlconnect.RedirectLinkGreen()
+	JobAshLead, err := h.Store.RedirectLinkGreen()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -1234,7 +1244,7 @@ func SeekGreenLeadLink(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func SeekAshLeadLink(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) SeekAshLeadLink(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
 	var req BlastRequest
@@ -1246,7 +1256,7 @@ func SeekAshLeadLink(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
 	//dont expect this to be a recurring job
-	JobAshLead, err := sqlconnect.RedirectLinkAsh()
+	JobAshLead, err := h.Store.RedirectLinkAsh()
 	if err != nil {
 		log.Println(err)
 		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)

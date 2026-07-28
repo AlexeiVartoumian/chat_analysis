@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"reflect"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -202,13 +203,9 @@ ORDER BY j.date_posted DESC;
 	return output, nil
 }
 
-func SeekExpired() ([]string, error) {
+func (s *PostgresStore) SeekExpired() ([]string, error) {
 
-	db, err := ConnectDb()
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'LISTED' ORDER BY last_seen_listed_at ASC limit 1000;
 	`)
 	if err != nil {
@@ -228,15 +225,10 @@ func SeekExpired() ([]string, error) {
 	return output, nil
 }
 
-func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
-
-	db, err := ConnectDb()
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
+func (s *PostgresStore) SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 
 	if firstrun == true {
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		UPDATE JOB_LIFECYCLE SET visited = FALSE`)
 
 		if err != nil {
@@ -257,7 +249,7 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 	// send.
 	//UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id IN (SELECT job_id FROM JOB_LIFECYCLE where job_state LIKE 'LISTED' and visited = FALSE limit 1000);
 
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE $1 and visited = FALSE order by last_seen_listed_at ASC limit 1000;
 	`, workflow)
 	if err != nil {
@@ -279,7 +271,7 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 	fmt.Println(len(output))
 	if len(output) == 0 {
 
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		UPDATE JOB_LIFECYCLE SET visited = FALSE`)
 
 		if err != nil {
@@ -295,7 +287,7 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 		// `)
 		job_id := output[index]
 		//fmt.Println(job_id)
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		 UPDATE JOB_LIFECYCLE SET visited = TRUE where job_id = $1
 		 `, job_id)
 
@@ -307,13 +299,9 @@ func SeekExpiredAuto(filetype string, firstrun bool) ([]string, error) {
 	return output, nil
 }
 
-func SeekReopened() ([]string, error) {
+func (s *PostgresStore) SeekReopened() ([]string, error) {
 
-	db, err := ConnectDb()
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT job_id FROM JOB_LIFECYCLE WHERE job_state LIKE 'SUSPENDED' ORDER BY last_seen_listed_at ASC limit 1000;
 	`)
 	if err != nil {
@@ -333,13 +321,9 @@ func SeekReopened() ([]string, error) {
 	return output, nil
 
 }
-func GetKeys() ([]string, error) {
+func (s *PostgresStore) GetKeys() ([]string, error) {
 
-	db, err := ConnectDb()
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT * from FILE_KEYS;
 	`)
 	if err != nil {
@@ -360,12 +344,7 @@ func GetKeys() ([]string, error) {
 
 }
 
-func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]SearchTerm, error) {
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
+func (s *PostgresStore) GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]SearchTerm, error) {
 
 	if first_run == true {
 
@@ -374,7 +353,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 		// 	rows, err := db.Query(`
 		// 	SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
 		// `, number_accounts)
-		rows, err := db.Query(query, number_accounts)
+		rows, err := s.db.Query(query, number_accounts)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "first run failure in GetSearchTerms function")
@@ -392,7 +371,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 			}
 			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where search_term_id = $1;", tablename)
 
-			_, err := db.Exec(query, res.Search_term_id)
+			_, err := s.db.Exec(query, res.Search_term_id)
 			// _, err := db.Exec(`
 			// UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
 			// 	`, res.Search_term_id)
@@ -414,7 +393,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 		if number_accounts != -1 { // backoff file will send -1 since they already updated table
 
 			query := fmt.Sprintf("UPDATE %s SET run_count = 1 , mid_run = FALSE where search_term_id =$1", tablename)
-			_, err := db.Exec(query, number_accounts)
+			_, err := s.db.Exec(query, number_accounts)
 
 			// 	_, err := db.Exec(`
 			// 	UPDATE SEARCH_TERM SET run_count = 1 , mid_run = FALSE where search_term_id = $1;
@@ -427,7 +406,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 
 		query := fmt.Sprintf("SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM %s WHERE mid_run = FALSE) AS max FROM %s WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM %s) limit 1;", tablename, tablename, tablename)
 
-		row := db.QueryRow(query)
+		row := s.db.QueryRow(query)
 		// row := db.QueryRow(`
 		// 	SELECT search_term_id , term , min(run_count) , (SELECT max(run_count) FROM SEARCH_TERM WHERE mid_run = FALSE) AS max FROM SEARCH_TERM WHERE mid_run = FALSE GROUP BY search_term_id HAVING run_count=(SELECT min(run_count) FROM SEARCH_TERM)  limit 1;
 		// `)
@@ -437,7 +416,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 		var min int
 		var max int
 
-		err = row.Scan(&res.Search_term_id, &res.Search_term, &min, &max)
+		err := row.Scan(&res.Search_term_id, &res.Search_term, &min, &max)
 		if err == sql.ErrNoRows {
 			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
 			fmt.Println("job done , waiting for remaining jobs to complete ")
@@ -451,7 +430,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 
 			fmt.Println(res)
 			query := fmt.Sprintf("UPDATE %s SET run_count = 0 , total_run_count = total_run_count +1;", tablename)
-			_, err := db.Exec(query)
+			_, err := s.db.Exec(query)
 			// _, err := db.Exec(`
 			// UPDATE SEARCH_TERM SET run_count = 0 , total_run_count = total_run_count +1;
 			// `)
@@ -462,7 +441,7 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 			return nil, nil
 		} else {
 			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where search_term_id = $1", tablename)
-			_, err := db.Exec(query, res.Search_term_id)
+			_, err := s.db.Exec(query, res.Search_term_id)
 			// _, err := db.Exec(`
 			// UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1
 			// `, res.Search_term_id)
@@ -479,16 +458,12 @@ func GetSearchTerms(first_run bool, number_accounts int, tablename string) ([]Se
 
 }
 
-func BackoffUpdate(searchtermid int) error {
-	db, err := ConnectDb()
-	if err != nil {
-		return utils.ErrorHandler(err, "db conn error")
-	}
+func (s *PostgresStore) BackoffUpdate(searchtermid int) error {
 
 	// _, err = db.Exec(`
 	//     UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term LIKE $1;
 	// `, "%"+searchterm+"%")
-	_, err = db.Exec(`
+	_, err := s.db.Exec(`
         UPDATE SEARCH_TERM SET mid_run = False, run_count = 0 WHERE search_term_id LIKE $1;
     `, searchtermid)
 	if err != nil {
@@ -498,14 +473,9 @@ func BackoffUpdate(searchtermid int) error {
 	return nil
 }
 
-func SeekCompanyChecker() ([]models.COMPANY_DEED, error) {
-	db, err := ConnectDb()
+func (s *PostgresStore) SeekCompanyChecker() ([]models.COMPANY_DEED, error) {
 
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
-
-	rows, err := db.Query(`SELECT * FROM COMPANY_DEED WHERE NOT EXISTS (SELECT * FROM COMPANY_METADATA_DEED where COMPANY_DEED.company_id = COMPANY_METADATA_deed.company_id);
+	rows, err := s.db.Query(`SELECT * FROM COMPANY_DEED WHERE NOT EXISTS (SELECT * FROM COMPANY_METADATA_DEED where COMPANY_DEED.company_id = COMPANY_METADATA_deed.company_id);
 `)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
@@ -526,15 +496,10 @@ func SeekCompanyChecker() ([]models.COMPANY_DEED, error) {
 	return results, nil
 }
 
-func GetCompanyDeets() ([]models.CompanyDetail, error) {
+func (s *PostgresStore) GetCompanyDeets() ([]models.CompanyDetail, error) {
 
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
 	//best effort if visited fails for whatever reason then can fall back on set difference
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 	SELECT company_id, name FROM COMPANY WHERE NOT EXISTS ( SELECT 1 FROM COMPANY_DETAIL WHERE COMPANY_DETAIL.company_id = COMPANY.company_id) AND VISITED = FALSE LIMIT 100;`)
 
 	if err != nil {
@@ -547,7 +512,7 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 	for rows.Next() {
 		var res models.CompanyDetail
 		err = rows.Scan(&res.Company_id, &res.Company_name)
-		_, err := db.Exec(
+		_, err := s.db.Exec(
 			`UPDATE COMPANY SET VISITED = TRUE where company_id = $1`, res.Company_id)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Scann load error on companydetails")
@@ -560,16 +525,10 @@ func GetCompanyDeets() ([]models.CompanyDetail, error) {
 
 	return output, nil
 }
-func RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
-
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
+func (s *PostgresStore) RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
 
 	if firstrun == true {
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		UPDATE JOBS_DEED SET VISITED = FALSE`)
 
 		if err != nil {
@@ -579,7 +538,7 @@ func RedirectIndAuto(firstrun bool) ([]models.JobRedirect_DEED, error) {
 	}
 	// what we say below is give me jobs that point to real page that are still live
 	// and the work for it has not been done for it
-	rows, err := db.Query(`WITH candidate AS ( 
+	rows, err := s.db.Query(`WITH candidate AS ( 
     SELECT job_id , job_url , JOBS_DEED.visited from JOBS_DEED where NOT EXISTS (SELECT REDIRECT_DEED.job_id from REDIRECT_DEED WHERE JOBS_DEED.job_id = REDIRECT_DEED.job_id) LIMIT 100
 ) SELECT candidate.job_id , candidate.job_url  FROM candidate 
 JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where job_state LIKE 'False' and candidate.visited = False; 
@@ -597,7 +556,7 @@ JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where j
 		var res models.JobRedirect_DEED
 		rows.Scan(&res.JobId, &res.JobUrl)
 
-		_, err := db.Exec(
+		_, err := s.db.Exec(
 			`UPDATE JOBS_DEED SET VISITED = TRUE where job_id = $1`, res.JobId)
 
 		if err != nil {
@@ -610,7 +569,7 @@ JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where j
 	fmt.Println(len(output))
 	if len(output) == 0 {
 
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		UPDATE JOBS_DEED SET visited = FALSE`)
 
 		if err != nil {
@@ -623,18 +582,12 @@ JOIN JOB_LIFECYCLE_DEED on JOB_LIFECYCLE_DEED.job_id = candidate.job_id  where j
 	return output, nil
 }
 
-func RedirectInd() ([]models.JobRedirect_DEED, error) {
-
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
+func (s *PostgresStore) RedirectInd() ([]models.JobRedirect_DEED, error) {
 
 	// rows, err := db.Query(`
 	// SELECT job_id , job_url FROM jobs_deed limit 100;
 	// `)
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT job_id , job_url from JOBS_DEED where NOT EXISTS (SELECT * from REDIRECT_DEED WHERE JOBS_DEED.job_id = REDIRECT_DEED.job_id) LIMIT 100;
 	`)
 	if err != nil {
@@ -660,16 +613,10 @@ func RedirectInd() ([]models.JobRedirect_DEED, error) {
 
 }
 
-func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
-
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "db conn error")
-	}
+func (s *PostgresStore) SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 
 	if firstrun == true {
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 		UPDATE JOB_LIFECYCLE_DEED SET visited = FALSE`)
 
 		if err != nil {
@@ -677,7 +624,7 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 		}
 	}
 
-	rows, err := db.Query(`SELECT job_id FROM JOB_LIFECYCLE_DEED where job_state LIKE 'False' and visited = FALSE ORDER by last_seen_listed_at ASC limit 100;`)
+	rows, err := s.db.Query(`SELECT job_id FROM JOB_LIFECYCLE_DEED where job_state LIKE 'False' and visited = FALSE ORDER by last_seen_listed_at ASC limit 100;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "query on payload messed up ")
@@ -698,7 +645,7 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 
 	if len(output) == 0 {
 
-		_, err := db.Exec(
+		_, err := s.db.Exec(
 			`UPDATE JOB_LIFECYCLE_DEED SET visited = FALSE`)
 
 		if err != nil {
@@ -710,7 +657,7 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 
 		job_id := output[index]
 
-		_, err := db.Exec(`UPDATE JOB_LIFECYCLE_DEED SET visited = TRUE where job_id = $1`, job_id)
+		_, err := s.db.Exec(`UPDATE JOB_LIFECYCLE_DEED SET visited = TRUE where job_id = $1`, job_id)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "update error on lifecycle visited workflow")
@@ -720,15 +667,9 @@ func SeekExpiredAutoDeed(firstrun bool) ([]string, error) {
 	return output, nil
 }
 
-func RedirectAshLead() ([]models.JobRedirect_DEED, error) {
+func (s *PostgresStore) RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
-
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 	SELECT job_id , job_url FROM REDIRECT_DEED where job_url LIKE '%ashby%' and visited =FALSE;
 	`)
 
@@ -756,14 +697,9 @@ func RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 }
 
 // TODO ADD TIMESTAMP ON TABLE FOR LASTSCAN
-func SeekAshCompany() ([]models.AshCompany, error) {
-	db, err := ConnectDb()
+func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
-
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
 	`)
 
@@ -789,15 +725,9 @@ func SeekAshCompany() ([]models.AshCompany, error) {
 	return output, nil
 }
 
-func RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
+func (s *PostgresStore) RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
-
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 	SELECT job_id , job_url FROM REDIRECT_DEED where job_url LIKE '%greenhouse%' and visited =FALSE;
 	`)
 
@@ -823,15 +753,9 @@ func RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 	return output, nil
 
 }
-func RedirectLinkGreen() ([]models.JobRedirect_LinkGreen, error) {
+func (s *PostgresStore) RedirectLinkGreen() ([]models.JobRedirect_LinkGreen, error) {
 
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
-
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT rl.job_id, jg.company_apply_url
 		FROM redirect_link rl
 		JOIN JOB_METADATA jg ON jg.job_id = rl.job_id
@@ -867,7 +791,7 @@ func RedirectLinkGreen() ([]models.JobRedirect_LinkGreen, error) {
 	rows.Close() // done reading, free the connection before issuing updates
 
 	for _, job := range output {
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 			UPDATE redirect_link
 			SET status_green = 'in_progress'
 			WHERE job_id = $1;
@@ -881,15 +805,9 @@ func RedirectLinkGreen() ([]models.JobRedirect_LinkGreen, error) {
 	return output, nil
 }
 
-func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
+func (s *PostgresStore) RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
 
-	db, err := ConnectDb()
-
-	if err != nil {
-		return nil, utils.ErrorHandler(err, "dbconn err")
-	}
-
-	rows, err := db.Query(`
+	rows, err := s.db.Query(`
 		SELECT rl.job_id, jg.company_apply_url
 		FROM redirect_link rl
 		JOIN JOB_METADATA jg ON jg.job_id = rl.job_id
@@ -924,7 +842,7 @@ func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
 	}
 	rows.Close()
 	for _, job := range output {
-		_, err := db.Exec(`
+		_, err := s.db.Exec(`
 			UPDATE redirect_link
 			SET status_ash = 'in_progress'
 			WHERE job_id = $1;
@@ -941,3 +859,75 @@ func RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) {
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
+
+func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {
+
+	db, err := ConnectDb(1)
+
+	if err != nil {
+		return nil, nil, utils.ErrorHandler(err, "db conn error")
+	}
+
+	defer db.Close()
+
+	var currentUser string
+	db.QueryRow("SELECT current_user").Scan(&currentUser)
+	fmt.Println("CURRENT USER:", currentUser)
+
+	var currentDb string
+	db.QueryRow("SELECT current_database()").Scan(&currentDb)
+	fmt.Println("CURRENT DB:", currentDb)
+
+	fmt.Println("QUERY:", query)
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		fmt.Println("QUERY ERROR:", err)
+		return nil, nil, err
+	}
+
+	defer rows.Close()
+
+	//todo dep injection as param and rows.close instead of db.close
+	cols, err := rows.Columns()
+	if err != nil {
+		return nil, nil, err
+	}
+	colTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	scanTypes := make([]reflect.Type, len(colTypes))
+	colMeta := make([]ColumnMeta, len(colTypes))
+
+	for i, ct := range colTypes {
+		scanTypes[i] = ct.ScanType()
+		colMeta[i] = ColumnMeta{
+			Name: ct.Name(),
+			Type: ct.DatabaseTypeName(),
+		}
+	}
+
+	var results []map[string]interface{}
+
+	for rows.Next() {
+
+		scanTargets := make([]interface{}, len(cols))
+
+		for i, t := range scanTypes {
+			scanTargets[i] = reflect.New(t).Interface()
+		}
+
+		if err := rows.Scan(scanTargets...); err != nil {
+			return nil, nil, err
+		}
+
+		row := make(map[string]interface{})
+
+		for i, col := range cols {
+			row[col] = reflect.ValueOf(scanTargets[i]).Elem().Interface()
+		}
+		results = append(results, row)
+	}
+	return results, colMeta, rows.Err()
+}
