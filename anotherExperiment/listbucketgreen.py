@@ -94,7 +94,7 @@ def dblforgive(key , mydict ):
         mydict[key] =  [0]     
     return mydict
 
-with open("keys_ash.json" , "w" , encoding="utf-8" ) as f:
+with open("keys_green.json" , "w" , encoding="utf-8" ) as f:
     output = defaultdict(list)
    
     ##need this since this guarantee the order
