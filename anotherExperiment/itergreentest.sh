@@ -7,7 +7,7 @@ while IFS= read -r file; do
     type="${file%%-*}"
     type="${type^^}"
     
-    if [ "$type" = "COMPANYGREEN"]; then
+    if [ "$type" = "COMPANYGREEN" ]; then
         ./start insert $file COMPANY_GREEN
     elif [ "$type" = "PROCESSEDJOBSGREEN" ]; then 
         ./start insert $file JOBS_GREEN
