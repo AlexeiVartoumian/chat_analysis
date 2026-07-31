@@ -1040,41 +1040,51 @@ func (h *Handler) SeekExpiredAutoDeed(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var roles []string
+	for account := range req.NumberAccounts {
+		isFirstAccountOnFirstRun := req.FirstRun && account == 0
 
-	roles, err := h.Store.SeekExpiredAutoDeed(req.FirstRun)
+		accountRoles, err := h.Store.SeekExpiredAutoDeed(isFirstAccountOnFirstRun)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
 
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "Internal server error", http.StatusBadRequest)
-		return
+		if len(accountRoles) == 0 {
+			fmt.Printf("account %d: no roles, skipping\n", account)
+			continue
+		}
+
+		payload, err := json.Marshal(accountRoles)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		cmd := exec.Command("python3", "/home/ubuntu/deedbackfill.py",
+			strconv.Itoa(account), strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("deedbackfill.py failed for account %d: %v", account, err)
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+
+		response := struct {
+			Status     string `json:"status"`
+			StatusCode int
+		}{
+			Status: fmt.Sprintf("Successfully sent autodeed. have a nice day %d", len(accountRoles)),
+		}
+
+		json.NewEncoder(w).Encode(response)
+		time.Sleep(1 * time.Second)
+
 	}
-
-	if roles == nil {
-		fmt.Println("Job done")
-		return
-	}
-
-	payload, _ := json.Marshal(roles)
-
-	numberof := strconv.Itoa(req.NumberAccounts)
-	cmd := exec.Command("python3", "/home/ubuntu/deedbackfill.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-	cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Run(); err != nil {
-		log.Printf("deedbackfill.py failed %v", err)
-	}
-
-	response := struct {
-		Status     string `json:"status"`
-		StatusCode int
-	}{
-		Status: fmt.Sprintf("Successfully sent autodeed. have a nice day %d", len(roles)),
-	}
-
-	json.NewEncoder(w).Encode(response)
 
 }
 
