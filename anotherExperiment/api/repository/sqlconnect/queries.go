@@ -700,7 +700,7 @@ func (s *PostgresStore) RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 
 	rows, err := s.db.Query(`
-	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id limit 75;
+	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id , last_scanned_at from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id order by last_scanned_at ASC limit 75;
 	`)
 
 	if err != nil {
@@ -714,7 +714,7 @@ func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 
 		var res models.AshCompany
 
-		err = rows.Scan(&res.Teamname, &res.DepartmentName, &res.LocationName, &res.CompanyUrl, &res.CompanyId)
+		err = rows.Scan(&res.Teamname, &res.DepartmentName, &res.LocationName, &res.CompanyUrl, &res.CompanyId, &res.Lastscannedat)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")

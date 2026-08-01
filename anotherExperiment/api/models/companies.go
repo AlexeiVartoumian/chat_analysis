@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 //todo handle uplaoding logo to db
 type COMPANY struct {
 	//Job_id      int       `json:"id,omitempty" db:"job_id"`
@@ -26,4 +28,5 @@ type AshCompany struct {
 	LocationName   string
 	CompanyUrl     string
 	CompanyId      string
+	Lastscannedat  time.Time
 }
