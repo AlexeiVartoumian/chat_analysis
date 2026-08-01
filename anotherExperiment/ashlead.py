@@ -31,7 +31,7 @@ leads = json.loads(sys.stdin.read())
 encoded = base64.b64encode(json.dumps(leads).encode()).decode()
 dynamodb = boto3.resource('dynamodb' , region_name='eu-west-2')
 
-filepool_table_name = "filepoolstore_deed"
+filepool_table_name = "filepoolstore_ash"
 
 filepool_table = dynamodb.Table(filepool_table_name)
 
