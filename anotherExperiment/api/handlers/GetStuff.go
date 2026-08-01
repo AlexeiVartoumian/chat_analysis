@@ -443,7 +443,7 @@ func (h *Handler) SeekExpiredAuto(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if roles == nil {
-		fmt.Println("Job Done ")
+		fmt.Sprintf("Job Done for %s", filetype)
 		return
 	}
 	payload, _ := json.Marshal(roles)

@@ -270,13 +270,13 @@ func (s *PostgresStore) SeekExpiredAuto(filetype string, firstrun bool) ([]strin
 	// then last run has been reached.
 	fmt.Println(len(output))
 	if len(output) == 0 {
+		// leave it as visited .
+		// _, err := s.db.Exec(`
+		// UPDATE JOB_LIFECYCLE SET visited = FALSE`)
 
-		_, err := s.db.Exec(`
-		UPDATE JOB_LIFECYCLE SET visited = FALSE`)
-
-		if err != nil {
-			return nil, utils.ErrorHandler(err, " last run errored on db output yes")
-		}
+		// if err != nil {
+		// 	return nil, utils.ErrorHandler(err, " last run errored on db output yes")
+		// }
 		return nil, nil
 	}
 
@@ -700,7 +700,7 @@ func (s *PostgresStore) RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 
 	rows, err := s.db.Query(`
-	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
+	SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id limit 75;
 	`)
 
 	if err != nil {
