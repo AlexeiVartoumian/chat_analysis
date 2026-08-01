@@ -51,14 +51,19 @@ module "iam_hub_attachments" {
     s3_file_bucket_arn = module.s3.s3_bucket_file_arn
     s3_output_bucket_arn = module.s3.s3_bucket_output_arn
     s3_backfill_bucket_arn = module.s3.s3_bucket_backfill_arn
+
     file_pool_table = module.dynamodb_hub.filepool_table_name
+    file_pool_table_ash = module.dynamodb_hub.filepoolash_table_name
+    file_pool_table_green = module.dynamodb_hub.filepoolgreen_table_name  
+    file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
+
     account_pool_table = module.dynamodb_hub.accountpool_table_name 
     bucket_reader_role_name= module.iam_hub.aws_iam_role_main_name
     bucket_reader_main_arn = module.iam_hub.aws_iam_role_main_arn
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn
     sqs_deadletter_arn = module.sqs_hub.deadletter_sqs_queue_arn
     sqs_coordinator_arn_deed = module.sqs_hub.coordinator_deed_sqs_queue_arn
-    file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
+    
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn

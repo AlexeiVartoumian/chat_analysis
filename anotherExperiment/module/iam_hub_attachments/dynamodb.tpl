@@ -18,7 +18,12 @@
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table}/index/status-index",
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table_deed}",
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_deed}",
-                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table_deed }/index/status-index"
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table_deed }/index/status-index",
+
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_ash}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_ash}/index/status-index",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_green}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_green}/index/status-index"
             ]
         }
     ]

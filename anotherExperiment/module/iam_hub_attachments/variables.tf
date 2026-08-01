@@ -45,6 +45,13 @@ variable account_pool_table{
     type = string 
 }
 
+variable file_pool_table_ash{
+    type = string
+}
+
+variable file_pool_table_green{
+    type = string
+}
 variable file_pool_table_deed {
     type = string 
 } 
