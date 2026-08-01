@@ -372,7 +372,8 @@ def create_tables(conn) -> None:
                 company_id          TEXT        PRIMARY KEY,  
                 name                TEXT        NOT NULL,      
                 public_website       TEXT,                      
-                job_page_url         TEXT,                      
+                job_page_url         TEXT, 
+                last_scanned_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),                     
                 timezone             VARCHAR(64),              
                 company_url          TEXT                       
             );
