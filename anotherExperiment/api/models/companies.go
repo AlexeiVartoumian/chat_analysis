@@ -30,3 +30,12 @@ type AshCompany struct {
 	CompanyId      string
 	Lastscannedat  time.Time
 }
+
+type GreenbyCompany struct {
+	JobId         int    `json:"job_id,omitempty" db:"job_id"`
+	CompanyId     int    `json:"company_id,omitempty" db:"company_id"`
+	CompanyName   string `json:"company_name,omitempty" db:"company_name"`
+	JobUrl        string `json:"job_url,omitempty" db:"job_url"`
+	CompanyUrl    string `json:"job_board_public_url,omitempty" db:"job_board_public_url"`
+	Lastscannedat time.Time
+}

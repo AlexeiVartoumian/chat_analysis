@@ -1170,6 +1170,45 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (h *Handler) SeekGreenCompany(w http.ResponseWriter, r *http.Request) {
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	JobsGreenCompany, err := h.Store.SeekGreenCompany()
+
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "problem reading from db could be unexpected format", http.StatusInternalServerError)
+	}
+
+	payload, err := json.Marshal(JobsGreenCompany)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+		return
+	}
+	numberof := strconv.Itoa(req.NumberAccounts)
+	cmd := exec.Command("python3", "/home/ubuntu/greenbycompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		log.Println(err)
+		http.Error(w, "failed to start job", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *Handler) SeekGreenLead(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 

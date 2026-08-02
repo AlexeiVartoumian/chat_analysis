@@ -725,6 +725,11 @@ func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 	return output, nil
 }
 
+func (s *PostgresStore) SeekGreenCompany() (models.GreenbyCompany, error) {
+
+	return nil, nil
+}
+
 func (s *PostgresStore) RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
 
 	rows, err := s.db.Query(`
