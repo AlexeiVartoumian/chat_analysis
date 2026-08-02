@@ -512,6 +512,7 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS COMPANY_GREEN (
                 company_id              BIGINT           PRIMARY KEY,
                 name                    VARCHAR(128)     NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 job_board_public_url    TEXT,
                 domainurl               TEXT,
                 company_url             TEXT,
@@ -525,10 +526,12 @@ def create_tables(conn) -> None:
                 company_id              BIGINT          NOT NULL,
                 company_name            VARCHAR(128)    NOT NULL,    
                 job_url                 TEXT            NOT NULL,
+                department_id           BIGINT,
                 redirect_url            TEXT,
                 location_name           TEXT,                  
                 salary                  TEXT,
                 published_date          TIMESTAMPTZ     NOT NULL,
+                origin_green            TEXT,
                 origin_deed_id          TEXT,
                 origin_link_id          BIGINT,
 
@@ -599,6 +602,26 @@ def create_tables(conn) -> None:
                 CONSTRAINT fk_jst_workflow
                     FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_GREEN (workflow_id) ON DELETE CASCADE
             );                    
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_GREEN (
+                department_id        BIGINT       PRIMARY KEY,
+                department_name      TEXT         NOT NULL,
+                department_path      JSONB,
+                parent_id            BIGINT       NULL,
+                company_id           BIGINT         NOT NULL,
+
+                CONSTRAINT fk_department_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_GREEN (company_id)
+                    ON DELETE CASCADE,
+
+                CONSTRAINT fk_parent_department
+                    FOREIGN KEY (parent_id)
+                    REFERENCES DEPARTMENT_GREEN (department_id)
+                    ON DELETE SET NULL
+            );
         """)
 
         cur.execute("""
