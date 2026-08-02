@@ -747,7 +747,7 @@ func (s *PostgresStore) SeekGreenCompany() ([]models.GreenbyCompany, error) {
 
 		var res models.GreenbyCompany
 
-		err = rows.Scan(&res.JobId, &res.CompanyId, &res.CompanyName, &res.JobUrl, &res.CompanyUrl, res.Lastscannedat)
+		err = rows.Scan(&res.JobId, &res.CompanyId, &res.CompanyName, &res.JobUrl, &res.CompanyUrl, &res.Lastscannedat)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "scaan load error on greenby")
