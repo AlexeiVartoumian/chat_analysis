@@ -531,6 +531,7 @@ def create_tables(conn) -> None:
                 location_name           TEXT,                  
                 salary                  TEXT,
                 published_date          TIMESTAMPTZ     NOT NULL,
+                department_path         JSONB,
                 origin_green            TEXT,
                 origin_deed_id          TEXT,
                 origin_link_id          BIGINT,
@@ -608,7 +609,6 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS DEPARTMENT_GREEN (
                 department_id        BIGINT       PRIMARY KEY,
                 department_name      TEXT         NOT NULL,
-                department_path      JSONB,
                 parent_id            BIGINT       NULL,
                 company_id           BIGINT         NOT NULL,
 
