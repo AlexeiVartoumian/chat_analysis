@@ -725,9 +725,37 @@ func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 	return output, nil
 }
 
-func (s *PostgresStore) SeekGreenCompany() (models.GreenbyCompany, error) {
+func (s *PostgresStore) SeekGreenCompany() ([]models.GreenbyCompany, error) {
 
-	return nil, nil
+	rows, err := s.db.Query(`
+		SELECT DISTINCT ON (JOBS_GREEN.company_id) job_id, JOBS_GREEN.company_id, company_name, job_url,
+       		COMPANY_GREEN.job_board_public_url, last_scanned_at
+			FROM JOBS_GREEN, COMPANY_GREEN
+			WHERE COMPANY_GREEN.company_id = JOBS_GREEN.company_id
+			ORDER BY JOBS_GREEN.company_id, last_scanned_at ASC
+			LIMIT 75;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+	defer rows.Close()
+
+	var output []models.GreenbyCompany
+
+	for rows.Next() {
+
+		var res models.GreenbyCompany
+
+		err = rows.Scan(&res.JobId, &res.CompanyId, &res.CompanyName, &res.JobUrl, &res.CompanyUrl, res.Lastscannedat)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "scaan load error on greenby")
+		}
+		output = append(output, res)
+
+	}
+	return output, nil
 }
 
 func (s *PostgresStore) RedirectGreenLead() ([]models.JobRedirect_DEED, error) {
