@@ -84,7 +84,7 @@ with open("newkeys_green.txt" , "w" , encoding="utf-8") as f :
 def forgive(key , mydict ):
 
     if key not in mydict:
-        mydict[key] =  [0] *3    
+        mydict[key] =  [0] *5   
     return mydict
 
 def dblforgive(key , mydict ):
@@ -138,17 +138,22 @@ with open("keys_green.json" , "w" , encoding="utf-8" ) as f:
             forgive(unique ,output[timeline_key][0])
             output[timeline_key][0][unique][0] = document
         
+        if document.startswith("department"):
+            forgive(unique ,output[timeline_key][0])
+            output[timeline_key][0][unique][1] = document
         
         if document.startswith("processedJobsGreen"):
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique][1] = document
+            output[timeline_key][0][unique][2] = document
 
         if document.startswith("JobdescriptionGreen"):
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique][2] = document
+            output[timeline_key][0][unique][3] = document
         
-      
+        if document.startswith("deadlinks"):
+            forgive(unique ,output[timeline_key][0])
+            output[timeline_key][0][unique][4] = document
        
     json.dump(output, f)
   
