@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"bytes"
+	"cli/models"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -189,6 +191,31 @@ func BackfillEmbeddings() error {
 		}
 
 		log.Printf("embedded job_id %d", jobId)
+	}
+	return nil
+}
+
+func upsertDepartment(db *sql.DB, node models.DeptNode, parentID *int64, companyID int64) error {
+	name := strings.TrimSpace(node.Name) // source data has trailing spaces e.g. "Operations "
+
+	_, err := db.Exec(`
+		INSERT INTO DEPARTMENT_GREEN (department_id, department_name, parent_id, company_id)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (department_id) DO UPDATE
+		SET department_name = EXCLUDED.department_name,
+		    parent_id       = EXCLUDED.parent_id,
+		    company_id      = EXCLUDED.company_id
+	`, node.ID, name, parentID, companyID)
+	if err != nil {
+		return fmt.Errorf("upsert department %d (%s): %w", node.ID, name, err)
+	}
+
+	for _, child := range node.Children {
+		// pass THIS node's own ID as the child's parent — recursion handles
+		// arbitrary depth, not just one level of children.
+		if err := upsertDepartment(db, child, &node.ID, companyID); err != nil {
+			return err
+		}
 	}
 	return nil
 }

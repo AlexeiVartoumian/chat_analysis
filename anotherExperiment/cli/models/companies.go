@@ -48,3 +48,18 @@ type COMPANY_ASH_TEAM struct {
 	ParentTeamId     *string `json:"parentTeamId,omitempty" db:"parent_team_id"`
 	TeamExternalName *string `json:"teamExternalName,omitempty" db:"team_external_name"`
 }
+
+type CompanyGreenDepartment struct {
+	DepartmentId    int    `json:"departmentId,omitempty" db:"department_id"`
+	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
+	ParentTeamId    *int64 `json:"parentTeamId,omitempty" db:"parent_id"`
+	CompanyId       int    `json:"organizationId,omitempty" db:"company_id"`
+}
+
+type DeptNode struct {
+	ID       int64      `json:"id"`
+	Value    int64      `json:"value"`
+	Name     string     `json:"name"`
+	Label    string     `json:"label"`
+	Children []DeptNode `json:"children"`
+}

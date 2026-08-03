@@ -1,6 +1,9 @@
 package models
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 type JOBS struct {
 	Job_id      int       `json:"id,omitempty" db:"job_id"`
@@ -48,19 +51,21 @@ type JobAsh struct {
 }
 
 type JobGreen struct {
-	JobID          int       `json:"job_id" db:"job_id"`
-	Title          string    `json:"title" db:"title"`
-	LocationName   *string   `json:"locationName,omitempty" db:"location_name"`
-	CompanyID      int       `json:"company_id" db:"company_id"`
-	Company_name   string    `json:"company_name,omitempty" db:"company_name"`
-	JobURL         string    `json:"job_url" db:"job_url"`
-	RedirectURL    *string   `json:"redirect_url" db:"redirect_url"`
-	PublishedDate  time.Time `json:"publishedDate" db:"published_date"`
-	Salary         *string   `json:"salary,omitempty" db:"salary"`
-	OriginLinkID   *int64    `json:"origin_link_id,omitempty" db:"origin_link_id"`
-	Origin_deed_id *string   `json:"origin_deed_id,omitempty" db:"origin_deed_id"`
+	JobID          int              `json:"job_id" db:"job_id"`
+	Title          string           `json:"title" db:"title"`
+	LocationName   *string          `json:"locationName,omitempty" db:"location_name"`
+	CompanyID      int              `json:"company_id" db:"company_id"`
+	Company_name   string           `json:"company_name,omitempty" db:"company_name"`
+	JobURL         string           `json:"job_url" db:"job_url"`
+	RedirectURL    *string          `json:"redirect_url" db:"redirect_url"`
+	PublishedDate  time.Time        `json:"publishedDate" db:"published_date"`
+	DepartmentPath *json.RawMessage `json:"department_path,omitempty" db:"department_path"`
+	Salary         *string          `json:"salary,omitempty" db:"salary"`
+	OriginLinkID   *int64           `json:"origin_link_id,omitempty" db:"origin_link_id"`
+	Origin_deed_id *string          `json:"origin_deed_id,omitempty" db:"origin_deed_id"`
+	Origin_green   *string          `json:"origin,omitempty" db:"origin_green"`
+	DepartmentId   *int64           `json:"department_id,omitempty" db:"department_id"`
 }
-
 type Everything struct {
 	JOBS
 	Jobs_metadata

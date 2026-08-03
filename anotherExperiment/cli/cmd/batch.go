@@ -430,6 +430,9 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 		if err != nil {
 			fmt.Println("record at index: has not been saved")
 		}
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "deadlinks-")[1], ".csv")[0], "_")
+
+		timestamp, err := parseTimestamp(meta_data[1])
 		for _, record := range records {
 
 			origin := record["origin"]
@@ -438,6 +441,10 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			case "link":
 				job_id, _ := strconv.Atoi(record["job_id"])
 				db.Exec("UPDATE REDIRECT_LINK SET status_green ='done' WHERE job_id = $1", job_id)
+
+			case "green":
+				job_id, _ := strconv.Atoi(record["job_id"])
+				db.Exec("UPDATE  job_lifecycle_green SET first_seen_closed_at = $1, job_state =$2 ,WHERE job_id = $3", timestamp, true, job_id)
 			default:
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 			}
@@ -1086,7 +1093,7 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 	}
 	var originLinkID *int64
 	var originDeedID *string
-
+	var origin_green *string
 	origin := record["origin"]
 
 	switch origin {
@@ -1100,12 +1107,36 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 				originLinkID = &v
 			}
 		}
-	default:
+	case "green":
 		raw := strings.TrimSpace(record["origin_deed_id"])
 		if raw != "" {
 			originDeedID = &raw
 		}
+	default:
+		raw := strings.TrimSpace(record["origin_deed_id"])
+		if raw != "" {
+			origin_green = &raw
+		}
 	}
+
+	var departmentId *int64
+	rawDept := strings.TrimSpace(record["department_id"])
+	if rawDept != "" {
+		v, err := strconv.ParseInt(rawDept, 10, 64)
+		if err != nil {
+			log.Printf("invalid department_id %q: %v", rawDept, err)
+		} else {
+			departmentId = &v
+		}
+	}
+
+	var departmentPath *json.RawMessage
+	rawPath := strings.TrimSpace(record["department_path"])
+	if rawPath != "" {
+		rm := json.RawMessage(rawPath)
+		departmentPath = &rm
+	}
+
 	job := models.JobGreen{
 		JobID:          job_id,
 		Title:          record["title"],
@@ -1115,11 +1146,71 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 		JobURL:         record["job_url"],
 		RedirectURL:    NullableString(record["redirect_url"]),
 		PublishedDate:  datePub,
+		DepartmentPath: departmentPath,
 		Salary:         NullableString(record["salary"]),
 		OriginLinkID:   originLinkID,
 		Origin_deed_id: originDeedID,
+		Origin_green:   origin_green,
+		DepartmentId:   departmentId,
 	}
 	return job, nil
+}
+
+func Green_DepartmentUpdate(records []map[string]string, tablename string, filepath string) {
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+
+	timestamp, err := parseTimestamp(meta_data[1])
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		return
+	}
+
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		// adjust this key to whatever column actually holds the company id in your CSV
+		companyIDStr, ok := record["organizationId"]
+		if !ok || companyIDStr == "" {
+			fmt.Println("record missing organizationId, skipping")
+			continue
+		}
+		companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
+		if err != nil {
+			fmt.Println("bad organizationId value:", companyIDStr, err)
+			continue
+		}
+
+		rawPath := record["department_path"]
+		if rawPath == "" {
+			continue
+		}
+
+		var nodes []models.DeptNode
+		if err := json.Unmarshal([]byte(rawPath), &nodes); err != nil {
+			fmt.Println("bad department_path json:", err, "raw:", rawPath)
+			continue
+		}
+
+		for _, node := range nodes {
+			// top-level nodes have no parent
+			if err := upsertDepartment(db, node, nil, companyID); err != nil {
+				fmt.Println(err)
+			}
+		}
+
+		// NOTE: your original query had no WHERE clause, so it would stamp
+		// last_scanned_at on every row in COMPANY_GREEN on every loop iteration.
+		// Scoping it to the company being processed is almost certainly what you want:
+		_, err = db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
+		if err != nil {
+			fmt.Println("update last_scanned_at failed", err)
+		}
+	}
 }
 
 func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepath string) {
