@@ -4,6 +4,7 @@ import (
 	"cli/models"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"log"
 
 	"bufio"
@@ -132,6 +133,10 @@ func CsvFile(filepath string, tablename string) error {
 	if tablename == "DEADLINKS_GREEN" && len(records) > 0 {
 		Job_and_search_loader_green(records, tablename, filepath)
 		return nil
+	}
+
+	if tablename == "DEPARTMENT_GREEN" && len(records) > 0 {
+		Green_DepartmentUpdate(records, filepath)
 	}
 
 	if tablename == "JOB_METADATA" && len(records) > 0 {
@@ -425,14 +430,16 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 
 	if strings.HasPrefix(filepath, "deadlink") {
 
-		db, err := ConnectDb()
-
 		if err != nil {
 			fmt.Println("record at index: has not been saved")
 		}
 		meta_data := strings.Split(strings.Split(strings.Split(filepath, "deadlinks-")[1], ".csv")[0], "_")
 
 		timestamp, err := parseTimestamp(meta_data[1])
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return
+		}
 		for _, record := range records {
 
 			origin := record["origin"]
@@ -444,7 +451,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 
 			case "green":
 				job_id, _ := strconv.Atoi(record["job_id"])
-				db.Exec("UPDATE  job_lifecycle_green SET first_seen_closed_at = $1, job_state =$2 ,WHERE job_id = $3", timestamp, true, job_id)
+				db.Exec("UPDATE job_lifecycle_green SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, true, job_id)
 			default:
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 			}
@@ -452,9 +459,9 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 		return
 	} else if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
-	} // else {
-	// 	meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
-	// }
+	} else {
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+	}
 
 	workflowid := meta_data[0]
 	timestamp, err := parseTimestamp(meta_data[1])
@@ -481,6 +488,12 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
 		}
+		//err = Green_DepartmentUpdate(db, value, timestamp)
+
+		// if err != nil {
+		// 	fmt.Println("bad insert on company update")
+		// 	continue
+		// }
 		//skipped, _ := AddNewRow(value, tablename)
 		skipped, err := AddNewRow(value, tablename)
 
@@ -511,14 +524,8 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_GREEN")
 
-		if err == nil && value.OriginLinkID != nil {
-
-			_, err = db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", value.OriginLinkID)
-
-		}
-		UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
-
 	}
+	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
 }
 
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
@@ -1156,61 +1163,76 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 	return job, nil
 }
 
-func Green_DepartmentUpdate(records []map[string]string, tablename string, filepath string) {
-	meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
+// func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
+// 	_, err := db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, value.CompanyID)
+// 	if err != nil {
+// 		fmt.Println("update last_scanned_at failed", err)
+// 		return err
+// 	}
+
+// 	if value.DepartmentPath == nil {
+// 		return nil
+// 	}
+
+// 	rawPath := *value.DepartmentPath
+
+// 	var nodes []models.DeptNode
+// 	if err := json.Unmarshal(rawPath, &nodes); err != nil {
+// 		fmt.Println("bad department_path json:", err, "raw:", string(rawPath))
+// 		return errors.New("bad json")
+// 	}
+
+// 	for _, node := range nodes {
+// 		if err := upsertDepartment(db, node, nil, int64(value.CompanyID)); err != nil {
+// 			fmt.Println(err)
+// 		}
+// 	}
+
+// 	return nil
+// }
+
+func Green_DepartmentUpdate(records []map[string]string, filepath string) error {
+
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "departmentGreen-")[1], ".csv")[0], "_")
 
 	timestamp, err := parseTimestamp(meta_data[1])
 	if err != nil {
-		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
-		return
+		fmt.Println("Error handling the timestamp")
+		return err
 	}
-
 	db, err := ConnectDb()
-	if err != nil {
-		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
-		return
-	}
-	defer db.Close()
 
-	for _, record := range records {
-		// adjust this key to whatever column actually holds the company id in your CSV
-		companyIDStr, ok := record["organizationId"]
-		if !ok || companyIDStr == "" {
-			fmt.Println("record missing organizationId, skipping")
-			continue
-		}
-		companyID, err := strconv.ParseInt(companyIDStr, 10, 64)
+	for index, record := range records {
+
+		companyID, err := strconv.Atoi(record["company_id"])
 		if err != nil {
-			fmt.Println("bad organizationId value:", companyIDStr, err)
+			fmt.Println("record at index department not saed", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
 		}
 
-		rawPath := record["department_path"]
-		if rawPath == "" {
-			continue
+		_, err = db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
+		if err != nil {
+			fmt.Println("update last_scanned_at failed", err)
+			return err
 		}
+
+		rawPath := record["departments"]
 
 		var nodes []models.DeptNode
 		if err := json.Unmarshal([]byte(rawPath), &nodes); err != nil {
 			fmt.Println("bad department_path json:", err, "raw:", rawPath)
-			continue
+			return errors.New("bad json")
 		}
 
 		for _, node := range nodes {
-			// top-level nodes have no parent
-			if err := upsertDepartment(db, node, nil, companyID); err != nil {
+			if err := upsertDepartment(db, node, nil, int64(companyID)); err != nil {
 				fmt.Println(err)
 			}
 		}
 
-		// NOTE: your original query had no WHERE clause, so it would stamp
-		// last_scanned_at on every row in COMPANY_GREEN on every loop iteration.
-		// Scoping it to the company being processed is almost certainly what you want:
-		_, err = db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
-		if err != nil {
-			fmt.Println("update last_scanned_at failed", err)
-		}
 	}
+
+	return nil
 }
 
 func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepath string) {
