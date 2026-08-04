@@ -137,6 +137,7 @@ func CsvFile(filepath string, tablename string) error {
 
 	if tablename == "DEPARTMENT_GREEN" && len(records) > 0 {
 		Green_DepartmentUpdate(records, filepath)
+		return nil
 	}
 
 	if tablename == "JOB_METADATA" && len(records) > 0 {
