@@ -9,6 +9,10 @@ while IFS= read -r file; do
     
     if [ "$type" = "COMPANYGREEN" ]; then
         ./start insert $file COMPANY_GREEN
+    
+    elif [ "$type" = "DEPARTMENTGREEN" ]; then 
+        ./start insert $file DEPARTMENT_GREEN
+    
     elif [ "$type" = "PROCESSEDJOBSGREEN" ]; then 
         ./start insert $file JOBS_GREEN
         ./start insert $file JOB_LIFECYCLE_GREEN
