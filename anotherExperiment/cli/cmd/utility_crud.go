@@ -219,3 +219,43 @@ func upsertDepartment(db *sql.DB, node models.DeptNode, parentID *int64, company
 	}
 	return nil
 }
+
+func upsertTeamAsh(db *sql.DB, node models.DeptNodeAsh, parentID *string, companyID string, departmentID string) error {
+	name := strings.TrimSpace(node.Name)
+
+	var externalName *string
+	if node.ExternalName != nil {
+		trimmed := strings.TrimSpace(*node.ExternalName)
+		externalName = &trimmed
+	}
+
+	_, err := db.Exec(`
+		INSERT INTO TEAM_ASH (team_id, team_name, department_id, parent_team_id, team_external_name, company_id)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		ON CONFLICT (team_id) DO UPDATE
+		SET team_name          = EXCLUDED.team_name,
+		    department_id      = EXCLUDED.department_id,
+		    parent_team_id     = EXCLUDED.parent_team_id,
+		    team_external_name = EXCLUDED.team_external_name,
+		    company_id         = EXCLUDED.company_id
+	`, node.ID, name, departmentID, parentID, externalName, companyID)
+	if err != nil {
+		return fmt.Errorf("upsert team %s (%s): %w", node.ID, name, err)
+	}
+	return nil
+}
+
+func walkTeamsAsh(db *sql.DB, nodeID string, byID map[string]models.DeptNodeAsh, childrenOf map[string][]string, companyID, departmentID string) error {
+	node := byID[nodeID]
+
+	if err := upsertTeamAsh(db, node, node.ParentTeamId, companyID, departmentID); err != nil {
+		return err
+	}
+
+	for _, childID := range childrenOf[nodeID] {
+		if err := walkTeamsAsh(db, childID, byID, childrenOf, companyID, departmentID); err != nil {
+			return err
+		}
+	}
+	return nil
+}

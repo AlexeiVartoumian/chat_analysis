@@ -38,15 +38,15 @@ type COMPANY_GREEN struct {
 type COMPANY_ASH_DEPARTMENT struct {
 	DepartmentId    string `json:"departmentId,omitempty" db:"department_id"`
 	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
-	CompanyId       string `json:"organizationId,omitempty" db:"company_id"`
 }
 
 type COMPANY_ASH_TEAM struct {
-	TeamId           string  `json:"teamId,omitempty" db:" team_id"`
+	TeamId           string  `json:"teamId,omitempty" db:"team_id"`
 	TeamName         string  `json:"teamName,omitempty" db:"team_name"`
 	DepartmentId     string  `json:"departmentId,omitempty" db:"department_id"`
 	ParentTeamId     *string `json:"parentTeamId,omitempty" db:"parent_team_id"`
 	TeamExternalName *string `json:"teamExternalName,omitempty" db:"team_external_name"`
+	CompanyId        string  `json:"organizationId,omitempty" db:"company_id"`
 }
 
 type CompanyGreenDepartment struct {
@@ -54,6 +54,13 @@ type CompanyGreenDepartment struct {
 	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
 	ParentTeamId    *int64 `json:"parentTeamId,omitempty" db:"parent_id"`
 	CompanyId       int    `json:"organizationId,omitempty" db:"company_id"`
+}
+
+type DeptNodeAsh struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	ExternalName *string `json:"externalName"`
+	ParentTeamId *string `json:"parentTeamId"`
 }
 
 type DeptNode struct {

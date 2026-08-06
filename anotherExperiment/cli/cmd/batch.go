@@ -120,6 +120,11 @@ func CsvFile(filepath string, tablename string) error {
 		Job_and_search_loader_ash(records, tablename, filepath)
 		return nil
 	}
+
+	if tablename == "TEAM_ASH" && len(records) > 0 {
+		Ash_TeamUpdate(records, filepath)
+	}
+
 	if tablename == "DEADLINKS_ASH" && len(records) > 0 {
 		Job_and_search_loader_ash(records, tablename, filepath)
 		return nil
@@ -1737,70 +1742,169 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 	return nil
 }
 
-// two pass logic on every row needed for self referencing parent id that might not exist yet . set null then set if exists.
-func Team_loader_ash(records []map[string]string, tablename string, filepath string) error {
+func Team_loader_ash(records []map[string]string, filepath string) error {
+
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "teamAsh-")[1], ".csv")[0], "_")
+
+	timestamp, err := parseTimestamp(meta_data[1])
+	if err != nil {
+		fmt.Println("Error handling the timestamp")
+		return err
+	}
 
 	db, err := ConnectDb()
 	if err != nil {
-		return ErrorHandler(err, "team loader db connection failed")
-	}
-	defer db.Close()
-
-	tx, err := db.Begin()
-	if err != nil {
-		return ErrorHandler(err, "team loader begin tx failed")
-	}
-	defer tx.Rollback()
-
-	seen := make(map[string]bool)
-	var teams []models.COMPANY_ASH_TEAM
-
-	for _, record := range records {
-		// child team (the team this job posting is directly tagged with)
-		team, err := TeamAshLoader(record)
-		if err != nil {
-			return ErrorHandler(err, "team parse failed")
-		}
-		if team.TeamId != "" && !seen[team.TeamId] {
-			seen[team.TeamId] = true
-			teams = append(teams, team)
-		}
-
-		// parent team — same row gives us its real id + name, add it too
-		parentID := record["parentTeamId"]
-		if parentID != "" && !seen[parentID] {
-			seen[parentID] = true
-			teams = append(teams, models.COMPANY_ASH_TEAM{
-				TeamId:       parentID,
-				TeamName:     record["parentTeam"],
-				DepartmentId: record["departmentId"],
-				ParentTeamId: nil,
-			})
-		}
+		return err
 	}
 
-	for _, t := range teams {
-		_, err := tx.Exec(`
-            INSERT INTO TEAM_ASH (team_id, team_name, department_id, team_external_name)
-            VALUES ($1, $2, $3, $4)
-            ON CONFLICT (team_id) DO NOTHING
-        `, t.TeamId, t.TeamName, t.DepartmentId, t.TeamExternalName)
-		if err != nil {
-			return ErrorHandler(err, "team insert (pass 1) failed")
-		}
-	}
+	for index, record := range records {
 
-	for _, t := range teams {
-		if t.ParentTeamId == nil {
+		companyID, ok := record["organizationId"]
+		if !ok || companyID == "" {
+			fmt.Println("record at index missing organizationId, skipping", index)
 			continue
 		}
-		_, err := tx.Exec(`
-            UPDATE TEAM_ASH SET parent_team_id = $1 WHERE team_id = $2
-        `, t.ParentTeamId, t.TeamId)
+
+		_, err = db.Exec("UPDATE COMPANY_ASH SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
 		if err != nil {
-			return ErrorHandler(err, "team parent backfill (pass 2) failed")
+			fmt.Println("update last_scanned_at failed", index, err)
+			return err
+		}
+
+		rawPath := record["departments"]
+
+		var nodes []models.DeptNodeAsh
+		if err := json.Unmarshal([]byte(rawPath), &nodes); err != nil {
+			fmt.Println("bad departments json:", err, "raw:", rawPath)
+			return errors.New("bad json")
+		}
+
+		// Reconstruct parent -> children edges since the source is flat.
+		byID := make(map[string]models.DeptNodeAsh, len(nodes))
+		childrenOf := make(map[string][]string)
+		var rootIDs []string
+
+		for _, n := range nodes {
+			byID[n.ID] = n
+			if n.ParentTeamId == nil {
+				rootIDs = append(rootIDs, n.ID)
+			} else {
+				childrenOf[*n.ParentTeamId] = append(childrenOf[*n.ParentTeamId], n.ID)
+			}
+		}
+
+		departmentID := "" // TODO: resolve — see note above, this can't stay blank
+
+		for _, rootID := range rootIDs {
+			if err := walkTeamsAsh(db, rootID, byID, childrenOf, companyID, departmentID); err != nil {
+				fmt.Println(err)
+			}
 		}
 	}
 
-	return tx.Commit()
+	return nil
 }
+
+// two pass logic on every row needed for self referencing parent id that might not exist yet . set null then set if exists.
+// func Team_loader_ash(records []map[string]string, tablename string, filepath string) error {
+
+// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "departmentGreen-")[1], ".csv")[0], "_")
+
+// 	timestamp, err := parseTimestamp(meta_data[1])
+// 	if err != nil {
+// 		fmt.Println("Error handling the timestamp")
+// 		return err
+// 	}
+// 	db, err := ConnectDb()
+
+// 	for index, record := range records {
+
+// 		companyID, err := record["company_id"]
+
+// 		_, err = db.Exec("UPDATE COMPANY_ASH SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
+// 		if err != nil {
+// 			fmt.Println(index)
+// 			fmt.Println("update last_scanned_at failed", err)
+// 			return err
+// 		}
+
+// 		rawPath := record["departments"]
+
+// 		var nodes []models.DeptNode
+// 		if err := json.Unmarshal([]byte(rawPath), &nodes); err != nil {
+// 			fmt.Println("bad department_path json:", err, "raw:", rawPath)
+// 			return errors.New("bad json")
+// 		}
+
+// 		for _, node := range nodes {
+// 			if err := upsertDepartment(db, node, nil, companyID); err != nil {
+// 				fmt.Println(err)
+// 			}
+// 		}
+
+// 	}
+
+// db, err := ConnectDb()
+// if err != nil {
+// 	return ErrorHandler(err, "team loader db connection failed")
+// }
+// defer db.Close()
+
+// tx, err := db.Begin()
+// if err != nil {
+// 	return ErrorHandler(err, "team loader begin tx failed")
+// }
+// defer tx.Rollback()
+
+// seen := make(map[string]bool)
+// var teams []models.COMPANY_ASH_TEAM
+
+// for _, record := range records {
+// 	// child team (the team this job posting is directly tagged with)
+// 	team, err := TeamAshLoader(record)
+// 	if err != nil {
+// 		return ErrorHandler(err, "team parse failed")
+// 	}
+// 	if team.TeamId != "" && !seen[team.TeamId] {
+// 		seen[team.TeamId] = true
+// 		teams = append(teams, team)
+// 	}
+
+// 	// parent team — same row gives us its real id + name, add it too
+// 	parentID := record["parentTeamId"]
+// 	if parentID != "" && !seen[parentID] {
+// 		seen[parentID] = true
+// 		teams = append(teams, models.COMPANY_ASH_TEAM{
+// 			TeamId:       parentID,
+// 			TeamName:     record["parentTeam"],
+// 			DepartmentId: record["departmentId"],
+// 			ParentTeamId: nil,
+// 		})
+// 	}
+// }
+
+// for _, t := range teams {
+// 	_, err := tx.Exec(`
+//         INSERT INTO TEAM_ASH (team_id, team_name, department_id, team_external_name)
+//         VALUES ($1, $2, $3, $4)
+//         ON CONFLICT (team_id) DO NOTHING
+//     `, t.TeamId, t.TeamName, t.DepartmentId, t.TeamExternalName)
+// 	if err != nil {
+// 		return ErrorHandler(err, "team insert (pass 1) failed")
+// 	}
+// }
+
+// for _, t := range teams {
+// 	if t.ParentTeamId == nil {
+// 		continue
+// 	}
+// 	_, err := tx.Exec(`
+//         UPDATE TEAM_ASH SET parent_team_id = $1 WHERE team_id = $2
+//     `, t.ParentTeamId, t.TeamId)
+// 	if err != nil {
+// 		return ErrorHandler(err, "team parent backfill (pass 2) failed")
+// 	}
+// }
+
+// return tx.Commit()
+//}
