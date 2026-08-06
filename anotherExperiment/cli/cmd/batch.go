@@ -1743,7 +1743,7 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 
 func Team_loader_ash(records []map[string]string, filepath string) error {
 
-	meta_data := strings.Split(strings.Split(strings.Split(filepath, "teamAsh-")[1], ".csv")[0], "_")
+	meta_data := strings.Split(strings.Split(strings.Split(filepath, "departmentsAsh-")[1], ".csv")[0], "_")
 
 	timestamp, err := parseTimestamp(meta_data[1])
 	if err != nil {
