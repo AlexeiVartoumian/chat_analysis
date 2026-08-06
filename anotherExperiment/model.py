@@ -385,13 +385,18 @@ def create_tables(conn) -> None:
                     title               TEXT          NOT NULL,
                     is_listed           BOOLEAN,
                     department_name     VARCHAR(64),
-                    team_name           JSONB,
+                    team_names          JSONB,
+                    team_name           VARCHAR(64),
+                    team_id             TEXT,   
+                    team_external_name  TEXT,
+                    parent_team_id       TEXT,
                     location_name       VARCHAR(64),
                     employment_type     VARCHAR(32),
                     workplace_type      VARCHAR(32),
                     salary              VARCHAR(128),
                     job_url             TEXT          NOT NULL,
-                    company_id          TEXT          NOT NULL,
+                    company_id          TEXT          NOT NULL, 
+                    origin_ash          TEXT,
                     origin_deed_id      TEXT,
                     origin_link_id      BIGINT
 
@@ -465,30 +470,31 @@ def create_tables(conn) -> None:
             );
         """)
         #SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS DEPARTMENT_ASH (
-                department_id       TEXT        PRIMARY KEY,
-                department_name     TEXT        NOT NULL,
-                company_id           TEXT        NOT NULL,
+        # cur.execute("""
+        #     CREATE TABLE IF NOT EXISTS DEPARTMENT_ASH (
+        #         department_id       TEXT        PRIMARY KEY,
+        #         department_name     TEXT        NOT NULL,
+        #         company_id           TEXT        NOT NULL,
 
-                CONSTRAINT fk_department_company
-                    FOREIGN KEY (company_id)
-                    REFERENCES COMPANY_ASH (company_id)
-                    ON DELETE CASCADE
-            );
-        """)
+        #         CONSTRAINT fk_department_company
+        #             FOREIGN KEY (company_id)
+        #             REFERENCES COMPANY_ASH (company_id)
+        #             ON DELETE CASCADE
+        #     );
+        # """)
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS TEAM_ASH (
                 team_id              TEXT        PRIMARY KEY,
                 team_name            TEXT        NOT NULL,
                 department_id        TEXT        NOT NULL,
-                parent_team_id        TEXT,       -- nullable: top-level teams have no parent
-                team_external_name    TEXT
+                parent_team_id       TEXT,       -- nullable: top-level teams have no parent
+                team_external_name   TEXT,
+                company_id           TEXT        NOT NULL,
 
-                CONSTRAINT fk_team_department
-                    FOREIGN KEY (department_id)
-                    REFERENCES DEPARTMENT_ASH (department_id)
+                CONSTRAINT fk_team_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_ASH (department_id)
                     ON DELETE CASCADE,
 
                 CONSTRAINT fk_team_parent
