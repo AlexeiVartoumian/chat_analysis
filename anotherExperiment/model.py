@@ -487,7 +487,7 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS TEAM_ASH (
                 team_id              TEXT        PRIMARY KEY,
                 team_name            TEXT        NOT NULL,
-                department_id        TEXT        NOT NULL,
+                department_id        TEXT,
                 parent_team_id       TEXT,       -- nullable: top-level teams have no parent
                 team_external_name   TEXT,
                 company_id           TEXT        NOT NULL,
