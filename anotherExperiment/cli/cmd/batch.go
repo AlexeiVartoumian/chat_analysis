@@ -1005,6 +1005,13 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 	return job, nil
 
 }
+func NullableJSON(s string) *json.RawMessage {
+	if s == "" {
+		return nil
+	}
+	rm := json.RawMessage(s)
+	return &rm
+}
 
 // add boolean to determine what to pass
 func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
@@ -1065,6 +1072,7 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		// PublishedDate:  datePub,
 		// UpdatedAt:      updatedAt,
 		JobURL:           record["job_url"],
+		TeamNames:        NullableJSON(record["teamNames"]),
 		TeamName:         NullableString(record["teamName"]),
 		Team_id:          NullableString(record["teamId"]),
 		ParentTeam_id:    NullableString(record["parentTeamId"]),
@@ -1079,6 +1087,7 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		Origin_deed_id:   originDeedID,
 		Origin_ash:       originAsh,
 	}
+	return job, nil
 	return job, nil
 }
 

@@ -33,26 +33,24 @@ type JOBS_DEED struct {
 }
 
 type JobAsh struct {
-	JobID            string  `json:"job_id" db:"job_id"`
-	Title            string  `json:"title" db:"title"`
-	IsListed         *bool   `json:"is_listed,omitempty" db:"is_listed"`
-	DepartmentName   *string `json:"department_name,omitempty" db:"department_name"`
-	TeamNames        *string `json:"team_name,omitempty" db:"team_names"`
-	TeamName         *string `json:"teamName,omitempty" db:"team_name"`
-	Team_id          *string `json:"teamId,omitempty" db:"team_id"`
-	ParentTeam_id    *string `json:"parentTeamId,omitempty" db:"parent_team_id"`
-	TeamExternalName *string `json:"teamExternalName,omitempty" db:"team_external_name"`
-	LocationName     *string `json:"location_name,omitempty" db:"location_name"`
-	EmploymentType   *string `json:"employment_type,omitempty" db:"employment_type"`
-	WorkplaceType    *string `json:"workplace_type,omitempty" db:"workplace_type"`
-	// PublishedDate  time.Time `json:"published_date" db:"published_date"`
-	// UpdatedAt      time.Time `json:"updated_at" db:"updated_at"`
-	Salary         *string `json:"salary,omitempty" db:"salary"`
-	JobURL         string  `json:"job_url" db:"job_url"`
-	CompanyID      string  `json:"company_id" db:"company_id"`
-	OriginLinkID   *int64  `json:"origin_link_id,omitempty" db:"origin_link_id"`
-	Origin_deed_id *string `json:"origin_deed_id,omitempty" db:"origin_deed_id"`
-	Origin_ash     *string `json:"origin_ash,omitempty" db:"origin_ash"`
+	JobID            string           `json:"job_id" db:"job_id"`
+	Title            string           `json:"title" db:"title"`
+	IsListed         *bool            `json:"is_listed,omitempty" db:"is_listed"`
+	DepartmentName   *string          `json:"department_name,omitempty" db:"department_name"`
+	TeamNames        *json.RawMessage `json:"team_names,omitempty" db:"team_names"`
+	TeamName         *string          `json:"teamName,omitempty" db:"team_name"`
+	Team_id          *string          `json:"teamId,omitempty" db:"team_id"`
+	ParentTeam_id    *string          `json:"parentTeamId,omitempty" db:"parent_team_id"`
+	TeamExternalName *string          `json:"teamExternalName,omitempty" db:"team_external_name"`
+	LocationName     *string          `json:"location_name,omitempty" db:"location_name"`
+	EmploymentType   *string          `json:"employment_type,omitempty" db:"employment_type"`
+	WorkplaceType    *string          `json:"workplace_type,omitempty" db:"workplace_type"`
+	Salary           *string          `json:"salary,omitempty" db:"salary"`
+	JobURL           string           `json:"job_url" db:"job_url"`
+	CompanyID        string           `json:"company_id" db:"company_id"`
+	OriginLinkID     *int64           `json:"origin_link_id,omitempty" db:"origin_link_id"`
+	Origin_deed_id   *string          `json:"origin_deed_id,omitempty" db:"origin_deed_id"`
+	Origin_ash       *string          `json:"origin_ash,omitempty" db:"origin_ash"`
 }
 
 type JobGreen struct {
