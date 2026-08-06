@@ -35,11 +35,6 @@ type COMPANY_GREEN struct {
 	CompanyAbout      *string `json:"companyAbout,omitempty" db:"company_about"`
 }
 
-type COMPANY_ASH_DEPARTMENT struct {
-	DepartmentId    string `json:"departmentId,omitempty" db:"department_id"`
-	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
-}
-
 type COMPANY_ASH_TEAM struct {
 	TeamId           string  `json:"teamId,omitempty" db:"team_id"`
 	TeamName         string  `json:"teamName,omitempty" db:"team_name"`

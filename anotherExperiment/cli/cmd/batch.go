@@ -120,9 +120,9 @@ func CsvFile(filepath string, tablename string) error {
 		Job_and_search_loader_ash(records, tablename, filepath)
 		return nil
 	}
-
 	if tablename == "TEAM_ASH" && len(records) > 0 {
-		Ash_TeamUpdate(records, filepath)
+		Team_loader_ash(records, filepath)
+		return nil
 	}
 
 	if tablename == "DEADLINKS_ASH" && len(records) > 0 {
@@ -172,10 +172,7 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
 	}
-	if tablename == "TEAM_ASH" && len(records) > 0 {
-		Team_loader_ash(records, tablename, filepath)
-		return nil
-	}
+
 	fmt.Println("records length:", len(records))
 	if tablename == "JOB_LIFECYCLE_UPDATE_SUSPENDED" && len(records) > 0 {
 		Jobs_LifeCycleSuspendedRolesUpdater(records, filepath)
@@ -353,8 +350,9 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			case "link":
 				job_id, _ := strconv.Atoi(record["job_id"])
 				db.Exec("UPDATE REDIRECT_LINK SET status_ash ='done' WHERE job_id = $1", job_id)
-			default:
+			case "deed":
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
+
 			}
 		}
 		return
@@ -574,8 +572,6 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "REDIRECT_DEED":
 		return RedirectDeedLoader(record)
 
-	case "DEPARTMENT_ASH":
-		return DepartmentAshLoader(record)
 	default:
 		return nil, nil
 	}
@@ -595,17 +591,6 @@ func Jobs_DescriptionLoader(record map[string]string) (models.JobDescription, er
 		Encodings:      json.RawMessage(record["encodings"]),
 	}
 	return Job_Description, nil
-}
-
-func DepartmentAshLoader(record map[string]string) (models.COMPANY_ASH_DEPARTMENT, error) {
-
-	AshDepartment := models.COMPANY_ASH_DEPARTMENT{
-		DepartmentId:    record["departmentId"],
-		Department_name: record["DepartmentName"],
-		CompanyId:       record["organizationId"],
-	}
-	return AshDepartment, nil
-
 }
 
 func TeamAshLoader(record map[string]string) (models.COMPANY_ASH_TEAM, error) {
@@ -1024,9 +1009,16 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 // add boolean to determine what to pass
 func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 
-	is_listed, err := strconv.ParseBool(record["isListed"])
-	if err != nil {
-		return models.JobAsh{}, ErrorHandler(err, "uh oh is_listed fail bool parse")
+	raw, ok := record["isListed"]
+	var is_listed bool
+	if ok && strings.TrimSpace(raw) != "" {
+		v, err := strconv.ParseBool(raw)
+		if err != nil {
+			return models.JobAsh{}, ErrorHandler(err, "uh oh is_listed fail bool parse")
+		}
+		is_listed = v
+	} else {
+		is_listed = true
 	}
 
 	// "2026-04-16" -> YYYY-MM-DD
@@ -1043,7 +1035,7 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 	// }
 	var originLinkID *int64
 	var originDeedID *string
-
+	var originAsh *string
 	origin := record["origin"]
 
 	switch origin {
@@ -1057,11 +1049,14 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 				originLinkID = &v
 			}
 		}
-	default:
+	case "deed":
 		raw := strings.TrimSpace(record["origin_deed_id"])
 		if raw != "" {
 			originDeedID = &raw
 		}
+	default:
+		green := "green"
+		originAsh = &green
 	}
 	job := models.JobAsh{
 		JobID:    record["job_id"],
@@ -1069,16 +1064,20 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		IsListed: &is_listed,
 		// PublishedDate:  datePub,
 		// UpdatedAt:      updatedAt,
-		JobURL:         record["job_url"],
-		TeamName:       NullableString(record["teamName"]),
-		DepartmentName: NullableString(record["DepartmentName"]),
-		LocationName:   NullableString(record["locationName"]),
-		EmploymentType: NullableString(record["employmentType"]),
-		WorkplaceType:  NullableString(record["workplaceType"]),
-		Salary:         NullableString(record["salary"]),
-		CompanyID:      record["organizationId"],
-		OriginLinkID:   originLinkID,
-		Origin_deed_id: originDeedID,
+		JobURL:           record["job_url"],
+		TeamName:         NullableString(record["teamName"]),
+		Team_id:          NullableString(record["teamId"]),
+		ParentTeam_id:    NullableString(record["parentTeamId"]),
+		TeamExternalName: NullableString(record["teamExternalName"]),
+		DepartmentName:   NullableString(record["DepartmentName"]),
+		LocationName:     NullableString(record["locationName"]),
+		EmploymentType:   NullableString(record["employmentType"]),
+		WorkplaceType:    NullableString(record["workplaceType"]),
+		Salary:           NullableString(record["salary"]),
+		CompanyID:        record["organizationId"],
+		OriginLinkID:     originLinkID,
+		Origin_deed_id:   originDeedID,
+		Origin_ash:       originAsh,
 	}
 	return job, nil
 }
@@ -1779,7 +1778,6 @@ func Team_loader_ash(records []map[string]string, filepath string) error {
 			return errors.New("bad json")
 		}
 
-		// Reconstruct parent -> children edges since the source is flat.
 		byID := make(map[string]models.DeptNodeAsh, len(nodes))
 		childrenOf := make(map[string][]string)
 		var rootIDs []string
@@ -1793,10 +1791,9 @@ func Team_loader_ash(records []map[string]string, filepath string) error {
 			}
 		}
 
-		departmentID := "" // TODO: resolve — see note above, this can't stay blank
-
+		//TODO backfill job to compare departementid to teamid .
 		for _, rootID := range rootIDs {
-			if err := walkTeamsAsh(db, rootID, byID, childrenOf, companyID, departmentID); err != nil {
+			if err := walkTeamsAsh(db, rootID, byID, childrenOf, companyID); err != nil {
 				fmt.Println(err)
 			}
 		}
@@ -1804,107 +1801,3 @@ func Team_loader_ash(records []map[string]string, filepath string) error {
 
 	return nil
 }
-
-// two pass logic on every row needed for self referencing parent id that might not exist yet . set null then set if exists.
-// func Team_loader_ash(records []map[string]string, tablename string, filepath string) error {
-
-// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "departmentGreen-")[1], ".csv")[0], "_")
-
-// 	timestamp, err := parseTimestamp(meta_data[1])
-// 	if err != nil {
-// 		fmt.Println("Error handling the timestamp")
-// 		return err
-// 	}
-// 	db, err := ConnectDb()
-
-// 	for index, record := range records {
-
-// 		companyID, err := record["company_id"]
-
-// 		_, err = db.Exec("UPDATE COMPANY_ASH SET last_scanned_at = $1 WHERE company_id = $2", timestamp, companyID)
-// 		if err != nil {
-// 			fmt.Println(index)
-// 			fmt.Println("update last_scanned_at failed", err)
-// 			return err
-// 		}
-
-// 		rawPath := record["departments"]
-
-// 		var nodes []models.DeptNode
-// 		if err := json.Unmarshal([]byte(rawPath), &nodes); err != nil {
-// 			fmt.Println("bad department_path json:", err, "raw:", rawPath)
-// 			return errors.New("bad json")
-// 		}
-
-// 		for _, node := range nodes {
-// 			if err := upsertDepartment(db, node, nil, companyID); err != nil {
-// 				fmt.Println(err)
-// 			}
-// 		}
-
-// 	}
-
-// db, err := ConnectDb()
-// if err != nil {
-// 	return ErrorHandler(err, "team loader db connection failed")
-// }
-// defer db.Close()
-
-// tx, err := db.Begin()
-// if err != nil {
-// 	return ErrorHandler(err, "team loader begin tx failed")
-// }
-// defer tx.Rollback()
-
-// seen := make(map[string]bool)
-// var teams []models.COMPANY_ASH_TEAM
-
-// for _, record := range records {
-// 	// child team (the team this job posting is directly tagged with)
-// 	team, err := TeamAshLoader(record)
-// 	if err != nil {
-// 		return ErrorHandler(err, "team parse failed")
-// 	}
-// 	if team.TeamId != "" && !seen[team.TeamId] {
-// 		seen[team.TeamId] = true
-// 		teams = append(teams, team)
-// 	}
-
-// 	// parent team — same row gives us its real id + name, add it too
-// 	parentID := record["parentTeamId"]
-// 	if parentID != "" && !seen[parentID] {
-// 		seen[parentID] = true
-// 		teams = append(teams, models.COMPANY_ASH_TEAM{
-// 			TeamId:       parentID,
-// 			TeamName:     record["parentTeam"],
-// 			DepartmentId: record["departmentId"],
-// 			ParentTeamId: nil,
-// 		})
-// 	}
-// }
-
-// for _, t := range teams {
-// 	_, err := tx.Exec(`
-//         INSERT INTO TEAM_ASH (team_id, team_name, department_id, team_external_name)
-//         VALUES ($1, $2, $3, $4)
-//         ON CONFLICT (team_id) DO NOTHING
-//     `, t.TeamId, t.TeamName, t.DepartmentId, t.TeamExternalName)
-// 	if err != nil {
-// 		return ErrorHandler(err, "team insert (pass 1) failed")
-// 	}
-// }
-
-// for _, t := range teams {
-// 	if t.ParentTeamId == nil {
-// 		continue
-// 	}
-// 	_, err := tx.Exec(`
-//         UPDATE TEAM_ASH SET parent_team_id = $1 WHERE team_id = $2
-//     `, t.ParentTeamId, t.TeamId)
-// 	if err != nil {
-// 		return ErrorHandler(err, "team parent backfill (pass 2) failed")
-// 	}
-// }
-
-// return tx.Commit()
-//}
