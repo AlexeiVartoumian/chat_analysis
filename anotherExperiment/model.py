@@ -494,7 +494,7 @@ def create_tables(conn) -> None:
 
                 CONSTRAINT fk_team_company
                     FOREIGN KEY (company_id)
-                    REFERENCES COMPANY_ASH (department_id)
+                    REFERENCES COMPANY_ASH (company_id)
                     ON DELETE CASCADE,
 
                 CONSTRAINT fk_team_parent
