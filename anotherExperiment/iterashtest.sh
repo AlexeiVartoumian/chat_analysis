@@ -7,7 +7,13 @@ while IFS= read -r file; do
     type="${file%%-*}"
     type="${type^^}"
 
-    if [ "$type" = "PROCESSEDJOBSASH" ]; then 
+    if   [ "$type" = "DEPARTMENTSASH" ]; then
+        ./start insert $file TEAM_ASH
+    
+    elif [ "$type" = "ASHJOBSBYCOMPANY" ]; then
+        ./start insert $file "JOBS_ASH"
+
+    elif [ "$type" = "PROCESSEDJOBSASH" ]; then 
         ./start insert $file COMPANY_ASH
         ./start insert $file JOBS_ASH
         ./start insert $file JOB_LIFECYCLE_ASH
