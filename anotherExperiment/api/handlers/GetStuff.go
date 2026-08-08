@@ -1365,7 +1365,7 @@ func (h *Handler) SeekGreenJd(w http.ResponseWriter, r *http.Request) {
 			}
 			payload, _ := json.Marshal(MissingJd)
 
-			cmd := exec.Command("python3", "/home/ubuntu/seekgreenjd", "1", firstRunStr, "")
+			cmd := exec.Command("python3", "/home/ubuntu/seekgreenjd.py", "1", firstRunStr, "")
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -1386,7 +1386,7 @@ func (h *Handler) SeekGreenJd(w http.ResponseWriter, r *http.Request) {
 		}
 		payload, _ := json.Marshal(MissingJd)
 
-		cmd := exec.Command("python3", "/home/ubuntu/seekgreenjd", "1", firstRunStr, req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/seekgreenjd.py", "1", firstRunStr, req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -1440,7 +1440,7 @@ func (h *Handler) SeekAshJd(w http.ResponseWriter, r *http.Request) {
 			}
 			payload, _ := json.Marshal(MissingJd)
 
-			cmd := exec.Command("python3", "/home/ubuntu/seekashjd", "1", firstRunStr, "")
+			cmd := exec.Command("python3", "/home/ubuntu/seekashjd.py", "1", firstRunStr, "")
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -1461,7 +1461,7 @@ func (h *Handler) SeekAshJd(w http.ResponseWriter, r *http.Request) {
 		}
 		payload, _ := json.Marshal(MissingJd)
 
-		cmd := exec.Command("python3", "/home/ubuntu/seekashjd", "1", firstRunStr, req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/seekashjd.py", "1", firstRunStr, req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
