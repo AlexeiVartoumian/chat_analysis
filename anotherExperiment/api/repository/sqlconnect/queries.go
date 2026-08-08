@@ -889,6 +889,76 @@ func (s *PostgresStore) RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) 
 	return output, nil
 }
 
+func (s *PostgresStore) SeekGreenJdChecker() ([]models.JobRedirect_LinkGreen, error) {
+
+	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_GREEN where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTIONS_GREEN WHERE jobs_GREEN.job_id = JOB_DESCRIPTIONS_GREEN.job_id) limit 75;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.JobRedirect_LinkGreen
+
+	for rows.Next() {
+
+		var res models.JobRedirect_LinkGreen
+
+		rows.Scan(&res.JobId, &res.JobUrl)
+
+		results = append(results, res)
+	}
+	rows.Close()
+
+	for _, job := range results {
+		_, err := s.db.Exec(`
+		UPDATE JOBS_GREEN SET visited = TRUE where job_id = $1;
+		`, job.JobId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "update error on db")
+		}
+
+	}
+
+	return results, nil
+}
+
+func (s *PostgresStore) SeekAshJdChecker() ([]models.JobRedirect_LinkAsh, error) {
+
+	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_ASH where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTIONS_ASH WHERE JOBS_ASH.job_id = JOB_DESCRIPTIONS_ASH.job_id) limit 75;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.JobRedirect_LinkAsh
+
+	for rows.Next() {
+
+		var res models.JobRedirect_LinkAsh
+
+		rows.Scan(&res.JobId, &res.JobUrl)
+
+		results = append(results, res)
+	}
+	rows.Close()
+
+	for _, job := range results {
+		_, err := s.db.Exec(`
+		UPDATE JOBS_ASH SET visited = TRUE where job_id = $1;
+		`, job.JobId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "update error on db")
+		}
+
+	}
+
+	return results, nil
+}
+
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
