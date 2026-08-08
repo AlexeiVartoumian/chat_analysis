@@ -398,7 +398,8 @@ def create_tables(conn) -> None:
                     company_id          TEXT          NOT NULL, 
                     origin_ash          TEXT,
                     origin_deed_id      TEXT,
-                    origin_link_id      BIGINT
+                    origin_link_id      BIGINT,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
 
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
@@ -541,6 +542,7 @@ def create_tables(conn) -> None:
                 origin_green            TEXT,
                 origin_deed_id          TEXT,
                 origin_link_id          BIGINT,
+                visited                 BOOLEAN         NOT NULL DEFAULT FALSE,
 
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
