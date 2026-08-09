@@ -124,6 +124,9 @@ func CsvFile(filepath string, tablename string) error {
 		Team_loader_ash(records, filepath)
 		return nil
 	}
+	if tablename == "UPDATED_JOBS_ASH" && len(records) > 0 {
+		Update_jobs_ash(records)
+	}
 
 	if tablename == "DEADLINKS_ASH" && len(records) > 0 {
 		Job_and_search_loader_ash(records, tablename, filepath)
@@ -433,6 +436,25 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 	}
 
 	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+}
+
+func Update_jobs_ash(records []map[string]string) {
+	db, err := ConnectDb()
+
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
+	for index, record := range records {
+		value, err := JobLoaderAsh(record)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		db.Exec("UPDATE JOBS_ASH SET is_listed = $1 , department_name = $2 , teamNames = $3 , job_url = $4 where job_id = $5", value.IsListed, value.DepartmentName, value.TeamNames, value.JobURL, value.JobID)
+
+	}
+
 }
 func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) {
 
@@ -1095,7 +1117,7 @@ func JobLoaderAsh(record map[string]string) (models.JobAsh, error) {
 		Origin_ash:       originAsh,
 	}
 	return job, nil
-	return job, nil
+
 }
 
 func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
@@ -1281,7 +1303,11 @@ func Jobs_LifecycleLoader(records []map[string]string, tablename string, filepat
 }
 
 func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, filepath string) {
-
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
 	if strings.HasPrefix(filepath, "processedJobsAsh") {
 		meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsAsh-")[1], ".csv")[0], "_")
 
@@ -1318,6 +1344,17 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 			}
 			AddNewRow(value, "JOB_LIFECYCLE_ASH")
 
+		}
+	} else if strings.HasPrefix(filepath, "updatedJobsAsh") {
+		meta_data := strings.Split(strings.Split(strings.Split(filepath, "updatedJobsAsh-")[1], ".csv")[0], "_")
+
+		timestamp, err := parseTimestamp(meta_data[1])
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		for _, record := range records {
+			db.Exec("UDPATE JOB_LIFECYCLE_ASH SET last_seen_listed_at = $1 where job_id = $2", timestamp, record["job_id"])
 		}
 	} else {
 		fmt.Println("please implement")
