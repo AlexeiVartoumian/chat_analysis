@@ -12,13 +12,18 @@ while IFS= read -r file; do
     
     elif [ "$type" = "ASHJOBSBYCOMPANY" ]; then
         ./start insert $file "JOBS_ASH"
-        ./start insert $file JOB_LIFECYCLE_ASH
+        ./start insert $file "JOB_LIFECYCLE_ASH"
 
     elif [ "$type" = "PROCESSEDJOBSASH" ]; then 
         ./start insert $file COMPANY_ASH
         ./start insert $file JOBS_ASH
         ./start insert $file JOB_LIFECYCLE_ASH
     
+    elif [ "$type" = "UPDATEDJOBSASH" ]; then 
+        
+        ./start insert $file UPDATED_JOBS_ASH
+        ./start insert $file JOB_LIFECYCLE_ASH
+
     elif [ "$type" = "JOBDESCRIPTIONASH" ]; then
         ./start insert $file JOB_DESCRIPTIONS_ASH
 
