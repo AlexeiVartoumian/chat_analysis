@@ -452,7 +452,7 @@ func Update_jobs_ash(records []map[string]string) {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
 		}
-		_, err = db.Exec("UPDATE JOBS_ASH SET is_listed = $1 , department_name = $2 , teamNames = $3 , job_url = $4 where job_id = $5", value.IsListed, value.DepartmentName, value.TeamNames, value.JobURL, value.JobID)
+		_, err = db.Exec("UPDATE JOBS_ASH SET is_listed = $1 , department_name = $2 , team_names = $3 , job_url = $4 where job_id = $5", value.IsListed, value.DepartmentName, value.TeamNames, value.JobURL, value.JobID)
 		if err != nil {
 			fmt.Println("update failed at index:", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
