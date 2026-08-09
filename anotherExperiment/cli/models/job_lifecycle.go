@@ -23,7 +23,7 @@ type JobLifeCycleDeed struct {
 
 type JobLifeCycleAsh struct {
 	JobId             string     `json:"job_id,omitempty" db:"job_id"`
-	Job_state         string     `json:"isListed,omitempty" db:"job_state"`
+	Job_state         bool       `json:"isListed,omitempty" db:"job_state"`
 	FirstSeenAt       time.Time  `json:"first_seen_at,omitempty" db:"first_seen_at"`
 	LastSeenListedAt  time.Time  `json:"last_seen_listed_at,omitempty" db:"last_seen_listed_at"`
 	FirstSeenClosedAt *time.Time `json:"first_seen_closed_at,omitempty" db:"first_seen_closed_at"`
