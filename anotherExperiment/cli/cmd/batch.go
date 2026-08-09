@@ -126,6 +126,7 @@ func CsvFile(filepath string, tablename string) error {
 	}
 	if tablename == "UPDATED_JOBS_ASH" && len(records) > 0 {
 		Update_jobs_ash(records)
+		return nil
 	}
 
 	if tablename == "DEADLINKS_ASH" && len(records) > 0 {
