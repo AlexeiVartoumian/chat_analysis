@@ -84,7 +84,7 @@ with open("newkeys_ash.txt" , "w" , encoding="utf-8") as f :
 def forgive(key , mydict ):
 
     if key not in mydict:
-        mydict[key] =  [0] *5   
+        mydict[key] =  [0] *6   
     return mydict
 
 def dblforgive(key , mydict ):
@@ -142,19 +142,21 @@ with open("keys_ash.json" , "w" , encoding="utf-8" ) as f:
             forgive(unique ,output[timeline_key][0])
             output[timeline_key][0][unique][1] = document
         
-        
+        if document.startswith("updatedJobsAsh"):
+            forgive(unique ,output[timeline_key][0])
+            output[timeline_key][0][unique][2] = document
         if document.startswith("JobdescriptionAsh"):
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique][2] = document
+            output[timeline_key][0][unique][3] = document
 
         if document.startswith("deadlink"):
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique][3] = document
+            output[timeline_key][0][unique][4] = document
         
         if document.startswith("AshJobsByCompany"):
             forgive(unique , output[timeline_key][0])
-            output[timeline_key][0][unique][4] = document
+            output[timeline_key][0][unique][5] = document
       
        
     json.dump(output, f)
