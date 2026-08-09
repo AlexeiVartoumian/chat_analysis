@@ -1511,12 +1511,22 @@ func Jobs_LifecycleDeedmodel(record map[string]string, timestamp time.Time) (mod
 	return Job_lifeCycle, nil
 
 }
+func parseBoolOrDefault(s string, def bool) bool {
+	if s == "" {
+		return def
+	}
+	v, err := strconv.ParseBool(s)
+	if err != nil {
+		return def // or handle/log the error, your call
+	}
+	return v
+}
 func Jobs_LifecycleAshmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleAsh, error) {
 
 	nextScan := timestamp.AddDate(0, 0, 7)
 	Job_lifeCycle := models.JobLifeCycleAsh{
 		JobId:            record["job_id"],
-		Job_state:        record["isListed"],
+		Job_state:        parseBoolOrDefault(record["isListed"], true),
 		FirstSeenAt:      timestamp,
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
