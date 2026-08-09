@@ -342,6 +342,11 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 		if err != nil {
 			fmt.Println("record at index: has not been saved")
 		}
+		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+		timestamp, err := parseTimestamp(meta_data[1])
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
 		for _, record := range records {
 
 			origin := record["origin"]
@@ -353,6 +358,8 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			case "deed":
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 
+			case "ashby":
+				db.Exec("UPDATE JOB_LIFECYCLE_ASH SET first_seen_closed_at = $1 , job_state = $2 where job_id = $3", timestamp, false, record["job_id"])
 			}
 		}
 		return
