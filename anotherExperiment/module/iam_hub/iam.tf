@@ -28,6 +28,9 @@ resource "aws_iam_role" "bucket_reader_main" {
   })
 }
 
+
+
+
 resource "aws_iam_role_policy_attachment" "ssm_core" {
   role       = aws_iam_role.bucket_reader_main.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"

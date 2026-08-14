@@ -76,7 +76,30 @@ resource "aws_iam_role_policy" "esc_invoke" {
     ]
   })
 }
+variable "worker_role_tag" {
+  description = "Value of the Role tag used to scope self-termination to this worker pool"
+  type        = string
+  default     = "time-to-go"
+}
 
+data "aws_iam_policy_document" "self_terminate" {
+  statement {
+    effect    = "Allow"
+    actions   = ["ec2:TerminateInstances"]
+    resources = ["*"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "ec2:ResourceTag/Role"
+      values   = [var.worker_role_tag]
+    }
+  }
+}
+resource "aws_iam_role_policy" "time-to-go" {
+  name = "time-2-go"
+  role = var.bucket_reader_role_name
+  policy = data.aws_iam_policy_document.self_terminate.json
+}
 # resource "aws_iam_role_policy" "send_spoke_sqs" {
 #   role = var.bucket_reader_role_name
 #   policy = templatefile("${path.module}/send_spoke_sqs.tpl" , {
