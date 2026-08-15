@@ -108,6 +108,7 @@ def acquire_lock(workflow_id):
 
 scroller_count = 1
 numberof = int(numberof)
+file=None
 for count in range(numberof):
 
     if first_run == "true" or instance_id == "":
@@ -158,6 +159,7 @@ for count in range(numberof):
         inner_cmd = (
             f"export DISPLAY=:1 && "
             f"export workflow_id={shlex.quote(workflow_id)} && "
+            f"export profile_id={shlex.quote(file['profile_id'])} && "
             f"echo {shlex.quote(encoded)} | base64 -d > /tmp/leads.json && "
             f"cd /opt/myapp && "
             f"timeout 1800 /venv/bin/python3 seekgreenjd.py < /tmp/leads.json > /tmp/last_run.log 2>&1; "
