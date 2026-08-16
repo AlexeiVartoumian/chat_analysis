@@ -110,9 +110,10 @@ scroller_count = 1
 numberof = int(numberof)
 file =None
 for count in range(numberof):
-
+    workflow_id = str(uuid.uuid4())
+    
     if first_run == "true" or instance_id == "":
-        workflow_id = str(uuid.uuid4())
+        
         file = acquire_lock(workflow_id)
         scroller_worker = f"ashlead-{scroller_count}"
         scroller_count+=1
@@ -140,7 +141,7 @@ for count in range(numberof):
 
 
 
-    workflow_id = str(uuid.uuid4())
+
 
     ssm_client = boto3.client('ssm', region_name="eu-west-2")
 
