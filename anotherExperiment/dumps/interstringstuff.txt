@@ -1,0 +1,41 @@
+
+
+when to use alias abac vs tag abac and table detailing where tags can go 
+https://docs.aws.amazon.com/kms/latest/developerguide/abac.html
+
+
+
+describes how resourcetags is only on the iam side
+https://docs.aws.amazon.com/kms/latest/developerguide/tag-authorization.html
+
+
+abac tutorial
+https://docs.aws.amazon.com/IAM/latest/UserGuide/tutorial_attribute-based-access-control.html#tutorial_abac_step2
+
+
+on removing tags that have explicit pattern.
+https://docs.aws.amazon.com/IAM/latest/UserGuide/access_iam-tags.html#access_iam-tags_control-tag-keys
+
+
+kms specific condition keys
+https://docs.aws.amazon.com/kms/latest/developerguide/conditions-kms.html
+
+
+on encryption context -> todo research more
+https://docs.aws.amazon.com/kms/latest/developerguide/least-privilege.html
+
+
+veryuseful page for service autorhization below link for kms
+https://docs.aws.amazon.com/IAM/latest/UserGuide/list_kms.html 
+https://docs.aws.amazon.com/pdfs/service-authorization/latest/reference/service-authorization.pdf
+
+
+condition operators and how the request context is evaluated 
+https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition_operators.html#Conditions_Null
+
+request-context
+https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-logic_policy-eval-reqcontext.html
+
+
+example on using null condition to ensure condition evaluates to false if there are no tags in the request.
+https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html
