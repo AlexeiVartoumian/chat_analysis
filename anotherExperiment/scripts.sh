@@ -60,8 +60,8 @@ sudo mv chat_analysis/anotherExperiment/deedbackfill.py  /home/ubuntu/deedbackfi
 sudo mv chat_analysis/anotherExperiment/sqsblaster.py  /home/ubuntu/sqsblaster.py
 sudo mv chat_analysis/anotherExperiment/scrollerv3.py  /home/ubuntu/scrollerv3.py
 sudo mv chat_analysis/anotherExperiment/hosted.py /home/ubuntu/hosted.py
-
-
+sudo mv chat_analysis/anotherExperiment/seekashjd.py /home/ubuntu/seekashjd.py
+sudo mv chat_analysis/anotherExperiment/seekgreenjd.py /home/ubuntu/seekgreenjd.py
 
 sudo apt install postgresql-client-common
 sudo apt install postgresql-client-common postgresql-client -y
