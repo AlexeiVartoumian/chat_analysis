@@ -139,7 +139,7 @@ for term in search_terms:
 
 
 
-    workflow_id = str(uuid.uuid4())
+    
 
     ssm_client = boto3.client('ssm', region_name="eu-west-2")
 
