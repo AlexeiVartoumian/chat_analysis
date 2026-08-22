@@ -105,13 +105,14 @@ def acquire_lock(workflow_id):
 
 scroller_count = 1
 file = None
+workflow_id = str(uuid.uuid4())
 for term in search_terms:
 
     search_term_id = term["search_term_id"]
     search_term = term["search_term"]
 
     # if first_run == "yes":
-    workflow_id = str(uuid.uuid4())
+    
     file = acquire_lock(workflow_id)
     scroller_worker = f"scroller-{scroller_count}"
     scroller_count+=1
