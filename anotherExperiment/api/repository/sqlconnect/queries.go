@@ -959,6 +959,41 @@ func (s *PostgresStore) SeekAshJdChecker() ([]models.JobRedirect_LinkAsh, error)
 	return results, nil
 }
 
+func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error) {
+
+	rows, err := s.db.Query(`SELECT job_id  FROM JOBS_DEED where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTION_DEED WHERE JOBS_DEED.job_id = JOB_DESCRIPTION_DEED.job_id) order by date_advertised desc limit 75;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.JobRedirect_LinkAsh
+
+	for rows.Next() {
+
+		var res models.JobRedirect_LinkAsh
+
+		rows.Scan(&res.JobId)
+
+		results = append(results, res)
+	}
+	rows.Close()
+
+	for _, job := range results {
+		_, err := s.db.Exec(`
+		UPDATE JOBS_DEED SET visited = TRUE where job_id = $1;
+		`, job.JobId)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "update error on db")
+		}
+
+	}
+
+	return results, nil
+}
+
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';

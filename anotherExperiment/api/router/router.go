@@ -128,5 +128,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SeekAshJd),
 	))
 
+	mux.Handle("POST /seekdeedJd", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SeekDeedJd),
+	))
+
 	return mux
 }
