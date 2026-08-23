@@ -257,8 +257,10 @@ def create_tables(conn) -> None:
                 date_advertised TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 search_term     VARCHAR(256)    NOT NULL,
                 organic_apply   INTEGER,
-                is_repost       BOOLEAN,
-                is_latest       BOOLEAN,
+                salary          VARCHAR(255),
+                location        VARCHAR(255),
+                taxonomy        JSONB,
+                indeed_applyable BOOLEAN      DEFAULT FALSE,
                 company_id      TEXT          NOT NULL,
                 visited         BOOLEAN         NOT NULL DEFAULT FALSE,
                 CONSTRAINT fk_jobs_company
