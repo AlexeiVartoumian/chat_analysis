@@ -998,16 +998,22 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 		}
 	}
 
-	is_repost, err := strconv.ParseBool(record["is_repost"])
+	// is_repost, err := strconv.ParseBool(record["is_repost"])
+
+	// if err != nil {
+	// 	return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is repost fail bool parse")
+	// }
+
+	// is_latest, err := strconv.ParseBool(record["is_latest"])
+
+	// if err != nil {
+	// 	return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is latest fail bool parse")
+	// }
+
+	indeed_applyable, err := strconv.ParseBool(record["indeedApplyable"])
 
 	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is repost fail bool parse")
-	}
-
-	is_latest, err := strconv.ParseBool(record["is_latest"])
-
-	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is latest fail bool parse")
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh fail bool parse")
 	}
 
 	date_pub, err := strconv.ParseInt(record["date_published"], 10, 64)
@@ -1030,9 +1036,11 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 		Job_url:         record["job_url"],
 		Search_term:     record["search_term"],
 		Organic_apply:   organic_apply,
-		Is_repost:       is_repost,
-		Is_latest:       is_latest,
 		Company_id:      Company_id,
+		Salary:          record["salary"],
+		Location:        record["location"],
+		IndeedApplyable: indeed_applyable,
+		Taxonomy:        NullableJSON(record["taxonomy"]),
 	}
 
 	return job, nil
