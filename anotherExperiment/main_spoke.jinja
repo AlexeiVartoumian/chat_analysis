@@ -49,6 +49,12 @@ module "lambda_spoke_{{ account }}" {
     dynamodb_filetable_name = module.dynamodb_hub.filepool_table_name
     dynamodb_accounttable_name = module.dynamodb_hub.accountpool_table_name
 
+    sqs_workd_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_id
+    sqs_workd_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_arn
+    dynamodb_accountpoolwork_name = module.dynamodb_hub.accountpoolwork_table_name
+    s3_work_source_name = module.s3.s3_bucket_output_work_store_name
+    s3_work_output_name = module.s3.s3_bucket_output_work_cache_name
+    
     sqs_deadletter_url = module.sqs_hub.deadletter_requests_sqs_queue_id
 
     providers = {

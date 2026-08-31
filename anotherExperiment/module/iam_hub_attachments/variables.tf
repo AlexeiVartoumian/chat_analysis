@@ -58,6 +58,9 @@ variable file_pool_table_deed {
 variable account_pool_table_deed{
     type = string 
 }
+variable account_pool_table_work{
+    type = string 
+}
 
 variable sqs_coordinator_arn {
     type = string
@@ -71,6 +74,9 @@ variable sqs_deadletter_arn {
     type = string
 }
 
+variable sqs_coordinator_arn_work {
+    type = string
+}
 
 variable s3_output_bucket_ash_cache_arn {
     type =string
@@ -92,5 +98,13 @@ variable s3_output_bucket_green_cache_arn {
 }
 
 variable s3_output_bucket_green_store_arn {
+    type = string
+}
+
+variable s3_output_bucket_work_cache_arn {
+    type =string
+}
+
+variable s3_output_bucket_work_store_arn {
     type = string
 }

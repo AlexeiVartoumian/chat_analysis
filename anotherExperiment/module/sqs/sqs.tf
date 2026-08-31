@@ -65,3 +65,25 @@ resource "aws_sqs_queue_policy" "access_lambda_3"{
         orchestrator = var.aws_iam_role_main_name
     })
 }
+
+
+resource "aws_sqs_queue" "workflow_crossaccount_work" {
+  name                      = "workflow-crossaccount-work"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+resource "aws_sqs_queue_policy" "request_access"{
+    queue_url = aws_sqs_queue.workflow_crossaccount_work.id
+    policy = templatefile("${path.module}/sqs_access_request.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        hub_account  = var.hub_account
+        sqs_queuename  = aws_sqs_queue.workflow_crossaccount_work.name
+        orchestrator = var.aws_iam_role_main_name
+    })
+}

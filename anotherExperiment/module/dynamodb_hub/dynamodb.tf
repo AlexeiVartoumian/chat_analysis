@@ -182,3 +182,39 @@ resource "aws_dynamodb_table" "filepool_green" {
     Name = "filepoolstore_green"
   }
 }
+
+
+
+resource "aws_dynamodb_table" "accountpoolwork" {
+  name         = "accountpoolwork"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "account_id"
+
+  stream_enabled = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "account"
+    type = "S"
+  }
+
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "locked_at"
+    type = "N"
+  }
+  global_secondary_index {
+    name            = "status-index"
+    hash_key        = "status"
+    range_key       = "locked_at"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name = "accountpoolwork"
+  }
+}

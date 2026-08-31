@@ -148,3 +148,34 @@ output "s3_bucket_output_green_store_name" {
     value = aws_s3_bucket.output_store_green_store.bucket
 }
 
+
+
+
+output "s3_bucket_output_work_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_cache.arn
+}
+output "s3_bucket_output_work_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_cache.id
+}
+
+output "s3_bucket_output_work_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_cache.bucket
+}
+
+
+output "s3_bucket_output_work_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_store.arn
+}
+output "s3_bucket_output_work_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_store.id
+}
+output "s3_bucket_output_work_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_work_store.bucket
+}
+

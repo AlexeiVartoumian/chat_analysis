@@ -35,3 +35,21 @@ output "coordinator_deed_sqs_queue_arn" {
     description = "sqs arn"
     value = aws_sqs_queue.sqs_hub_requests_deed.arn   
 }
+
+
+output "coordinator_work_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_work.arn   
+}
+
+output "coordinator_work_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_work.id  
+}
+
+output "coordinator_work_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_work.name
+}
+
+

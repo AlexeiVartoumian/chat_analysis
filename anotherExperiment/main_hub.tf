@@ -38,6 +38,12 @@ module "lambda_hub"{
     file_pool_table =  module.dynamodb_hub.filepool_table_name
     file_pool_table_deed = module.dynamodb_hub.filepooldeed_table_name
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
+    coordinator_work_sqs_queue_id = module.sqs_hub.coordinator_work_sqs_queue_id  
+    s3_output_bucket_work_store_name = module.s3_output_bucket_work_store_name
+    account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
+    account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
+    account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
+    eventbridge_rule_arn = module.eventbridge_hub.file_created_rule_arn
 
          providers = {
         aws = aws.hub
@@ -63,8 +69,10 @@ module "iam_hub_attachments" {
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn
     sqs_deadletter_arn = module.sqs_hub.deadletter_sqs_queue_arn
     sqs_coordinator_arn_deed = module.sqs_hub.coordinator_deed_sqs_queue_arn
+    sqs_coordinator_arn_work = module.sqs_hub.coordinator_work_sqs_queue_arn
     
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
+    account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn
     s3_output_bucket_ash_store_arn = module.s3.s3_bucket_output_ash_store_arn
@@ -74,6 +82,9 @@ module "iam_hub_attachments" {
 
     s3_output_bucket_green_cache_arn = module.s3.s3_bucket_output_green_cache_arn
     s3_output_bucket_green_store_arn = module.s3.s3_bucket_output_green_store_arn
+
+    s3_output_bucket_work_cache_arn = module.s3.s3_bucket_output_work_cache_arn
+    s3_output_bucket_work_store_arn = module.s3.s3_bucket_output_work_store_arn
     providers = {
         aws = aws.hub
     }
@@ -97,4 +108,11 @@ module "ec2_hub"{
     scroller_profile = module.iam_hub.aws_iam_role_scroller_profile
     ami_id = var.ami_id
     keys = var.keys
+}
+
+module "eventbridge_hub"{
+    source = "./module/eventbridge_hub"
+    bucket_work_id = module.s3.s3_bucket_output_work_store_id
+    lambda_work_arn = module.lambda_hub.lambda_work_arn
+
 }

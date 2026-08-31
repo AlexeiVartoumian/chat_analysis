@@ -27,3 +27,18 @@ output "filepoolgreen_table_name" {
   value       = aws_dynamodb_table.filepool_green.name
 }
 
+
+
+output "accountpoolwork_table_name"{
+  value = aws_dynamodb_table.accountpoolwork.name
+}
+
+
+output "accountpoolwork_table_arn" {
+  value = aws_dynamodb_table.accountpoolwork.arn
+}
+
+output "accountpoolwork_stream_arn" {
+  
+  value       = aws_dynamodb_table.accountpoolwork.stream_arn
+}

@@ -10,7 +10,11 @@
                 "dynamodb:PutItem",
                 "dynamodb:Query",
                 "dynamodb:DeleteItem",
-                "dynamodb:GetItem"
+                "dynamodb:GetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:DescribeStream",
+                "dynamodb:ListStreams",
             ],
             "Resource": [
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${filepool_table}",
@@ -24,6 +28,11 @@
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_ash}/index/status-index",
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_green}",
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_green}/index/status-index"
+
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_work}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_work}/index/status-index"
+
+                
             ]
         }
     ]

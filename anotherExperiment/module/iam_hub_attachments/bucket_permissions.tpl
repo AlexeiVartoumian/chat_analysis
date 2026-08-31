@@ -30,7 +30,10 @@
                 "${s3_output_bucket_green_cache_arn}", 
                 "${s3_output_bucket_green_cache_arn}/*", 
                 "${s3_output_bucket_green_store_arn}",
-                "${s3_output_bucket_green_store_arn}/*" 
+                "${s3_output_bucket_green_store_arn}/*",
+                "${s3_output_bucket_work_store_arn}",
+                "${s3_output_bucket_work_store_arn}/*" 
+
             ]
         }
     ]

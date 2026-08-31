@@ -18,6 +18,12 @@ data "archive_file" "go_metadata_path" {
     output_path = "${path.root}/module/sources/booter/bootstrap.zip"
 }
 
+data "archive_file" "go_metadata_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/workboot/workboot"
+    output_path = "${path.root}/module/sources/workboot/workboot.zip"
+}
+
 data "archive_file" "requests_layer" {
   type        = "zip"
   source_dir  = "${path.root}/module/sources/layer"
@@ -52,7 +58,7 @@ resource "aws_lambda_function" "reader" {
 
 resource "aws_lambda_function" "processor" {
     filename = data.archive_file.processor_path.output_path
-     source_code_hash = data.archive_file.processor_path.output_base64sha256
+    source_code_hash = data.archive_file.processor_path.output_base64sha256
     function_name = "processorv2"
     role = var.iam_role_arn_spoke
     handler = "processfile.lambda_handler"
@@ -93,6 +99,28 @@ resource "aws_lambda_function" "go_metadata" {
     depends_on = [ aws_cloudwatch_log_group.go_metadata ]
 }
 
+resource "aws_lambda_function" "go_workboot" {
+    filename = data.archive_file.go_metadata_path.output_path
+    //source_code_hash = data.archive_file.zip.output_base64sha256
+    source_code_hash = data.archive_file.go_metadata_path.output_base64sha256
+    function_name = "go_workboot"
+    role =  var.iam_role_arn_spoke
+    handler = "bootstrap"
+    runtime = "provided.al2023"
+    timeout     = 900
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            file_pool = var. dynamodb_accountpoolwork_name
+            s3_source_bucket = var.s3_work_source_name
+            s3_output_bucket_name = var.s3_work_output_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
+        }
+    }
+    depends_on = [ aws_cloudwatch_log_group.go_metadata ]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -119,6 +147,14 @@ resource "aws_lambda_permission" "allow_sqs3" {
   source_arn    = var.sqs_queue_3_arn
 }
 
+resource "aws_lambda_permission" "allow_sqs_work" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.go_workboot.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_request_access_arn
+}
+
 resource "aws_lambda_event_source_mapping" "reader_trigger" {
   event_source_arn = var.sqs_request_access_arn
   function_name    = aws_lambda_function.reader.arn
@@ -143,6 +179,14 @@ resource "aws_lambda_event_source_mapping" "go_metadata_trigger" {
   depends_on = [aws_lambda_function.go_metadata]
 }
 
+resource "aws_lambda_event_source_mapping" "go_workboot_trigger" {
+  event_source_arn = var.sqs_workd_arn
+  function_name    = aws_lambda_function.go_workboot.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.go_workboot]
+}
+
 
 resource "aws_cloudwatch_log_group" "reader" {
     name = "/aws/lambda/readerv2"
@@ -157,5 +201,11 @@ resource "aws_cloudwatch_log_group" "processor" {
 }
 resource "aws_cloudwatch_log_group" "go_metadata" {
     name = "/aws/lambda/go_metadatav2"
+    retention_in_days = 7
+}
+
+
+resource "aws_cloudwatch_log_group" "go_workboot" {
+    name = "/aws/lambda/go_workboot"
     retention_in_days = 7
 }

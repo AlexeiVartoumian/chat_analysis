@@ -123,6 +123,8 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_deed_store_arn = var.s3_output_bucket_deed_store_arn
     s3_output_bucket_green_cache_arn = var.s3_output_bucket_green_cache_arn
     s3_output_bucket_green_store_arn = var.s3_output_bucket_green_store_arn
+    s3_output_bucket_work_cache_arn = var.s3_output_bucket_work_cache_arn
+    s3_output_bucket_work_store_arn = var.s3_output_bucket_work_store_arn
   })
 }
 
@@ -136,6 +138,7 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     accountpool_table_deed = var.account_pool_table_deed
     file_pool_table_ash = var.file_pool_table_ash
     file_pool_table_green = var.file_pool_table_green
+    accountpool_table_work = var.account_pool_table_work
   })
 }
 
@@ -171,7 +174,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:GetQueueAttributes",
           "sqs:SendMessage"
         ]
-        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work]  # pass the actual SQS ARN directly
       }
     ]
   })

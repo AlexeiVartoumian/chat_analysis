@@ -63,3 +63,15 @@ variable "s3_bucket_name_output_green_store" {
     description = "name of bucket"
     default = "output-store-green-store"
 }
+
+variable "s3_bucket_name_output_work_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-work-cache"
+}
+
+variable "s3_bucket_name_output_work_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-work-store"
+}

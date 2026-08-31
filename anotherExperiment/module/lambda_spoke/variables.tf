@@ -49,3 +49,23 @@ variable dynamodb_accounttable_name{
 variable sqs_deadletter_url {
     type = string
 }
+
+variable "dynamodb_accountpoolwork_name" {
+  type = string 
+}
+
+variable "s3_work_source_name"{
+    type = string
+}
+
+variable "s3_work_output_name"{
+    type = string
+}
+
+variable "sqs_workd_id" {
+    type = string
+}
+
+variable "sqs_workd_arn" {
+    type = string 
+}

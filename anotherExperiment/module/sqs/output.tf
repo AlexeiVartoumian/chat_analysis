@@ -48,3 +48,19 @@ output "workflow_lambda3_trigger_sqs_queue_arn" {
     description = "sqs arn"
     value = aws_sqs_queue.workflow_lambda3_trigger.arn   
 }
+
+
+output "workflow_crossaccount_work_queue_id"{
+    description = "sqs_queue_url "
+    value = aws_sqs_queue.workflow_crossaccount_work.id
+}
+
+output "workflow_crossaccount_work_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.workflow_crossaccount_work.name
+}
+
+output "workflow_crossaccount_work_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.workflow_crossaccount_work.arn   
+}
