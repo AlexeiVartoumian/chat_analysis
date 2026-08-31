@@ -160,7 +160,8 @@ resource "aws_lambda_function" "seek_work_posts" {
     handler = "processfile.lambda_handler"
     runtime = "python3.13" 
     timeout     = 900
-    layers = [aws_lambda_layer_version.requests_layer.arn]
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
     environment {
         variables = {
             RoleArn = var.aws_iam_role_main_arn
@@ -191,7 +192,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_deed" {
 
 
 resource "aws_lambda_event_source_mapping" "ddb_stream_trigger_work" {
-  event_source_arn  = aws_dynamodb_table.accountpoolwork.stream_arn
+  event_source_arn  = var.account_pool_table_stream_arn
   function_name     = aws_lambda_function.orchestrator_work.arn
   starting_position = "LATEST"
   batch_size        = 10

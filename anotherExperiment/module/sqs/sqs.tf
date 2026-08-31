@@ -78,7 +78,7 @@ resource "aws_sqs_queue" "workflow_crossaccount_work" {
     Environment = "production"
   }
 }
-resource "aws_sqs_queue_policy" "request_access"{
+resource "aws_sqs_queue_policy" "request_access_worker"{
     queue_url = aws_sqs_queue.workflow_crossaccount_work.id
     policy = templatefile("${path.module}/sqs_access_request.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id

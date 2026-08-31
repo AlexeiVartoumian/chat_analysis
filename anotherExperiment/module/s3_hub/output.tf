@@ -174,6 +174,7 @@ output "s3_bucket_output_work_store_id" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_work_store.id
 }
+
 output "s3_bucket_output_work_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_work_store.bucket

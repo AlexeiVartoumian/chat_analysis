@@ -18,9 +18,9 @@ data "archive_file" "go_metadata_path" {
     output_path = "${path.root}/module/sources/booter/bootstrap.zip"
 }
 
-data "archive_file" "go_metadata_path" {
+data "archive_file" "go_workboot_path" {
     type = "zip"
-    source_file = "${path.root}/module/sources/workboot/workboot"
+    source_file = "${path.root}/module/sources/workboot/bootstrap"
     output_path = "${path.root}/module/sources/workboot/workboot.zip"
 }
 
@@ -118,7 +118,7 @@ resource "aws_lambda_function" "go_workboot" {
             account_id = data.aws_caller_identity.current.account_id 
         }
     }
-    depends_on = [ aws_cloudwatch_log_group.go_metadata ]
+    depends_on = [ aws_cloudwatch_log_group.go_workboot ]
 }
 
 resource "aws_lambda_permission" "allow_sqs_request" {
