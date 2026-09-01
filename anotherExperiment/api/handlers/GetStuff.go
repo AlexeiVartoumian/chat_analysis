@@ -1558,3 +1558,78 @@ func (h *Handler) SeekDeedJd(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+
+func (h *Handler) SendWorkweek(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendWorkweek()
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendworkweek.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendWorkweek()
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendworkweek.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+
+}

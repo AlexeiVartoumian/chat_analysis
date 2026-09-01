@@ -994,6 +994,41 @@ func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error
 	return results, nil
 }
 
+func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error) {
+
+	rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 75;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.JOB_SEARCH_TERM_WORKWEEK
+
+	for rows.Next() {
+
+		var res models.JOB_SEARCH_TERM_WORKWEEK
+
+		rows.Scan(&res.Job_id)
+
+		results = append(results, res)
+	}
+	rows.Close()
+	//TODO THINK OF SOME WAY TO AVOID REPEATED WORK
+	// for _, job := range results {
+	// 	_, err := s.db.Exec(`
+	// 	UPDATE JOBS_DEED SET visited = TRUE where job_id = $1;
+	// 	`, job.)
+
+	// 	if err != nil {
+	// 		return nil, utils.ErrorHandler(err, "update error on db")
+	// 	}
+
+	// }
+
+	return results, nil
+}
+
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';

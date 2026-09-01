@@ -25,6 +25,11 @@ type JOB_SEARCH_TERM_DEED struct {
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
 }
 
+type JOB_SEARCH_TERM_WORKWEEK struct {
+	Job_id      string `json:"job_id,omitempty" db:"job_id"`
+	Workflow_id string `json:"url,omitempty" db:"company_apply_url"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`
