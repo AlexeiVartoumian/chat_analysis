@@ -14,6 +14,7 @@ module "iam_spoke_attachments_{{ account }}" {
     sqs_request_access = module.sqs_spoke_{{ account }}.workflow_requests_sqs_queue_name
     sqs_queue_2 = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_name
     sqs_queue_3 = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_name
+    sqs_workd_queue = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_name
     bucket_reader_spoke = module.iam_spoke_{{ account }}.iam_spoke_role_name
     fargate_spoke = module.iam_spoke_{{ account }}.iam_fargate_task_execution_role_name
     hub_account = var.hub_account

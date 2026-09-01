@@ -73,6 +73,8 @@ module "iam_hub_attachments" {
     
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
+    account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
+
     
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn
     s3_output_bucket_ash_store_arn = module.s3.s3_bucket_output_ash_store_arn

@@ -139,6 +139,7 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     file_pool_table_ash = var.file_pool_table_ash
     file_pool_table_green = var.file_pool_table_green
     accountpool_table_work = var.account_pool_table_work
+    account_pool_table_stream_arn = var.account_pool_table_stream_arn
   })
 }
 

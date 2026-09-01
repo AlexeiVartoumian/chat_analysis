@@ -12,7 +12,8 @@
             "Resource": [
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_request}",
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_2}",
-                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_3}"
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_3}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_work}"
             ]
         }
     ]

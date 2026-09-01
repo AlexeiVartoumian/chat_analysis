@@ -30,7 +30,9 @@
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${file_pool_table_green}/index/status-index",
 
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_work}",
-                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_work}/index/status-index"
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_work}/index/status-index",
+                "${account_pool_table_stream_arn}"
+
 
                 
             ]

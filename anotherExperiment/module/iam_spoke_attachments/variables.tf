@@ -11,6 +11,10 @@ variable "sqs_queue_3" {
     type = string
 }
 
+variable "sqs_workd_queue" {
+    type = string
+}
+
 variable "bucket_reader_spoke" {
     type = string
 }

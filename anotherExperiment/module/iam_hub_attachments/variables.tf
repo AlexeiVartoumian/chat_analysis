@@ -108,3 +108,7 @@ variable s3_output_bucket_work_cache_arn {
 variable s3_output_bucket_work_store_arn {
     type = string
 }
+
+ variable account_pool_table_stream_arn{
+    type = string
+ }
