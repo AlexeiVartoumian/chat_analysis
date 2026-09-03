@@ -173,7 +173,6 @@ resource "aws_lambda_function" "seek_work_posts" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
-
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
