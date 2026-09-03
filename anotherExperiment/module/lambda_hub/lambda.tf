@@ -157,7 +157,7 @@ resource "aws_lambda_function" "seek_work_posts" {
     source_code_hash = data.archive_file.seek_work_posts.output_base64sha256
     function_name = "seekworkposts"
     role = var.aws_iam_role_main_arn
-    handler = "processfile.lambda_handler"
+    handler = "seek_work_posts.lambda_handler"
     runtime = "python3.13" 
     timeout     = 900
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]
