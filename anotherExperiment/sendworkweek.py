@@ -9,7 +9,8 @@ values = sys.stdin.read()
 # stdin is JSON from Go's SendWorkweek(): [{"job_id": "...", "url": "..."}, ...]
 payload = json.loads(values)
 
-lambda_client = boto3.client('lambda')
+print(payload)
+lambda_client = boto3.client('lambda' , region_name="eu-west-2")
 
 response = lambda_client.invoke(
     FunctionName=LAMBDA_ARN,
