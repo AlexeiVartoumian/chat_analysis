@@ -1009,7 +1009,7 @@ func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error
 
 		var res models.JOB_SEARCH_TERM_WORKWEEK
 
-		rows.Scan(&res.Job_id)
+		rows.Scan(&res.Job_id, &res.Workflow_id)
 
 		results = append(results, res)
 	}
