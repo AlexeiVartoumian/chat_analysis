@@ -7,7 +7,8 @@
                 "sqs:ReceiveMessage",
                 "sqs:DeleteMessage",
                 "sqs:GetQueueAttributes",
-                "sqs:SendMessage"
+                "sqs:SendMessage",
+                "sqs:ChangeMessageVisibility"
             ],
             "Resource": [
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_deadletter_arn}",
