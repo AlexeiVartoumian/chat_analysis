@@ -32,7 +32,8 @@ module "s3" {
 module "lambda_hub"{
     source = "./module/lambda_hub"
     sqs_coordinator_arn = module.sqs_hub.coordinator_sqs_queue_arn  
-    sqs_cordinator_deed_arn = module.sqs_hub.coordinator_deed_sqs_queue_arn 
+    sqs_cordinator_deed_arn = module.sqs_hub.coordinator_deed_sqs_queue_arn
+    sqs_coordinator_work_arn = module.sqs_hub.coordinator_work_sqs_queue_arn
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name
