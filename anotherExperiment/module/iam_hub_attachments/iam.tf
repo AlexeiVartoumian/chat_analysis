@@ -173,7 +173,8 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:ReceiveMessage",
           "sqs:DeleteMessage",
           "sqs:GetQueueAttributes",
-          "sqs:SendMessage"
+          "sqs:SendMessage",
+          "sqs:ChangeMessageVisibility"
         ]
         Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work]  # pass the actual SQS ARN directly
       }
