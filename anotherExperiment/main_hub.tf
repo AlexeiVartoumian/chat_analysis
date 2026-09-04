@@ -44,7 +44,7 @@ module "lambda_hub"{
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
     account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
-    eventbridge_rule_arn = module.eventbridge_hub.file_created_rule_arn
+    #eventbridge_rule_arn = module.eventbridge_hub.file_created_rule_arn
 
          providers = {
         aws = aws.hub
@@ -113,9 +113,9 @@ module "ec2_hub"{
     keys = var.keys
 }
 
-module "eventbridge_hub"{
-    source = "./module/eventbridge_hub"
-    bucket_work_id = module.s3.s3_bucket_output_work_store_id
-    lambda_work_arn = module.lambda_hub.lambda_work_arn
+# module "eventbridge_hub"{
+#     source = "./module/eventbridge_hub"
+#     bucket_work_id = module.s3.s3_bucket_output_work_store_id
+#     lambda_work_arn = module.lambda_hub.lambda_work_arn
 
-}
+# }
