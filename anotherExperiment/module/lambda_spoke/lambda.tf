@@ -100,9 +100,10 @@ resource "aws_lambda_function" "go_metadata" {
 }
 
 resource "aws_lambda_function" "go_workboot" {
-    filename = data.archive_file.go_metadata_path.output_path
+    
+    filename = data.archive_file.go_workboot_path.output_path
     //source_code_hash = data.archive_file.zip.output_base64sha256
-    source_code_hash = data.archive_file.go_metadata_path.output_base64sha256
+    source_code_hash = data.archive_file.go_workboot_path.output_base64sha256
     function_name = "go_workboot"
     role =  var.iam_role_arn_spoke
     handler = "bootstrap"
