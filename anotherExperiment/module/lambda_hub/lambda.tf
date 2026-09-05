@@ -210,18 +210,18 @@ resource "aws_lambda_event_source_mapping" "ddb_stream_trigger_work" {
   }
 }
 
-# resource "aws_lambda_permission" "allow_eventbridge"{
-#   statement_id  = "AllowEventBridgeInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.orchestrator_work.function_name
-#   principal     = "events.amazonaws.com"
-#   source_arn    = var.eventbridge_rule_arn
-# }
-
-resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
-  event_source_arn = var.sqs_coordinator_work_arn  
-  function_name    = aws_lambda_function.orchestrator_work.arn
-  batch_size       = 10  
-  enabled          = true
-  depends_on = [aws_lambda_function.orchestrator_work]
+resource "aws_lambda_permission" "allow_eventbridge"{
+  statement_id  = "AllowEventBridgeInvoke"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_work.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = var.eventbridge_rule_arn
 }
+
+# resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
+#   event_source_arn = var.sqs_coordinator_work_arn  
+#   function_name    = aws_lambda_function.orchestrator_work.arn
+#   batch_size       = 1  
+#   enabled          = true
+#   depends_on = [aws_lambda_function.orchestrator_work]
+# }

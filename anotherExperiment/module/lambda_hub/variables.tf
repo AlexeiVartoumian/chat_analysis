@@ -49,9 +49,9 @@ variable "s3_output_bucket_work_store_name" {
     type = string
 }
 
-# variable "eventbridge_rule_arn"{
-#     type = string
-# }
+variable "eventbridge_rule_arn"{
+    type = string
+}
 variable "sqs_coordinator_work_arn" {
     type = string
 }

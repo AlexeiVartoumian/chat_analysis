@@ -208,3 +208,21 @@ resource "aws_iam_policy" "hub_assume_spoke_invoker" {
   })
 }
  
+resource "aws_iam_role_policy" "events_put" {
+  role = var.bucket_reader_role_name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "events:PutEvents"
+        ]
+        Resource = [
+          "arn:aws:events:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:event-bus/default"
+        ]
+      }
+    ]
+  })
+}
