@@ -64,6 +64,10 @@ sudo mv chat_analysis/anotherExperiment/seekashjd.py /home/ubuntu/seekashjd.py
 sudo mv chat_analysis/anotherExperiment/seekgreenjd.py /home/ubuntu/seekgreenjd.py
 sudo mv chat_analysis/anotherExperiment/seekdeedjd.py /home/ubuntu/seekdeedjd.py
 sudo mv chat_analysis/anotherExperiment/sendworkweek.py /home/ubuntu/sendworkweek.py
+sudo mv chat_analysis/anotherExperiment/listbucketash.py /home/ubuntu/listbucketash.py
+sudo mv chat_analysis/anotherExperiment/listbucketgreen.py /home/ubuntu/listbucketgreen.py
+sudo mv chat_analysis/anotherExperiment/listbucketwork.py /home/ubuntu/listbucketwork.py
+
 
 
 sudo apt install postgresql-client-common
