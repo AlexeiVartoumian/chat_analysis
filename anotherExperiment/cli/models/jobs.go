@@ -1,6 +1,7 @@
 package models
 
 import (
+	"database/sql"
 	"encoding/json"
 	"time"
 )
@@ -72,6 +73,24 @@ type JobGreen struct {
 	Origin_deed_id *string          `json:"origin_deed_id,omitempty" db:"origin_deed_id"`
 	Origin_green   *string          `json:"origin,omitempty" db:"origin_green"`
 	DepartmentId   *int64           `json:"department_id,omitempty" db:"department_id"`
+}
+
+type JobWork struct {
+	JobID                   string       `json:"job_id" db:"job_id"`
+	Title                   string       `json:"title" db:"title"`
+	CompanyID               int          `json:"company_id" db:"company_id"`
+	Company_name            string       `json:"companyName" db:"company_name"`
+	JobURL                  string       `json:"externalUrl" db:"job_url"`
+	JobCategoryId           *string      `json:"jobCategoryId,omitempty" db:"jobCategoryId"`
+	Location                *string      `json:"location,omitempty" db:"location"`
+	JobRequisitionLocation  *string      `json:"jobRequisitionLocation,omitempty" db:"jobRequisitionLocation"`
+	Country                 *string      `json:"country,omitempty" db:"country"`
+	Date_published          time.Time    `json:"datePosted,omitempty" db:"datePosted"`
+	PostedOn                *string      `json:"postedOn,omitempty" db:"postedOn"`
+	TimeLeftToApply         *string      `json:"timeLeftToApply,omitempty" db:"timeLeftToApply"`
+	EndDate                 sql.NullTime `json:"endDate,omitempty" db:"endDate"`
+	JobPostingEndDateAsText *string      `json:"jobPostingEndDateAsText,omitempty" db:"jobPostingEndDateAsText"`
+	HiringOrganization      *string      `json:"hiringOrganization,omitempty" db:"hiringOrganization"`
 }
 type Everything struct {
 	JOBS

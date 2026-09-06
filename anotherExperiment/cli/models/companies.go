@@ -35,6 +35,15 @@ type COMPANY_GREEN struct {
 	CompanyAbout      *string `json:"companyAbout,omitempty" db:"company_about"`
 }
 
+type COMPANY_WORK struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	Slug             string `json:"companyName,omitempty" db:"slug"`
+	CompanyName      string `json:"companyName,omitempty" db:"name"` //to repopulate downstream
+	WdayInstance     string `json:"wd_instance,omitempty" db:"wd_instance"`
+	JobPostingSiteId string `json:"jobPostingSiteId,omitempty" db:"job_posting_site_id"`
+	PublicUrl        string `json:"public_url,omitempty" db:"job_board_public_url"`
+}
+
 type COMPANY_ASH_TEAM struct {
 	TeamId           string  `json:"teamId,omitempty" db:"team_id"`
 	TeamName         string  `json:"teamName,omitempty" db:"team_name"`

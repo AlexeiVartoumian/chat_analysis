@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"regexp"
+
 	"github.com/gocarina/gocsv"
 )
 
@@ -78,6 +80,11 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	if tablename == "FILE_KEYS_GREEN" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
+	if tablename == "FILE_KEYS_WORK" {
 		InsertNewKeys(filepath, tablename)
 		return nil
 	}
@@ -172,8 +179,21 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifecycleGreenLoader(records, tablename, filepath)
 		return nil
 	}
+	if tablename == "JOB_LIFECYCLE_WORK" && len(records) > 0 {
+		Jobs_LifecycleWorkLoader(records, tablename, filepath)
+		return nil
+	}
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
+		return nil
+	}
+
+	if tablename == "COMPANY_WORK" && len(records) > 0 {
+		Company_Work(records, tablename)
+	}
+
+	if tablename == "JOBS_WORK" && len(records) > 0 {
+		Job_and_search_loader_work(records, tablename, filepath)
 		return nil
 	}
 
@@ -340,6 +360,11 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 func Job_and_search_loader_ash(records []map[string]string, tablename string, filepath string) {
 
 	db, err := ConnectDb() //awful
+
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
 	var meta_data []string
 	if strings.HasPrefix(filepath, "deadlink") {
 
@@ -463,6 +488,10 @@ func Update_jobs_ash(records []map[string]string) {
 func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) {
 
 	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
 	var meta_data []string
 
 	if strings.HasPrefix(filepath, "deadlink") {
@@ -497,6 +526,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 	} else if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
 	} else {
+		//TODO FIX THIS shoulg this e GreenJobsBy company ?
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
 	}
 
@@ -576,6 +606,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Company_GreenLoader(record)
 	case "COMPANY_ASH":
 		return Company_AshLoader(record)
+	case "COMPANY_WORK":
+		return Company_WorkLoader(record)
 
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
@@ -598,6 +630,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "JOB_DESCRIPTIONS_GREEN":
 		return Jobs_DescriptionGreenLoader(record)
+
+	case "JOB_DESCRIPTIONS_WORK":
+		return Jobs_DescriptionWorkLoader(record)
 
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
@@ -675,6 +710,17 @@ func Jobs_DescriptionGreenLoader(record map[string]string) (models.JobDescriptio
 	return Job_Description, nil
 }
 
+func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription_Ash, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Ash{
+		JobId:          job_id,
+		JobDescription: record["jobDescription"],
+	}
+	return Job_Description, nil
+}
+
 func Jobs_MetadataLoader(record map[string]string) (models.Jobs_metadata, error) {
 
 	job_id, err := strconv.Atoi(record["job_id"])
@@ -699,6 +745,8 @@ func Jobs_MetadataLoaderFill(records []map[string]string) {
 	if err != nil {
 		fmt.Println("errgh", ErrorHandler(err, "you brought this on yourself"))
 	}
+
+	defer db.Close()
 	for index, record := range records {
 
 		value, err := Jobs_MetadataLoader(record)
@@ -1218,6 +1266,47 @@ func JobLoaderGreen(record map[string]string) (models.JobGreen, error) {
 	return job, nil
 }
 
+func JobLoaderWork(record map[string]string, companyid int) (models.JobWork, error) {
+
+	datePosted := record["datePosted"]
+	fmt.Println(datePosted, "value")
+	time1, err := time.Parse("2006-01-02", datePosted)
+
+	if err != nil {
+		return models.JobWork{}, ErrorHandler(err, "something happened with the date")
+	}
+
+	endDate := record["endDate"]
+	var time2 sql.NullTime
+	if endDate != "" {
+		parsed, err := time.Parse("2006-01-02", endDate)
+		if err != nil {
+			fmt.Println("failed to parse end date, storing as NULL:", err)
+		} else {
+			time2 = sql.NullTime{Time: parsed, Valid: true}
+		}
+	}
+
+	job := models.JobWork{
+		JobID:                   record["job_id"],
+		Title:                   record["title"],
+		CompanyID:               companyid,
+		Company_name:            record["companyName"],
+		JobURL:                  record["externalUrl"],
+		JobCategoryId:           NullableString(record["jobCategoryId"]),
+		Location:                NullableString(record["location"]),
+		JobRequisitionLocation:  NullableString(record["jobRequisitionLocation"]),
+		Country:                 NullableString(record["country"]),
+		Date_published:          time1,
+		PostedOn:                NullableString(record["postedOn"]),
+		TimeLeftToApply:         NullableString(record["timeLeftToApply"]),
+		EndDate:                 time2,
+		JobPostingEndDateAsText: NullableString(record["jobPostingEndDateAsText"]),
+		HiringOrganization:      NullableString(record["hiringOrganization"]),
+	}
+	return job, nil
+}
+
 // func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
 // 	_, err := db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, value.CompanyID)
 // 	if err != nil {
@@ -1256,7 +1345,10 @@ func Green_DepartmentUpdate(records []map[string]string, filepath string) error 
 		return err
 	}
 	db, err := ConnectDb()
-
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
 	for index, record := range records {
 
 		companyID, err := strconv.Atoi(record["company_id"])
@@ -1460,6 +1552,53 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 	// 	}
 
 }
+func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, filepath string) error {
+	if strings.HasPrefix(filepath, "output") {
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleWorkmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_WORK")
+
+		}
+	} else {
+		fmt.Println("please implement")
+	}
+	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+	// 	timestamp, err := parseTimestamp(meta_data[1])
+
+	// 	if err != nil {
+	// 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	// 	}
+	// 	for index, record := range records {
+
+	// 		value, err := Jobs_LifecycleAshmodel(record, timestamp)
+	// 		if err != nil {
+	// 			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+	// 			continue
+	// 		}
+	// 		AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+	// 	}
+	return nil
+
+}
 
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
@@ -1604,6 +1743,20 @@ func Jobs_LifecycleGreenmodel(record map[string]string, timestamp time.Time) (mo
 	//TODO  jobstate is default true will have to update on consequrn riuns
 	Job_lifeCycle := models.JobLifeCycleGreen{
 		JobId:            job_id,
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+func Jobs_LifecycleWorkmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWork, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleWork{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
 		FirstSeenAt:      timestamp,
 		LastSeenListedAt: timestamp,
 		NextScanAt:       &nextScan,
@@ -1805,6 +1958,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ASH SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_GREEN":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_GREEN SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_WORK":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_WORK SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
@@ -1828,8 +1983,9 @@ func Team_loader_ash(records []map[string]string, filepath string) error {
 
 	db, err := ConnectDb()
 	if err != nil {
-		return err
+		return ErrorHandler(err, "db conn error")
 	}
+	defer db.Close()
 
 	for index, record := range records {
 
@@ -1873,6 +2029,173 @@ func Team_loader_ash(records []map[string]string, filepath string) error {
 			}
 		}
 	}
+
+	return nil
+}
+func Company_WorkLoader(record map[string]string) (models.COMPANY_WORK, error) {
+	for k, v := range record {
+		fmt.Printf("key=%q value=%q\n", k, v)
+	}
+
+	company_work := models.COMPANY_WORK{
+		Slug:             record["companyName"],
+		WdayInstance:     record["wd_instance"],
+		CompanyName:      record["companyName"],
+		JobPostingSiteId: record["jobPostingSiteId"],
+		PublicUrl:        record["public_url"],
+	}
+	return company_work, nil
+}
+
+// TODO REFACTOR INSERTS TO REDUCE ROUNDTRIPS i.e instead of insert every time contrstruct the query then send once.
+func Company_Work(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		fmt.Println(record)
+		fmt.Println(" ")
+		value, _ := Company_WorkLoader(record)
+
+		_, err = db.Exec("INSERT INTO company_work (slug, wd_instance, company_name, job_posting_site_id,job_board_public_url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (slug, wd_instance) DO UPDATE SET company_name = EXCLUDED.company_name;",
+			value.Slug, value.WdayInstance, value.CompanyName, value.JobPostingSiteId, value.PublicUrl)
+
+		if err != nil {
+			fmt.Println("failed to insert for job_id", value.Slug, ErrorHandler(err, "redirect update failed"))
+			continue
+		}
+	}
+}
+
+var uuidRegex = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
+
+func parseFilename(filepath string) (uuid, timestamp string, err error) {
+	loc := uuidRegex.FindStringIndex(filepath)
+	if loc == nil {
+		return "", "", fmt.Errorf("no UUID found in filename: %s", filepath)
+	}
+
+	uuid = filepath[loc[0]:loc[1]]
+
+	// Everything after the UUID: "_sometimestamp.csv"
+	rest := filepath[loc[1]:]
+	rest = strings.TrimPrefix(rest, "_")
+	rest = strings.TrimSuffix(rest, ".csv")
+	timestamp = rest
+
+	return uuid, timestamp, nil
+}
+func GetCompanyWorkID(db *sql.DB, slug, wdInstance string) (int, error) {
+	var companyID int
+	err := db.QueryRow(
+		"SELECT company_id FROM company_work WHERE slug = $1 AND wd_instance = $2",
+		slug, wdInstance,
+	).Scan(&companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no company found for slug=%q wd_instance=%q", slug, wdInstance)
+		}
+		return 0, fmt.Errorf("failed to query company_id: %w", err)
+	}
+
+	return companyID, nil
+}
+func insertJobCategory(db *sql.DB, record map[string]string, companyID int) error {
+	categoryID := record["jobCategoryId"]
+	categoryName := record["jobCategory"]
+
+	if categoryID == "" || categoryName == "" {
+
+		return nil
+	}
+
+	_, err := db.Exec(`
+		INSERT INTO job_category_work (jobCategoryId, jobCategory, company_id)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (jobCategoryId) DO NOTHING;`,
+		categoryID, categoryName, companyID)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert job category %q: %w", categoryID, err)
+	}
+
+	return nil
+}
+func Job_and_search_loader_work(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, time, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(time)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflowWork{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_WORK")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+	for index, record := range records {
+
+		company_id, err := GetCompanyWorkID(db, record["companyName"], record["WdayInstance"])
+		if err != nil {
+			fmt.Println(err, "error could not find companyId")
+			return err
+		}
+		err = insertJobCategory(db, record, company_id)
+
+		if err != nil {
+			fmt.Println("failed to insert Actual values from job category:", err)
+			continue
+		}
+		value, err := JobLoaderWork(record, company_id)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_WORK{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORK")
+	}
+	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
 
 	return nil
 }
