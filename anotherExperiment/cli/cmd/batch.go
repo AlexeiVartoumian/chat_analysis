@@ -711,11 +711,11 @@ func Jobs_DescriptionGreenLoader(record map[string]string) (models.JobDescriptio
 	return Job_Description, nil
 }
 
-func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription_Ash, error) {
+func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription_Work, error) {
 
 	job_id := record["job_id"]
 
-	Job_Description := models.JobDescription_Ash{
+	Job_Description := models.JobDescription_Work{
 		JobId:          job_id,
 		JobDescription: record["jobDescription"],
 	}
