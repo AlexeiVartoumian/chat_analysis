@@ -635,6 +635,118 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
+                CREATE TABLE IF NOT EXISTS FILE_KEYS_WORK (
+                    file_name            VARCHAR(256) PRIMARY KEY
+                );
+                """)
+        
+        
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS COMPANY_WORK (
+                    company_id              SERIAL          PRIMARY KEY,
+                    slug                    VARCHAR(128)    NOT NULL,
+                    wd_instance             VARCHAR(16)     NOT NULL,
+                    company_name            VARCHAR(128)    NOT NULL,
+                    last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                    job_posting_site_id     VARCHAR(64),
+                    job_board_public_url    TEXT,
+                    UNIQUE (slug, wd_instance)
+                );
+            """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_CATEGORY_WORK(
+                    jobCategoryId       TEXT        NOT NULL,
+                    jobCategory         TEXT        NOT NULL,
+                    company_id          INT         NOT NULL,
+                    
+                    PRIMARY KEY (jobCategoryId),
+                    CONSTRAINT fk_jcw_job
+                        FOREIGN KEY (company_id) REFERENCES COMPANY_WORK (company_id) ON DELETE CASCADE
+                );                    
+            """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOBS_WORK (
+                    job_id                  TEXT            PRIMARY KEY,
+                    title                   TEXT            NOT NULL,
+                    company_id              INT             NOT NULL,
+                    company_name            VARCHAR(128)    NOT NULL,    
+                    job_url                 TEXT            NOT NULL,
+                    jobCategoryId           TEXT,
+                    location                TEXT,                  
+                    jobRequisitionLocation  TEXT,
+                    country                 TEXT,
+                    datePosted              TIMESTAMPTZ,
+                    postedOn                TEXT,
+                    timeLeftToApply         TEXT,
+                    endDate                 TIMESTAMPTZ,
+                    jobPostingEndDateAsText TEXT,
+                    hiringOrganization      TEXT,
+                    
+                    CONSTRAINT fk_jobs_company
+                        FOREIGN KEY (company_id)
+                        REFERENCES COMPANY_WORK (company_id)
+                        ON DELETE CASCADE,
+                    CONSTRAINT fk_jobs_category
+                        FOREIGN KEY (jobCategoryId)
+                        REFERENCES JOB_CATEGORY_WORK (jobCategoryId)
+                        ON DELETE SET NULL    
+                );  
+                """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_WORK (
+                    job_id              TEXT          PRIMARY KEY,
+                    jobDescription    TEXT          NOT NULL,
+    
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_WORK (job_id)
+                    ON DELETE CASCADE
+                );
+            """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_WORK (
+                    job_id               TEXT            PRIMARY KEY,
+                    job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                    first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                    last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                    first_seen_closed_at TIMESTAMPTZ,
+                    next_scan_at         TIMESTAMPTZ,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                    CONSTRAINT fk_job_lifecycle_jobs
+                        FOREIGN KEY (job_id)
+                        REFERENCES JOBS_WORK (job_id)
+                        ON DELETE CASCADE
+            );
+        """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_WORK (
+                    workflow_id         UUID      PRIMARY KEY,
+                    run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                    total_jobs_found    INTEGER     NOT NULL,
+                    net_new_jobs        INTEGER     NOT NULL
+                );
+            """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_WORK(
+                    job_id              TEXT         NOT NULL,
+                    workflow_id         UUID        NOT NULL,
+                    is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                    PRIMARY KEY (job_id, workflow_id),
+                    CONSTRAINT fk_jst_job
+                        FOREIGN KEY (job_id) REFERENCES JOBS_WORK (job_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_jst_workflow
+                        FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_WORK (workflow_id) ON DELETE CASCADE
+                );                    
+            """)
+
+        
+
+
+        cur.execute("""
             CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
                 status_green  VARCHAR(16) DEFAULT 'pending'
@@ -643,6 +755,8 @@ def create_tables(conn) -> None:
                             CHECK (status_ash IN ('pending', 'in_progress', 'done', 'failed'))
             );
         """)
+
+      
 
    
 def _enum_exists(cur, enum_name: str) -> bool:
