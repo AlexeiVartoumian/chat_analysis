@@ -7,7 +7,7 @@ while IFS= read -r file; do
     if [ "$type" = "OUTPUT" ]; then
         ./start insert $file COMPANY_WORK
         ./start insert $file JOBS_WORK
-        ./start insert $file JOB_DESCRIPTION
+        ./start insert $file JOB_DESCRIPTIONS_WORK
         ./start insert $file JOB_LIFECYCLE_WORK
         
     fi
