@@ -2164,7 +2164,7 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 	}
 	for index, record := range records {
 
-		company_id, err := GetCompanyWorkID(db, record["companyName"], record["WdayInstance"])
+		company_id, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
 			return err
