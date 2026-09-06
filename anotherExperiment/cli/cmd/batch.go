@@ -190,6 +190,7 @@ func CsvFile(filepath string, tablename string) error {
 
 	if tablename == "COMPANY_WORK" && len(records) > 0 {
 		Company_Work(records, tablename)
+		return nil
 	}
 
 	if tablename == "JOBS_WORK" && len(records) > 0 {
