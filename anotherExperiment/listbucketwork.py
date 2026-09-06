@@ -132,7 +132,7 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
             unique = extract_unique(key)
         except ValueError as e:
             print(f"skipping {key}: {e}")
-        continue
+            continue
         document = os.path.basename(key)
         
         #TODO POTENTIAL FAILURE ON FILE NAME PARSING
