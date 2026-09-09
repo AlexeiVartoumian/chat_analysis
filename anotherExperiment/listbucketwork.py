@@ -128,13 +128,14 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
         # print(key)
         # print(unique)
         # print("---------------------\n")
+        
         try:
             unique = extract_unique(key)
         except ValueError as e:
             print(f"skipping {key}: {e}")
             continue
-        document = os.path.basename(key)
-        
+        document = os.path.basename(key).strip()
+      
         #TODO POTENTIAL FAILURE ON FILE NAME PARSING
 
         #string parse fill date string to y:m:d to be used be parsed back to string // 
@@ -148,11 +149,11 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
         timeline_key = datetime.strftime(timeline_key ,date_format)
 
         new_keys.append(document) 
-        if document.startswith("output"):
+        if  document.startswith("output"):
             
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique][0] = document
+            output[timeline_key][0][unique].append(document)
      
         
       
