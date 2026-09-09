@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
@@ -1006,11 +1007,11 @@ func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error
 	var results []models.JOB_SEARCH_TERM_WORKWEEK
 
 	for rows.Next() {
-
+		var jobID int
 		var res models.JOB_SEARCH_TERM_WORKWEEK
 
-		rows.Scan(&res.Job_id, &res.Workflow_id)
-
+		rows.Scan(&jobID, &res.Workflow_id)
+		res.Job_id = strconv.Itoa(jobID)
 		results = append(results, res)
 	}
 	rows.Close()
