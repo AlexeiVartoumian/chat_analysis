@@ -963,7 +963,6 @@ func (s *PostgresStore) SeekAshJdChecker() ([]models.JobRedirect_LinkAsh, error)
 func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error) {
 
 	rows, err := s.db.Query(`SELECT job_id  FROM JOBS_DEED where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTION_DEED WHERE JOBS_DEED.job_id = JOB_DESCRIPTION_DEED.job_id) order by date_advertised desc limit 75;`)
-
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
 	}

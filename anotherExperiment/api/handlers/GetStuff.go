@@ -1507,7 +1507,7 @@ func (h *Handler) SeekDeedJd(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			MissingJd, err := h.Store.SeekAshJdChecker()
+			MissingJd, err := h.Store.SeekDeedJdChecker()
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
