@@ -13,6 +13,9 @@ while IFS= read -r file; do
     elif [ "$type" = "EXPIRED" ]; then
         ./start insert $file JOB_LIFECYCLE_DEED
     
+    elif [ "$type" = "DEADLINKS" ]; then
+        ./start insert $file JOB_LIFECYCLE_DEED
+    
     fi 
 
 done < <(jq -r '.[][][][]' keys_deed.json)
