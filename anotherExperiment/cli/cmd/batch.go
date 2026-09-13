@@ -34,7 +34,7 @@ func parseTimestamp(ts string) (time.Time, error) {
 }
 
 func extractTimestampStr(filepath string) (string, error) {
-	markers := []string{"redirectlinksInd-", "live-roles-deed-", "expired-roles-deed-"}
+	markers := []string{"redirectlinksInd-", "live-roles-deed-", "expired-roles-deed-", "deadlinks-"}
 
 	var rest string
 	found := false
@@ -1646,10 +1646,22 @@ func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, fil
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			fmt.Println("this is job state", record["job_state"])
-			if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
+			// fmt.Println("this is job state", record["job_state"])
+			// if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
 
-				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
+			// 	_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
+
+			// 	if err != nil {
+			// 		//http.Error(w, " error updating Student ", http.StatusInternalServerError)
+			// 		fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
+			// 	}
+
+			// }
+			// 	fmt.Println("this is job state", record["job_state"])
+			if strings.EqualFold(strings.TrimSpace(record["expired"]), "true") {
+
+				jobState := "True"
+				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, jobState, record["job_id"])
 
 				if err != nil {
 					//http.Error(w, " error updating Student ", http.StatusInternalServerError)
