@@ -16,6 +16,9 @@ while IFS= read -r file; do
     elif [ "$type" = "DEADLINKS" ]; then
         ./start insert $file JOB_LIFECYCLE_DEED
     
+    elif [ "$type" = "JOBDESCRIPTIONIND" ]; then
+        ./start insert $file JOB_DESCRIPTION_DEED
+    
     fi 
 
 done < <(jq -r '.[][][][]' keys_deed.json)
