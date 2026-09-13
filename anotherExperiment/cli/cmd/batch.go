@@ -1647,19 +1647,7 @@ func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, fil
 				continue
 			}
 			// fmt.Println("this is job state", record["job_state"])
-			// if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
-
-			// 	_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, record["job_state"], record["job_id"])
-
-			// 	if err != nil {
-			// 		//http.Error(w, " error updating Student ", http.StatusInternalServerError)
-			// 		fmt.Println("record at index ", index, " for expired job_lifecycle not saved", ErrorHandler(err, "Db query JobLifecycle update error"))
-			// 	}
-
-			// }
-			// 	fmt.Println("this is job state", record["job_state"])
-			if strings.EqualFold(strings.TrimSpace(record["expired"]), "true") {
-
+			if strings.EqualFold(strings.TrimSpace(record["job_state"]), "true") {
 				jobState := "True"
 				_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, jobState, record["job_id"])
 
