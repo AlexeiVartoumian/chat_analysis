@@ -743,6 +743,110 @@ def create_tables(conn) -> None:
                 );                    
             """)
 
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS FILE_KEYS_LEV (
+                        file_name            VARCHAR(256) PRIMARY KEY
+                    );
+                """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS COMPANY_LEV (
+                    company_id              SERIAL          PRIMARY KEY,
+                    company_name            VARCHAR(128)    NOT NULL,
+                    last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+                    company_apply_url       TEXT 
+                );
+                    """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS COMPANY_LEV_ABOUT (
+                    company_id              SERIAL          PRIMARY KEY,
+                    company_about           VARCHAR(128)    NOT NULL,
+                    CONSTRAINT fk_team_company
+                                            FOREIGN KEY (company_id)
+                                            REFERENCES COMPANY_LEV (company_id)
+                                            ON DELETE CASCADE
+                        );
+                    """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS COMPANY_LEV_TEAM (
+                    team_id                 SERIAL          PRIMARY KEY,
+                    team_name               TEXT            not NULL , 
+                    company_id              INT             NOT NULL,
+                CONSTRAINT fk_team_company
+                        FOREIGN KEY (company_id)
+                        REFERENCES COMPANY_LEV (company_id)
+                        ON DELETE CASCADE
+                );
+                    """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOBS_LEV (
+                    job_id                  TEXT            PRIMARY KEY,
+                    title                   TEXT            NOT NULL,
+                    company_id              INT             NOT NULL,
+                    company_name            VARCHAR(128)    NOT NULL,    
+                    job_url                 TEXT            NOT NULL,
+                    apply_url               TEXT,
+                    jobType                 TEXT,
+                    location                TEXT,                  
+                    jobRequisitionLocation  TEXT,
+                    country                 TEXT,
+                    datePosted              TIMESTAMPTZ,
+                    
+                    CONSTRAINT fk_jobs_company
+                        FOREIGN KEY (company_id)
+                        REFERENCES COMPANY_LEV (company_id)
+                        ON DELETE CASCADE 
+                );  
+                """)
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_LEV (
+                        job_id              TEXT          PRIMARY KEY,
+                        jobDescription      TEXT          NOT NULL,
+                        requirements        JSONB
+                    CONSTRAINT fk_description_job
+                        FOREIGN KEY (job_id)
+                        REFERENCES JOBS_LEV (job_id)
+                        ON DELETE CASCADE
+                        );
+                    """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_LEV (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_LEV (job_id)
+                    ON DELETE CASCADE
+        );
+                """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_LEV (
+                    workflow_id         UUID      PRIMARY KEY,
+                    run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                    total_jobs_found    INTEGER     NOT NULL,
+                    net_new_jobs        INTEGER     NOT NULL
+                );
+            """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_LEV(
+                    job_id              TEXT         NOT NULL,
+                    workflow_id         UUID        NOT NULL,
+                    is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                    PRIMARY KEY (job_id, workflow_id),
+                    CONSTRAINT fk_jst_job
+                        FOREIGN KEY (job_id) REFERENCES JOBS_LEV (job_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_jst_workflow
+                        FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_LEV (workflow_id) ON DELETE CASCADE
+                );                    
+            """)
+
         
 
 
