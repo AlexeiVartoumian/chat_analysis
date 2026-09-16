@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-Fetch a TFE/TFC run's plan JSON and configuration-version (rendered .tf files).
 
-Usage:
-    export TFE_TOKEN="your-api-token"
-    python3 fetch_tfe_config.py --host nameoftfe.com --run-id run-XXXXXXXX
-"""
 import argparse
 import os
 import sys
