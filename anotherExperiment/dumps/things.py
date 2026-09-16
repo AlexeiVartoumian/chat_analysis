@@ -103,3 +103,12 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+sudo tee /etc/yum.repos.d/hashicorp.repo << 'EOF'
+[hashicorp]
+name=HashiCorp Stable - $basearch
+baseurl=https://rpm.releases.hashicorp.com/AmazonLinux/$releasever/$basearch/stable
+enabled=1
+gpgcheck=0
+sslverify=0
+EOF
