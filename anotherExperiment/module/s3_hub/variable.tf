@@ -75,3 +75,16 @@ variable "s3_bucket_name_output_work_store" {
     description = "name of bucket"
     default = "output-store-work-store"
 }
+
+
+variable "s3_bucket_name_output_lev_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-lev-cache"
+}
+
+variable "s3_bucket_name_output_lev_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-lev-store"
+}

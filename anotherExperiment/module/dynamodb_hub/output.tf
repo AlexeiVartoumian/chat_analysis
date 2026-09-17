@@ -42,3 +42,19 @@ output "accountpoolwork_stream_arn" {
   
   value       = aws_dynamodb_table.accountpoolwork.stream_arn
 }
+
+
+
+output "accountpoollev_table_name"{
+  value = aws_dynamodb_table.accountpoollev.name
+}
+
+
+output "accountpoollev_table_arn" {
+  value = aws_dynamodb_table.accountpoollev.arn
+}
+
+output "accountpoollev_stream_arn" {
+  
+  value       = aws_dynamodb_table.accountpoollev.stream_arn
+}

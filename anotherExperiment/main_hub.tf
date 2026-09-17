@@ -77,6 +77,10 @@ module "iam_hub_attachments" {
     account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
 
     
+    account_pool_table_lev = module.dynamodb_hub.accountpoollev_table_name
+    account_pool_table_stream_lev_arn = module.dynamodb_hub.accountpoolwork_stream_lev_arn
+
+    
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn
     s3_output_bucket_ash_store_arn = module.s3.s3_bucket_output_ash_store_arn
 
@@ -88,6 +92,9 @@ module "iam_hub_attachments" {
 
     s3_output_bucket_work_cache_arn = module.s3.s3_bucket_output_work_cache_arn
     s3_output_bucket_work_store_arn = module.s3.s3_bucket_output_work_store_arn
+
+    s3_output_bucket_lev_cache_arn = module.s3.s3_bucket_output_lev_cache_arn
+    s3_output_bucket_lev_store_arn = module.s3.s3_bucket_output_lev_store_arn
     providers = {
         aws = aws.hub
     }

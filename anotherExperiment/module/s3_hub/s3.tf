@@ -70,3 +70,17 @@ resource "aws_s3_bucket" "output_store_work_store" {
     bucket = "${local.s3_bucket_name_output_work_store }-${data.aws_caller_identity.current.account_id}"
 
 }
+
+
+resource "aws_s3_bucket" "output_store_lev_cache" {
+
+    bucket = "${local.s3_bucket_name_output_lev_cache}-${data.aws_caller_identity.current.account_id}"
+
+}
+
+resource "aws_s3_bucket" "output_store_lev_store" {
+
+    bucket = "${local.s3_bucket_name_output_lev_store }-${data.aws_caller_identity.current.account_id}"
+
+}
+

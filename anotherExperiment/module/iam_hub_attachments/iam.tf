@@ -125,6 +125,8 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_green_store_arn = var.s3_output_bucket_green_store_arn
     s3_output_bucket_work_cache_arn = var.s3_output_bucket_work_cache_arn
     s3_output_bucket_work_store_arn = var.s3_output_bucket_work_store_arn
+    s3_output_bucket_lev_cache_arn = var.s3_output_bucket_lev_cache_arn
+    s3_output_bucket_lev_store_arn = var.s3_output_bucket_lev_store_arn
   })
 }
 
@@ -140,6 +142,8 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     file_pool_table_green = var.file_pool_table_green
     accountpool_table_work = var.account_pool_table_work
     account_pool_table_stream_arn = var.account_pool_table_stream_arn
+    accountpool_table_lev = var.account_pool_table_lev
+    account_pool_table_stream_lev_arn = var.account_pool_table_stream_lev_arn
   })
 }
 
