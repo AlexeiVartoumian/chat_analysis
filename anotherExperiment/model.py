@@ -789,7 +789,6 @@ def create_tables(conn) -> None:
                     apply_url               TEXT,
                     jobType                 TEXT,
                     location                TEXT,                  
-                    jobRequisitionLocation  TEXT,
                     country                 TEXT,
                     datePosted              TIMESTAMPTZ,
                     
