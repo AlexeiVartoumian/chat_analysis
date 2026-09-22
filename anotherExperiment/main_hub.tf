@@ -71,6 +71,8 @@ module "iam_hub_attachments" {
     sqs_deadletter_arn = module.sqs_hub.deadletter_sqs_queue_arn
     sqs_coordinator_arn_deed = module.sqs_hub.coordinator_deed_sqs_queue_arn
     sqs_coordinator_arn_work = module.sqs_hub.coordinator_work_sqs_queue_arn
+
+    sqs_coordinator_arn_lev = module.sqs_hub.coordinator_lev_sqs_queue_arn 
     
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name

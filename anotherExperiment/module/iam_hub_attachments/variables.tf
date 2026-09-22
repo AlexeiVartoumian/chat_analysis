@@ -78,6 +78,10 @@ variable sqs_coordinator_arn_work {
     type = string
 }
 
+variable sqs_coordinator_arn_lev {
+    type = string
+}
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }
