@@ -106,7 +106,7 @@ resource "aws_sqs_queue_policy" "request_access_lev_worker"{
     policy = templatefile("${path.module}/sqs_access_request.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id
         hub_account  = var.hub_account
-        sqs_queuename  = aws_sqs_queue.workflow_crossaccount_work.name
+        sqs_queuename  = aws_sqs_queue.workflow_crossaccount_lev.name
         orchestrator = var.aws_iam_role_main_name
     })
 }
