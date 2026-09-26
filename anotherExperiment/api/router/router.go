@@ -136,5 +136,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendWorkweek),
 	))
 
+	mux.Handle("POST /sendlev", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendLev),
+	))
+
 	return mux
 }
