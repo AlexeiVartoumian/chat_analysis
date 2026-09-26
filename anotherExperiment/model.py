@@ -753,7 +753,7 @@ def create_tables(conn) -> None:
                 CREATE TABLE IF NOT EXISTS COMPANY_LEV (
                     company_id              SERIAL          PRIMARY KEY,
                     company_name            VARCHAR(128)    NOT NULL,
-                    last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW()
+                    last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                     company_apply_url       TEXT 
                 );
                     """)
@@ -773,6 +773,7 @@ def create_tables(conn) -> None:
                     team_id                 SERIAL          PRIMARY KEY,
                     team_name               TEXT            not NULL , 
                     company_id              INT             NOT NULL,
+                    department              TEXT,
                 CONSTRAINT fk_team_company
                         FOREIGN KEY (company_id)
                         REFERENCES COMPANY_LEV (company_id)
@@ -786,11 +787,11 @@ def create_tables(conn) -> None:
                     company_id              INT             NOT NULL,
                     company_name            VARCHAR(128)    NOT NULL,    
                     job_url                 TEXT            NOT NULL,
-                    apply_url               TEXT,
                     jobType                 TEXT,
                     location                TEXT,                  
                     country                 TEXT,
-                    datePosted              TIMESTAMPTZ,
+                    createdAt               TIMESTAMPTZ,
+                    salaryRange             JSONB,
                     
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
@@ -802,7 +803,8 @@ def create_tables(conn) -> None:
                     CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_LEV (
                         job_id              TEXT          PRIMARY KEY,
                         jobDescription      TEXT          NOT NULL,
-                        requirements        JSONB
+                        requirements        JSONB,
+                        additionalPlain     TEXT,
                     CONSTRAINT fk_description_job
                         FOREIGN KEY (job_id)
                         REFERENCES JOBS_LEV (job_id)
