@@ -175,9 +175,12 @@ resource "aws_lambda_function" "orchestrator_lev" {
         }
     }
 
-    #depends_on = [aws_cloudwatch_log_group.orchestrator]
+    depends_on = [aws_cloudwatch_log_group.orchestrator_lev]
 }
-
+resource "aws_cloudwatch_log_group" "orchestrator_lev" {
+    name = "/aws/lambda/orchestratorlev"
+    retention_in_days = 7
+}
 
 resource "aws_lambda_function" "seek_work_posts" {
     filename = data.archive_file.seek_work_posts.output_path
