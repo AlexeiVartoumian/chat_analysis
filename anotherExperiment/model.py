@@ -772,15 +772,17 @@ def create_tables(conn) -> None:
 
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS COMPANY_LEV_TEAM (
-                    team_id                 SERIAL          PRIMARY KEY,
-                    team_name               TEXT            not NULL , 
-                    company_id              INT             NOT NULL,
-                    department              TEXT,
-                CONSTRAINT fk_team_company
-                        FOREIGN KEY (company_id)
-                        REFERENCES COMPANY_LEV (company_id)
-                        ON DELETE CASCADE
-                );
+                        team_id         SERIAL      PRIMARY KEY,
+                        team_name       TEXT        NOT NULL,
+                        company_id      INT         NOT NULL,
+                        department      TEXT,
+                        CONSTRAINT fk_team_company
+                            FOREIGN KEY (company_id)
+                            REFERENCES COMPANY_LEV (company_id)
+                            ON DELETE CASCADE,
+                        CONSTRAINT company_lev_team_uniq
+                            UNIQUE (team_name, company_id)
+                    );
                     """)
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS JOBS_LEV (
