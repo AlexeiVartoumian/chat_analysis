@@ -68,6 +68,7 @@ sudo mv chat_analysis/anotherExperiment/listbucketash.py /home/ubuntu/listbucket
 sudo mv chat_analysis/anotherExperiment/listbucketgreen.py /home/ubuntu/listbucketgreen.py
 sudo mv chat_analysis/anotherExperiment/listbucketwork.py /home/ubuntu/listbucketwork.py
 sudo mv chat_analysis/anotherExperiment/levblaster.py /home/ubuntu/levblaster.py
+sudo mv chat_analysis/anotherExperiment/iterlevtest.sh /home/ubuntu/iterlevtest.sh
 
 
 
