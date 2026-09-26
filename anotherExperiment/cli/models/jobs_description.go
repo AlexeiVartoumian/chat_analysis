@@ -29,3 +29,10 @@ type JobDescription_Green struct {
 	JobDescriptionConclusion *string `json:"job_description_conclusion,omitempty" db:"job_description_conclusion"`
 	Company_about            *string `json:"company_about,omitempty" db:"company_about"`
 }
+
+type JobDescription_Lev struct {
+	JobId           string          `json:"job_id,omitempty" db:"job_id"`
+	JobDescription  string          `json:"jobDescription,omitempty" db:"jobDescription"`
+	Requirements    json.RawMessage `json:"requirements,omitempty" db:"requirements"`
+	AdditionalPlain string          `json:"additionalPlain,omitempty" db:"additionalPlain"`
+}

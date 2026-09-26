@@ -88,6 +88,10 @@ func CsvFile(filepath string, tablename string) error {
 		InsertNewKeys(filepath, tablename)
 		return nil
 	}
+	if tablename == "FILE_KEYS_LEV" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
 
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -609,6 +613,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Company_AshLoader(record)
 	case "COMPANY_WORK":
 		return Company_WorkLoader(record)
+	case "COMPANY_LEV":
+		return Company_LevLoader(record)
 
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
@@ -634,6 +640,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "JOB_DESCRIPTIONS_WORK":
 		return Jobs_DescriptionWorkLoader(record)
+
+	case "JOB_DESCRIPTIONS_LEV":
+		return Jobs_DescriptionLevLoader(record)
 
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
@@ -718,6 +727,19 @@ func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription
 	Job_Description := models.JobDescription_Work{
 		JobId:          job_id,
 		JobDescription: record["jobDescription"],
+	}
+	return Job_Description, nil
+}
+
+func Jobs_DescriptionLevLoader(record map[string]string) (models.JobDescription_Lev, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Lev{
+		JobId:           job_id,
+		JobDescription:  record["jobDescription"],
+		Requirements:    json.RawMessage(record["requirements"]),
+		AdditionalPlain: record["additonalPlain"],
 	}
 	return Job_Description, nil
 }
@@ -2048,6 +2070,18 @@ func Company_WorkLoader(record map[string]string) (models.COMPANY_WORK, error) {
 	return company_work, nil
 }
 
+func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
+	for k, v := range record {
+		fmt.Printf("key=%q value=%q\n", k, v)
+	}
+
+	company_lev := models.COMPANY_LEV{
+		CompanyName:      record["companyName"],
+		Company_ApplyUrl: record["apiendpoint"],
+	}
+	return company_lev, nil
+}
+
 // TODO REFACTOR INSERTS TO REDUCE ROUNDTRIPS i.e instead of insert every time contrstruct the query then send once.
 func Company_Work(records []map[string]string, tablename string) {
 	db, err := ConnectDb()
@@ -2107,6 +2141,23 @@ func GetCompanyWorkID(db *sql.DB, slug, wdInstance string) (int, error) {
 
 	return companyID, nil
 }
+
+func GetCompanyLevID(db *sql.DB, company_name string) (int, error) {
+	var companyID int
+	err := db.QueryRow(
+		"SELECT company_id FROM company_lev WHERE company_name = $1 ",
+		company_name,
+	).Scan(&companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no company found for slug=%q wd_instance=%q", company_name)
+		}
+		return 0, fmt.Errorf("failed to query company_id: %w", err)
+	}
+
+	return companyID, nil
+}
 func insertJobCategory(db *sql.DB, record map[string]string, companyID int) error {
 	categoryID := record["jobCategoryId"]
 	categoryName := record["jobCategory"]
@@ -2129,6 +2180,79 @@ func insertJobCategory(db *sql.DB, record map[string]string, companyID int) erro
 	return nil
 }
 func Job_and_search_loader_work(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, time, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(time)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflowWork{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_WORK")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+	for index, record := range records {
+
+		company_id, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
+		if err != nil {
+			fmt.Println(err, "error could not find companyId")
+			return err
+		}
+		err = insertJobCategory(db, record, company_id)
+
+		if err != nil {
+			fmt.Println("failed to insert Actual values from job category:", err)
+			continue
+		}
+		value, err := JobLoaderWork(record, company_id)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_WORK{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORK")
+	}
+	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+
+	return nil
+}
+
+func Job_and_search_loader_lev(records []map[string]string, tablename string, filepath string) error {
 
 	db, err := ConnectDb() //awful
 	if err != nil {

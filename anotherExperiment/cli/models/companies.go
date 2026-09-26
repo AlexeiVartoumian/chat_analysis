@@ -44,6 +44,12 @@ type COMPANY_WORK struct {
 	PublicUrl        string `json:"public_url,omitempty" db:"job_board_public_url"`
 }
 
+type COMPANY_LEV struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	CompanyName      string `json:"companyName,omitempty" db:"name"`
+	Company_ApplyUrl string `json:"apiendpoint,omitempty" db:"company_apply_url"`
+}
+
 type COMPANY_ASH_TEAM struct {
 	TeamId           string  `json:"teamId,omitempty" db:"team_id"`
 	TeamName         string  `json:"teamName,omitempty" db:"team_name"`
