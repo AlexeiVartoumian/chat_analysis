@@ -851,6 +851,7 @@ def create_tables(conn) -> None:
                         job_id_link          BIGINT          PRIMARY KEY,
                         job_url              VARCHAR(1024)   NOT NULL,
                         visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                        mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
                         CONSTRAINT fk_job_link_
                             FOREIGN KEY (job_id_link)
                             REFERENCES JOBS (job_id)
