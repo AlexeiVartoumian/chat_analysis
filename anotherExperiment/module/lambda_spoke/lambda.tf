@@ -33,7 +33,7 @@ data "archive_file" "requests_layer" {
 data "archive_file" "lev_path" {
     type = "zip"
     source_file = "${path.root}/module/sources/lev/seek_lev_posts.py"
-    output_path = "${path.root}/module/sources/file/seek_lev_posts.zip"
+    output_path = "${path.root}/module/sources/lev/seek_lev_posts.zip"
 }
 
 resource "aws_lambda_function" "reader" {
