@@ -1029,13 +1029,12 @@ func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error
 
 	return results, nil
 }
-func SendLevQuery(req.NumberAccounts)
 
 func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_LEV, error) {
 
 	if first_run == true {
 
-		query := fmt.Sprintf("SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE limit $1;", number_accounts)
+		query := fmt.Sprintf("SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE limit %d;", number_accounts)
 		// 	rows, err := db.Query(`
 		// 	SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
 		// `, number_accounts)
@@ -1055,7 +1054,7 @@ func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]mod
 			if err != nil {
 				return nil, utils.ErrorHandler(err, "Scann load error on first run in GetSearchTerms function")
 			}
-			query := fmt.Sprintf("UPDATE LEV_LINK SET mid_run = TRUE where job_id_link = $1;", res.Job_id)
+			query := fmt.Sprintf("UPDATE LEV_LINK SET mid_run = TRUE where job_id_link = %d;", res.Job_id)
 
 			_, err := s.db.Exec(query, res.Job_id)
 			// _, err := db.Exec(`
@@ -1072,7 +1071,7 @@ func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]mod
 
 		if number_accounts != -1 { // backoff file will send -1 since they already updated table
 
-			query := fmt.Sprintf("UPDATE %s SET VISITED = TRUE , mid_run = FALSE where job_id_link =$1", number_accounts)
+			query := fmt.Sprintf("UPDATE LEV_LINK SET VISITED = TRUE , mid_run = FALSE where job_id_link =%d;", number_accounts)
 			_, err := s.db.Exec(query, number_accounts)
 
 			if err != nil {
@@ -1081,7 +1080,7 @@ func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]mod
 
 		}
 
-		query := fmt.Sprintf("SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;")
+		query := "SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
 
 		row := s.db.QueryRow(query)
 
@@ -1098,7 +1097,7 @@ func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]mod
 			fmt.Println("something unexpected happened ")
 			return nil, err
 		} else {
-			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where job_id_link = $1", res.Job_id)
+			query := fmt.Sprintf("UPDATE %d SET mid_run = TRUE where job_id_link = $1", res.Job_id)
 			_, err := s.db.Exec(query, res.Job_id)
 
 			if err != nil {
