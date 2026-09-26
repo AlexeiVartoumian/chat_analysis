@@ -2218,8 +2218,8 @@ func Company_Lev(records []map[string]string) {
 	defer db.Close()
 
 	for _, record := range records {
-		name := strings.TrimSpace(record["company_name"])
-		applyUrl := record["company_apply_url"]
+		name := strings.TrimSpace(record["companyName"])
+		applyUrl := record["apiendpoint"]
 		if name == "" {
 			continue
 		}
