@@ -197,8 +197,17 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_LEV" && len(records) > 0 {
+		Company_Lev(records)
+		return nil
+	}
+
 	if tablename == "JOBS_WORK" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
+		return nil
+	}
+	if tablename == "JOBS_LEV" && len(records) > 0 {
+		Job_and_search_loader_lev(records, tablename, filepath)
 		return nil
 	}
 
@@ -611,10 +620,8 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 		return Company_GreenLoader(record)
 	case "COMPANY_ASH":
 		return Company_AshLoader(record)
-	case "COMPANY_WORK":
-		return Company_WorkLoader(record)
-	case "COMPANY_LEV":
-		return Company_LevLoader(record)
+	// case "COMPANY_WORK":
+	// 	return Company_WorkLoader(record)
 
 	case "COMPANY_METADATA":
 		return Company_MetadataLoader(record)
@@ -2107,6 +2114,38 @@ func Company_Work(records []map[string]string, tablename string) {
 	}
 }
 
+func Company_Lev(records []map[string]string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		name := strings.TrimSpace(record["company_name"])
+		applyUrl := record["company_apply_url"]
+		if name == "" {
+			continue
+		}
+
+		var companyId int
+		err := db.QueryRow(`
+			INSERT INTO company_lev (company_name, company_apply_url)
+			VALUES ($1, $2)
+			ON CONFLICT (company_name)
+			DO UPDATE SET company_name = EXCLUDED.company_name
+			RETURNING company_id;`,
+			name, applyUrl).Scan(&companyId)
+
+		if err != nil {
+			fmt.Println("failed to upsert company", name, ErrorHandler(err, "company upsert failed"))
+			continue
+		}
+		fmt.Println(name, "->", companyId)
+	}
+}
+
 var uuidRegex = regexp.MustCompile(`[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`)
 
 func parseFilename(filepath string) (uuid, timestamp string, err error) {
@@ -2179,6 +2218,27 @@ func insertJobCategory(db *sql.DB, record map[string]string, companyID int) erro
 
 	return nil
 }
+func insertJobTeamLev(db *sql.DB, record map[string]string, companyID int) error {
+	teamName := record["team"]
+	department := record["department"]
+
+	if teamName == "" {
+		return nil
+	}
+
+	_, err := db.Exec(`
+	INSERT INTO company_lev_team (team_name, company_id, department)
+	VALUES ($1, $2, NULLIF($3, ''))
+	ON CONFLICT (team_name, company_id) DO NOTHING;`,
+		teamName, companyID, department)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert team %q: %w", teamName, err)
+	}
+
+	return nil
+}
+
 func Job_and_search_loader_work(records []map[string]string, tablename string, filepath string) error {
 
 	db, err := ConnectDb() //awful
@@ -2275,20 +2335,20 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 
 	InsertTime := timestamp
 	DuplicateCount := 0
-	SearchWorkflow := models.SearchWorkflowWork{
+	SearchWorkflow := models.SearchWorkflowLev{
 		Workflow_id:      uuid,
 		Run_at:           InsertTime,
 		Total_jobs_found: 0,
 		Net_new_found:    0,
 	}
-	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_WORK")
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_LEV")
 	if err != nil {
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
 	for index, record := range records {
 
-		company_id, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
+		company_id, err := GetCompanyLevID(db, record["companyName"])
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
 			return err
