@@ -187,6 +187,10 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifecycleWorkLoader(records, tablename, filepath)
 		return nil
 	}
+	if tablename == "JOB_LIFECYCLE_LEV" && len(records) > 0 {
+		Jobs_LifecycleLevLoader(records, tablename, filepath)
+		return nil
+	}
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -1337,6 +1341,32 @@ func JobLoaderWork(record map[string]string, companyid int) (models.JobWork, err
 	return job, nil
 }
 
+func JobLoaderLev(record map[string]string, companyid int) (models.JobLev, error) {
+
+	createdAt := record["createdAt"]
+
+	ms, err := strconv.ParseFloat(createdAt, 64)
+	if err != nil {
+		return models.JobLev{}, fmt.Errorf("bad createdAt %q: %w", createdAt, err)
+	}
+	time1 := time.UnixMilli(int64(ms)).UTC()
+
+	job := models.JobLev{
+		JobID:        record["job_id"],
+		Title:        record["title"],
+		CompanyID:    companyid,
+		Company_name: record["companyName"],
+		JobURL:       record["job_url"],
+		JobType:      record["jobType"],
+		Location:     record["location"],
+		Country:      record["country"],
+		CreatedAt:    time1,
+		SalaryRange:  NullableJSON(record["salaryRange"]),
+	}
+
+	return job, nil
+}
+
 // func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
 // 	_, err := db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, value.CompanyID)
 // 	if err != nil {
@@ -1582,6 +1612,54 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 	// 	}
 
 }
+func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, filepath string) error {
+	if strings.HasPrefix(filepath, "output") {
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleLevmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			AddNewRow(value, "JOB_LIFECYCLE_LEV")
+
+		}
+	} else {
+		fmt.Println("please implement")
+	}
+	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+	// 	timestamp, err := parseTimestamp(meta_data[1])
+
+	// 	if err != nil {
+	// 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	// 	}
+	// 	for index, record := range records {
+
+	// 		value, err := Jobs_LifecycleAshmodel(record, timestamp)
+	// 		if err != nil {
+	// 			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+	// 			continue
+	// 		}
+	// 		AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+	// 	}
+	return nil
+
+}
+
 func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, filepath string) error {
 	if strings.HasPrefix(filepath, "output") {
 		_, time, err := parseFilename(filepath)
@@ -1796,6 +1874,21 @@ func Jobs_LifecycleWorkmodel(record map[string]string, timestamp time.Time) (mod
 
 }
 
+func Jobs_LifecycleLevmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleLev, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleLev{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
 func Jobs_LifeCycleLiveRolesUpdater(records []map[string]string, filepath string) error {
 	// following this format live-roles-38418f82-1d77-4760-8ce4-e40d43917d75_2026-04-29-19-23-53+00-00.csv
 	//meta_data := strings.Split(strings.Split(strings.Split(filepath, "job_metadata-")[1], ".csv")[0], "_")
@@ -1990,6 +2083,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_GREEN SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_WORK":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_WORK SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_LEV":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_LEV SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
@@ -2077,17 +2172,17 @@ func Company_WorkLoader(record map[string]string) (models.COMPANY_WORK, error) {
 	return company_work, nil
 }
 
-func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
-	for k, v := range record {
-		fmt.Printf("key=%q value=%q\n", k, v)
-	}
+// func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
+// 	for k, v := range record {
+// 		fmt.Printf("key=%q value=%q\n", k, v)
+// 	}
 
-	company_lev := models.COMPANY_LEV{
-		CompanyName:      record["companyName"],
-		Company_ApplyUrl: record["apiendpoint"],
-	}
-	return company_lev, nil
-}
+// 	company_lev := models.COMPANY_LEV{
+// 		CompanyName:      record["companyName"],
+// 		Company_ApplyUrl: record["apiendpoint"],
+// 	}
+// 	return company_lev, nil
+// }
 
 // TODO REFACTOR INSERTS TO REDUCE ROUNDTRIPS i.e instead of insert every time contrstruct the query then send once.
 func Company_Work(records []map[string]string, tablename string) {
@@ -2346,6 +2441,7 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
+
 	for index, record := range records {
 
 		company_id, err := GetCompanyLevID(db, record["companyName"])
@@ -2353,13 +2449,13 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 			fmt.Println(err, "error could not find companyId")
 			return err
 		}
-		err = insertJobCategory(db, record, company_id)
+		err = insertJobTeamLev(db, record, company_id)
 
 		if err != nil {
 			fmt.Println("failed to insert Actual values from job category:", err)
 			continue
 		}
-		value, err := JobLoaderWork(record, company_id)
+		value, err := JobLoaderLev(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
@@ -2373,12 +2469,12 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 		}
 		DuplicateCount += skipped
 
-		JobSearchWorkflow := models.JOB_SEARCH_TERM_WORK{
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_LEV{
 			Job_id:      value.JobID,
 			Workflow_id: uuid,
 			Is_new_job:  skipped == 0,
 		}
-		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORK")
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_LEV")
 	}
 	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
 

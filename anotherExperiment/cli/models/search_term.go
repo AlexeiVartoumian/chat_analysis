@@ -72,6 +72,12 @@ type JOB_SEARCH_TERM_WORK struct {
 	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
 }
 
+type JOB_SEARCH_TERM_LEV struct {
+	Job_id      string `json:"id,omitempty" db:"job_id"`
+	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`

@@ -92,6 +92,19 @@ type JobWork struct {
 	JobPostingEndDateAsText *string      `json:"jobPostingEndDateAsText,omitempty" db:"jobPostingEndDateAsText"`
 	HiringOrganization      *string      `json:"hiringOrganization,omitempty" db:"hiringOrganization"`
 }
+
+type JobLev struct {
+	JobID        string           `json:"job_id" db:"job_id"`
+	Title        string           `json:"title" db:"title"`
+	CompanyID    int              `json:"company_id" db:"company_id"`
+	Company_name string           `json:"companyName" db:"company_name"`
+	JobURL       string           `json:"job_url" db:"job_url"`
+	JobType      string           `json:"jobType" db:"jobType"`
+	Location     string           `json:"location,omitempty" db:"location"`
+	Country      string           `json:"country,omitempty" db:"country"`
+	CreatedAt    time.Time        `json:"createdAt,omitempty" db:"createdAt"`
+	SalaryRange  *json.RawMessage `json:"salaryRange,omitempty" db:"salaryRange"`
+}
 type Everything struct {
 	JOBS
 	Jobs_metadata
