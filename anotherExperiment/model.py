@@ -846,6 +846,18 @@ def create_tables(conn) -> None:
                 );                    
             """)
 
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS LEV_LINK(
+                        job_id_link          BIGINT          PRIMARY KEY,
+                        job_url              VARCHAR(1024)   NOT NULL,
+                        visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                        CONSTRAINT fk_job_link_
+                            FOREIGN KEY (job_id_link)
+                            REFERENCES JOBS (job_id)
+                            ON DELETE CASCADE 
+                );
+                """)
+
         
 
 
