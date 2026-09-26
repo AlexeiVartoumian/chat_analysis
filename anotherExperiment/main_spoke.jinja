@@ -58,6 +58,7 @@ module "lambda_spoke_{{ account }}" {
     sqs_worklev_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_id
     sqs_worklev_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_arn
     dynamodb_accountpoolwork_name = module.dynamodb_hub.accountpoolwork_table_name
+    dynamodb_accountpoollev_name = module.dynamodb_hub.accountpoollev_table_name
     s3_work_source_name = module.s3.s3_bucket_output_work_store_name
     s3_work_output_name = module.s3.s3_bucket_output_work_cache_name
 

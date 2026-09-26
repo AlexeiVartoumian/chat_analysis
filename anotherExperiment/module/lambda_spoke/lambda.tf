@@ -134,7 +134,7 @@ resource "aws_lambda_function" "lev" {
     source_code_hash = data.archive_file.lev_path.output_base64sha256
     function_name = "levwork"
     role = var.iam_role_arn_spoke 
-    handler = "reader.lambda_handler"
+    handler = "seek_lev_posts.lambda_handler"
     runtime = "python3.13" 
     timeout     = 900
     layers = [aws_lambda_layer_version.requests_layer.arn]
@@ -142,8 +142,9 @@ resource "aws_lambda_function" "lev" {
     environment {
         variables = {
             RoleArn = var.iam_role_main_arn
-            s3_source_bucket = var.s3_lev_output_name
+            output_bucket = var.s3_lev_output_name
             account_id = data.aws_caller_identity.current.account_id
+            account_pool = var.dynamodb_accountpoollev_name
         }
     }
 

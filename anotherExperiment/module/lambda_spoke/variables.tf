@@ -54,6 +54,10 @@ variable "dynamodb_accountpoolwork_name" {
   type = string 
 }
 
+variable "dynamodb_accountpoollev_name" {
+  type = string 
+}
+
 variable "s3_work_source_name"{
     type = string
 }
