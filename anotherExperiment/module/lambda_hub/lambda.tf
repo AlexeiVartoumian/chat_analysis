@@ -170,7 +170,7 @@ resource "aws_lambda_function" "orchestrator_lev" {
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]
     environment {
         variables = {
-            account_pool_table_work= var.account_pool_table_lev
+            account_pool_table_lev= var.account_pool_table_lev
             #sqs_queue_id = var.coordinator_work_sqs_queue_id
         }
     }
