@@ -62,10 +62,23 @@ variable "s3_work_output_name"{
     type = string
 }
 
+variable "s3_lev_output_name"{
+    type = string
+}
+
+
 variable "sqs_workd_id" {
     type = string
 }
 
 variable "sqs_workd_arn" {
+    type = string 
+}
+
+variable "sqs_worklev_id" {
+    type = string
+}
+
+variable "sqs_worklev_arn" {
     type = string 
 }

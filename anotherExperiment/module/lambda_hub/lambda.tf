@@ -38,6 +38,12 @@ data "archive_file" "seek_work_posts" {
     output_path = "${path.root}/module/sources/seek_work_posts/seek_work_posts.zip"
 }
 
+data "archive_file" "orchestrator_path_lev" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orchestrator_lev/orchestrator_lev.py"
+    output_path = "${path.root}/module/sources/orchestrator_lev/orchestrator_lev.zip"
+}
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -152,6 +158,27 @@ resource "aws_lambda_function" "orchestrator_work" {
     #depends_on = [aws_cloudwatch_log_group.orchestrator]
 }
 
+resource "aws_lambda_function" "orchestrator_lev" {
+    filename = data.archive_file.orchestrator_path_lev.output_path
+    source_code_hash = data.archive_file.orchestrator_path_lev.output_base64sha256
+
+    function_name = "orchestratorlev"
+    role = var.aws_iam_role_main_arn
+    handler = "orchestrator_lev.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 60
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    environment {
+        variables = {
+            account_pool_table_work= var.account_pool_table_lev
+            #sqs_queue_id = var.coordinator_work_sqs_queue_id
+        }
+    }
+
+    #depends_on = [aws_cloudwatch_log_group.orchestrator]
+}
+
+
 resource "aws_lambda_function" "seek_work_posts" {
     filename = data.archive_file.seek_work_posts.output_path
     source_code_hash = data.archive_file.seek_work_posts.output_base64sha256
@@ -172,6 +199,8 @@ resource "aws_lambda_function" "seek_work_posts" {
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
+
+
 
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"

@@ -42,8 +42,9 @@ module "lambda_spoke_{{ account }}" {
     iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     s3_source_name = module.s3.s3_bucket_source_name
     s3_filestore_name = module.s3.s3_bucket_file_name
-    s3_output_bucket_name = module.s3.s3_bucket_output_name
+    s3_output_bucket_name = module.s3.s3_bucket_output_name 
     sqs_request_access_arn = module.sqs_spoke_{{ account }}.workflow_requests_sqs_queue_arn
+    #sqs_request_access_lev_arn = module.sqs_spoke_{{ account }}.workflow_requests_sqs_queue_lev_arn
     sqs_queue_2_arn = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_arn
     sqs_queue_3_arn = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_arn
     sqs_queue_2_id = module.sqs_spoke_{{ account }}.workflow_lambda2_trigger_sqs_queue_id
@@ -53,9 +54,14 @@ module "lambda_spoke_{{ account }}" {
 
     sqs_workd_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_id
     sqs_workd_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_arn
+
+    sqs_worklev_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_id
+    sqs_worklev_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_arn
     dynamodb_accountpoolwork_name = module.dynamodb_hub.accountpoolwork_table_name
     s3_work_source_name = module.s3.s3_bucket_output_work_store_name
     s3_work_output_name = module.s3.s3_bucket_output_work_cache_name
+
+    s3_lev_output_name = module.s3.s3_bucket_output_lev_cache_name
     
     sqs_deadletter_url = module.sqs_hub.deadletter_requests_sqs_queue_id
 

@@ -46,6 +46,8 @@ module "lambda_hub"{
     account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
     eventbridge_rule_arn = module.eventbridge_hub.file_created_rule_arn
 
+    account_pool_table_lev = module.dynamodb_hub.accountpoollev_table_name
+
          providers = {
         aws = aws.hub
     }
@@ -80,7 +82,7 @@ module "iam_hub_attachments" {
 
     
     account_pool_table_lev = module.dynamodb_hub.accountpoollev_table_name
-    account_pool_table_stream_lev_arn = module.dynamodb_hub.accountpoolwork_stream_lev_arn
+    account_pool_table_stream_lev_arn = module.dynamodb_hub.accountpool_stream_lev_arn
 
     
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn

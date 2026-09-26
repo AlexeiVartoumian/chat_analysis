@@ -31,6 +31,10 @@ variable "account_pool_table_stream_arn"{
     type = string
 }
 
+variable "account_pool_table_lev"{
+    type = string
+}
+
 
 
 variable "file_pool_table_deed"{

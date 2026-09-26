@@ -30,6 +30,12 @@ data "archive_file" "requests_layer" {
   output_path = "${path.root}/module/sources/python.zip"
 }
 
+data "archive_file" "lev_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/lev/seek_lev_posts.py"
+    output_path = "${path.root}/module/sources/file/seek_lev_posts.zip"
+}
+
 resource "aws_lambda_function" "reader" {
     filename = data.archive_file.reader_path.output_path
     source_code_hash = data.archive_file.reader_path.output_base64sha256
@@ -122,6 +128,28 @@ resource "aws_lambda_function" "go_workboot" {
     depends_on = [ aws_cloudwatch_log_group.go_workboot ]
 }
 
+
+resource "aws_lambda_function" "lev" {
+    filename = data.archive_file.lev_path.output_path 
+    source_code_hash = data.archive_file.lev_path.output_base64sha256
+    function_name = "levwork"
+    role = var.iam_role_arn_spoke 
+    handler = "reader.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_layer.arn]
+
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            s3_source_bucket = var.s3_lev_output_name
+            account_id = data.aws_caller_identity.current.account_id
+        }
+    }
+
+    depends_on = [ aws_cloudwatch_log_group.lev ]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -156,6 +184,14 @@ resource "aws_lambda_permission" "allow_sqs_work" {
   source_arn    = var.sqs_request_access_arn
 }
 
+resource "aws_lambda_permission" "allow_sqs_lev" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.lev.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_worklev_arn
+}
+
 resource "aws_lambda_event_source_mapping" "reader_trigger" {
   event_source_arn = var.sqs_request_access_arn
   function_name    = aws_lambda_function.reader.arn
@@ -188,6 +224,13 @@ resource "aws_lambda_event_source_mapping" "go_workboot_trigger" {
   depends_on = [aws_lambda_function.go_workboot]
 }
 
+resource "aws_lambda_event_source_mapping" "lev_trigger" {
+  event_source_arn = var.sqs_worklev_arn
+  function_name    = aws_lambda_function.lev.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.lev]
+}
 
 resource "aws_cloudwatch_log_group" "reader" {
     name = "/aws/lambda/readerv2"
@@ -208,5 +251,10 @@ resource "aws_cloudwatch_log_group" "go_metadata" {
 
 resource "aws_cloudwatch_log_group" "go_workboot" {
     name = "/aws/lambda/go_workboot"
+    retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "lev" {
+    name = "/aws/lambda/lev"
     retention_in_days = 7
 }
