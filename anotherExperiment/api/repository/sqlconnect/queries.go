@@ -1029,6 +1029,90 @@ func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error
 
 	return results, nil
 }
+func SendLevQuery(req.NumberAccounts)
+
+func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_LEV, error) {
+
+	if first_run == true {
+
+		query := fmt.Sprintf("SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE limit $1;", number_accounts)
+		// 	rows, err := db.Query(`
+		// 	SELECT search_term_id ,term from SEARCH_TERM LIMIT $1;
+		// `, number_accounts)
+		rows, err := s.db.Query(query)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "first run failure in GetSearchTerms function")
+		}
+		defer rows.Close()
+		var output []models.JOB_SEARCH_TERM_LEV
+
+		for rows.Next() {
+			var res models.JOB_SEARCH_TERM_LEV
+
+			err = rows.Scan(&res.Job_id, &res.Api_url)
+
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "Scann load error on first run in GetSearchTerms function")
+			}
+			query := fmt.Sprintf("UPDATE LEV_LINK SET mid_run = TRUE where job_id_link = $1;", res.Job_id)
+
+			_, err := s.db.Exec(query, res.Job_id)
+			// _, err := db.Exec(`
+			// UPDATE SEARCH_TERM SET mid_run = TRUE where search_term_id = $1;
+			// 	`, res.Search_term_id)
+
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			output = append(output, res)
+		}
+		return output, nil
+	} else {
+
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			query := fmt.Sprintf("UPDATE %s SET VISITED = TRUE , mid_run = FALSE where job_id_link =$1", number_accounts)
+			_, err := s.db.Exec(query, number_accounts)
+
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+
+		}
+
+		query := fmt.Sprintf("SELECT job_id_link , job_url FROM LEV_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;")
+
+		row := s.db.QueryRow(query)
+
+		var output []models.JOB_SEARCH_TERM_LEV
+
+		var res models.JOB_SEARCH_TERM_LEV
+
+		err := row.Scan(&res.Job_id, &res.Api_url)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+			query := fmt.Sprintf("UPDATE %s SET mid_run = TRUE where job_id_link = $1", res.Job_id)
+			_, err := s.db.Exec(query, res.Job_id)
+
+			if err != nil {
+				return nil, utils.ErrorHandler(err, "no no but yes")
+			}
+
+		}
+		output = append(output, res)
+
+		return output, nil
+
+	}
+
+}
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 

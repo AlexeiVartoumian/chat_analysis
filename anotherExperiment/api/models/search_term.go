@@ -30,6 +30,11 @@ type JOB_SEARCH_TERM_WORKWEEK struct {
 	Workflow_id string `json:"url,omitempty" db:"company_apply_url"`
 }
 
+type JOB_SEARCH_TERM_LEV struct {
+	Job_id  int    `json:"job_id,omitempty" db:"job_id"`
+	Api_url string `json:"api_url,omitempty" db:"company_apply_url"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`

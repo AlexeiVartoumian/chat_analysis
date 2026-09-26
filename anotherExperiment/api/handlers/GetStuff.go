@@ -1655,30 +1655,8 @@ func (h *Handler) SendLev(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if firstRunStr == "true" {
-		for index := range req.NumberAccounts {
-			fmt.Println(index)
-			Urls, err := h.Store.SendLevQuery()
 
-			if err != nil {
-				http.Error(w, "Internal server error", http.StatusInternalServerError)
-				return
-			}
-			payload, _ := json.Marshal(Urls)
-
-			cmd := exec.Command("python3", "/home/ubuntu/sendworkweek.py", "1", firstRunStr, "")
-			cmd.Stdin = bytes.NewReader(payload)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			if err := cmd.Run(); err != nil {
-				log.Printf("details.py failed %v", err)
-
-			}
-			time.Sleep(3 * time.Second)
-			fmt.Println("blasted the spot", len(payload))
-		}
-	} else {
-		Urls, err := h.Store.SendWorkweek()
+		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1686,7 +1664,29 @@ func (h *Handler) SendLev(w http.ResponseWriter, r *http.Request) {
 		}
 		payload, _ := json.Marshal(Urls)
 
-		cmd := exec.Command("python3", "/home/ubuntu/sendworkweek.py", "1", firstRunStr, req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/levblaster.py")
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+
+		}
+		time.Sleep(3 * time.Second)
+		fmt.Println("blasted the spot", len(payload))
+
+	} else {
+		//todo convert at send time to integer
+		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/levblaster.py")
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
