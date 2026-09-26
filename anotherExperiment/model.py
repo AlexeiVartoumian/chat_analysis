@@ -754,7 +754,9 @@ def create_tables(conn) -> None:
                     company_id              SERIAL          PRIMARY KEY,
                     company_name            VARCHAR(128)    NOT NULL,
                     last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-                    company_apply_url       TEXT 
+                    company_apply_url       TEXT ,
+                    CONSTRAINT company_lev_name_uniq 
+                    UNIQUE (company_name);
                 );
                     """)
         cur.execute("""
