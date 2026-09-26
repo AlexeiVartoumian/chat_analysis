@@ -1,0 +1,10 @@
+// TODO can autopop when loading
+
+// INSERT INTO LEV_LINK (job_id_link, job_url)
+// SELECT JOBS.job_id, JOB_METADATA.company_apply_url
+// FROM JOBS
+// JOIN JOB_METADATA  ON JOBS.job_id = JOB_METADATA.job_id
+// JOIN JOB_LIFECYCLE ON JOBS.job_id = JOB_LIFECYCLE.job_id
+// WHERE JOB_LIFECYCLE.job_state = 'LISTED'
+//   AND JOB_METADATA.company_apply_url LIKE '%lever%'
+// ON CONFLICT (job_id_link) DO NOTHING;
