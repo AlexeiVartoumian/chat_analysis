@@ -1613,7 +1613,7 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 
 }
 func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, filepath string) error {
-	if strings.HasPrefix(filepath, "output") {
+	if strings.HasPrefix(filepath, "processedJobslever") {
 		_, time, err := parseFilename(filepath)
 
 		if err != nil {
