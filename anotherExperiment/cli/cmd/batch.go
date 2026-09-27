@@ -750,7 +750,7 @@ func Jobs_DescriptionLevLoader(record map[string]string) (models.JobDescription_
 		JobId:           job_id,
 		JobDescription:  record["jobDescription"],
 		Requirements:    json.RawMessage(record["requirements"]),
-		AdditionalPlain: record["additonalPlain"],
+		AdditionalPlain: record["additionalPlain"],
 	}
 	return Job_Description, nil
 }
