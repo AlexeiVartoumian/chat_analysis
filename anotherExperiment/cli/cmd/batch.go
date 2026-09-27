@@ -814,6 +814,15 @@ func Jobs_MetadataLoaderFill(records []map[string]string) {
 					continue
 				}
 			}
+			if strings.Contains(value.CompanyApplyUrl, "lever.co") {
+				if _, err := db.Exec(
+					`INSERT INTO LEV_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
+					value.JobId, value.CompanyApplyUrl,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
 		}
 	}
 }
