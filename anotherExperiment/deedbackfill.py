@@ -108,13 +108,13 @@ def acquire_lock(workflow_id):
 scroller_count = 1
 numberof = int(numberof)
 for count in range(numberof):
-
+    workflow_id = str(uuid.uuid4())
     if first_run == "true" or instance_id  == "":
-        workflow_id = str(uuid.uuid4())
+        
         file = acquire_lock(workflow_id)
         scroller_worker = f"deedbackfill-{scroller_count}"
         scroller_count+=1
-        response = ec2_client.run_instances(LaunchTemplate={'LaunchTemplateId': 'lt-0989cbde3348f9e83', 'Version': '$Latest'} ,MinCount=1,MaxCount=1, TagSpecifications=[{'ResourceType': 'instance','Tags': [{'Key': 'Name', 'Value': f'{scroller_worker}'}]}])
+        response = ec2_client.run_instances(LaunchTemplate={'LaunchTemplateId': 'lt-0989cbde3348f9e83', 'Version': '$Latest'} ,MinCount=1,MaxCount=1, TagSpecifications=[{'ResourceType': 'instance','Tags': [{'Key': 'Name', 'Value': f'{scroller_worker}'},{'Key': 'Role', 'Value': 'time-to-go'}]}])
 
         instance_id = response['Instances'][0]['InstanceId']
 
@@ -138,8 +138,6 @@ for count in range(numberof):
 
 
 
-    workflow_id = str(uuid.uuid4())
-
     ssm_client = boto3.client('ssm', region_name="eu-west-2")
 
     if instance_id:
@@ -150,11 +148,20 @@ for count in range(numberof):
         inner_cmd = (
             f"export DISPLAY=:1 && "
             f"export workflow_id={shlex.quote(workflow_id)} && "
+            f"export profile_id={shlex.quote(file['profile_id'])} && "
             f"echo {shlex.quote(encoded)} | base64 -d > /tmp/search_terms.json && "
-            f"cd /opt/myapp && /venv/bin/python3 deedbackfillami.py < /tmp/search_terms.json > /tmp/last_run.log 2>&1; echo EXIT_CODE:$?"
+            f"cd /opt/myapp && " 
+            f"timeout 1800 /venv/bin/python3 deedbackfillami.py < /tmp/search_terms.json > /tmp/last_run.log 2>&1; " 
+            f"echo EXIT_CODE:$?  > /tmp/exit_code.txt"
         )
 
         full_cmd = f"sudo -u ubuntu bash -c {shlex.quote(inner_cmd)}"
+        commands = [
+                                    full_cmd,
+                                    "cat /tmp/exit_code.txt",   
+                                    "sleep 15",                 # CloudWatch flush logs
+                                    "shutdown -h now",          
+                                ]
         ssm_response = ssm_client.send_command(
             InstanceIds=[instance_id],
             DocumentName="AWS-RunShellScript",
