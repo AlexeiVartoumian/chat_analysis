@@ -12,7 +12,7 @@ while IFS= read -r file; do
         ./start insert $file JOB_DESCRIPTIONS_LEV
         
     fi
-done < <(jq -r '.[][][][]' keys_work.json)
+done < <(jq -r '.[][][][]' keys_lev.json)
 
 
 
