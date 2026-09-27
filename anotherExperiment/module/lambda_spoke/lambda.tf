@@ -148,7 +148,7 @@ resource "aws_lambda_function" "lev" {
         }
     }
 
-    memory_size = 256
+    memory_size = 312
 
     depends_on = [ aws_cloudwatch_log_group.lev ]
 }
