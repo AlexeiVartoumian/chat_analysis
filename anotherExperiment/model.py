@@ -744,6 +744,19 @@ def create_tables(conn) -> None:
             """)
 
         cur.execute("""
+                    CREATE TABLE IF NOT EXISTS WORK_LINK(
+                        job_id_link          BIGINT          PRIMARY KEY,
+                        job_url              VARCHAR(1024)   NOT NULL,
+                        visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                        mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                        CONSTRAINT fk_job_link_
+                            FOREIGN KEY (job_id_link)
+                            REFERENCES JOBS (job_id)
+                            ON DELETE CASCADE 
+                );
+                """)
+
+        cur.execute("""
                     CREATE TABLE IF NOT EXISTS FILE_KEYS_LEV (
                         file_name            VARCHAR(256) PRIMARY KEY
                     );
