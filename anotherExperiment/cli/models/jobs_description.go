@@ -20,7 +20,7 @@ type JobDescription_Work struct {
 }
 type JobDescription_Ash struct {
 	JobId          string `json:"job_id,omitempty" db:"job_id"`
-	JobDescription string `json:"descriptionHtml,omitempty" db:"jobDescription"`
+	JobDescription string `json:"descriptionHtml,omitempty" db:"descriptionHtml"`
 }
 
 type JobDescription_Green struct {
