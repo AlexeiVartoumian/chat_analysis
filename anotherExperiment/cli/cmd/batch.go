@@ -187,7 +187,7 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifecycleWorkLoader(records, tablename, filepath)
 		return nil
 	}
-	if tablename == "JOB_LIFECYCLE_LEV" && len(records) > 0 {
+	if tablename == "JOBS_LIFECYCLE_LEV" && len(records) > 0 {
 		Jobs_LifecycleLevLoader(records, tablename, filepath)
 		return nil
 	}
