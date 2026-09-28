@@ -1582,7 +1582,7 @@ func (h *Handler) SendWorkweek(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			Urls, err := h.Store.SendWorkweek()
+			Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1603,7 +1603,7 @@ func (h *Handler) SendWorkweek(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		Urls, err := h.Store.SendWorkweek()
+		Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

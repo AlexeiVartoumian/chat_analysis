@@ -26,8 +26,8 @@ type JOB_SEARCH_TERM_DEED struct {
 }
 
 type JOB_SEARCH_TERM_WORKWEEK struct {
-	Job_id      string `json:"job_id,omitempty" db:"job_id"`
-	Workflow_id string `json:"url,omitempty" db:"company_apply_url"`
+	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
 }
 
 type JOB_SEARCH_TERM_LEV struct {
