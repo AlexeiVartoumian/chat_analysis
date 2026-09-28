@@ -125,6 +125,7 @@ resource "aws_lambda_function" "go_workboot" {
             account_id = data.aws_caller_identity.current.account_id 
         }
     }
+    memory_size = 356
     depends_on = [ aws_cloudwatch_log_group.go_workboot ]
 }
 
