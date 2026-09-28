@@ -997,7 +997,7 @@ func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error
 
 func (s *PostgresStore) SendWorkweek() ([]models.JOB_SEARCH_TERM_WORKWEEK, error) {
 
-	rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 75;`)
+	rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
