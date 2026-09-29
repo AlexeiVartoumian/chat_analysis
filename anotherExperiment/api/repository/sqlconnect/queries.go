@@ -1023,6 +1023,7 @@ func (s *PostgresStore) SendWorkweek(first_run bool, number_accounts int) ([]mod
 			results = append(results, res)
 		}
 		rows.Close()
+		return results, nil
 	} else {
 		if number_accounts != -1 { // backoff file will send -1 since they already updated table
 
@@ -1052,7 +1053,7 @@ func (s *PostgresStore) SendWorkweek(first_run bool, number_accounts int) ([]mod
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE WORK_LINK SET mid_run = TRUE WHERE job_id_link = $1`, res.Job_id); err != nil {
+				`UPDATE WORK_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -1064,7 +1065,6 @@ func (s *PostgresStore) SendWorkweek(first_run bool, number_accounts int) ([]mod
 
 	}
 
-	return nil, nil
 }
 
 func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_LEV, error) {
