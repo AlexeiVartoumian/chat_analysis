@@ -206,8 +206,13 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
-	if tablename == "JOBS_WORK" && len(records) > 0 {
+	if tablename == "JOBS_WORK_PARTIAL" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOBS_WORK" && len(records) > 0 {
+		LoadFullJobs(records)
 		return nil
 	}
 	if tablename == "JOBS_LEV" && len(records) > 0 {
@@ -1358,6 +1363,29 @@ func JobLoaderWork(record map[string]string, companyid int) (models.JobWork, err
 	}
 	return job, nil
 }
+func JobLoaderPartial(record map[string]string, companyid int) (models.JobWork, error) {
+	if record["job_id"] == "" || record["title"] == "" {
+		return models.JobWork{}, fmt.Errorf("partial record missing job_id/title")
+	}
+
+	jobURL := record["job_url"]
+	if jobURL == "" {
+		jobURL = record["public_url"]
+	}
+
+	return models.JobWork{
+		JobID:          record["job_id"],
+		Title:          record["title"],
+		ApiEndpoint:    record["apiendpoint"],
+		CompanyID:      companyid,
+		Company_name:   record["companyName"],
+		JobURL:         jobURL,
+		JobCategoryId:  NullableString(record["jobCategoryId"]),
+		Location:       NullableString(record["locationsText"]),
+		Date_published: time.Now().UTC().Truncate(24 * time.Hour), // no datePosted available
+		// everything else stays NULL / zero
+	}, nil
+}
 
 func JobLoaderLev(record map[string]string, companyid int) (models.JobLev, error) {
 
@@ -2386,6 +2414,7 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
+
 	for index, record := range records {
 
 		company_id, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
@@ -2399,7 +2428,8 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 			fmt.Println("failed to insert Actual values from job category:", err)
 			continue
 		}
-		value, err := JobLoaderWork(record, company_id)
+		//value, err := JobLoaderWork(record, company_id)
+		value, err := JobLoaderPartial(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
@@ -2423,6 +2453,64 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
 
 	return nil
+}
+
+func LoadFullJobs(records []map[string]string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	for index, record := range records {
+		companyID, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
+		if err != nil {
+			return fmt.Errorf("could not find companyId: %w", err)
+		}
+
+		value, err := JobLoaderWork(record, companyID) // same as before: record -> model
+		if err != nil {
+			fmt.Println("record not updated at index", index, err)
+			continue
+		}
+
+		updated, err := UpdateJobWork(db, value) // model -> UPDATE
+		if err != nil {
+			return fmt.Errorf("update job %s: %w", value.JobID, err)
+		}
+		if !updated {
+			fmt.Println("no partial row for job", value.JobID, "- skipped")
+		}
+	}
+	return nil
+}
+func UpdateJobWork(db *sql.DB, j models.JobWork) (bool, error) {
+	res, err := db.Exec(`
+        UPDATE jobs_work SET
+            title                        = $2,
+            job_url                      = $3,
+            job_category_id              = COALESCE($4, job_category_id),
+            location                     = COALESCE($5, location),
+            job_requisition_location     = $6,
+            country                      = $7,
+            date_published               = $8,
+            posted_on                    = $9,
+            time_left_to_apply           = $10,
+            end_date                     = $11,
+            job_posting_end_date_as_text = $12,
+            hiring_organization          = $13
+        WHERE job_id = $1 AND company_id = $14`,
+		j.JobID, j.Title, j.JobURL, j.JobCategoryId, j.Location,
+		j.JobRequisitionLocation, j.Country, j.Date_published, j.PostedOn,
+		j.TimeLeftToApply, j.EndDate, j.JobPostingEndDateAsText,
+		j.HiringOrganization, j.CompanyID,
+	)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
 }
 
 func Job_and_search_loader_lev(records []map[string]string, tablename string, filepath string) error {

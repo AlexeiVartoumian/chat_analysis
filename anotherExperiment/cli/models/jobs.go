@@ -81,6 +81,7 @@ type JobWork struct {
 	CompanyID               int          `json:"company_id" db:"company_id"`
 	Company_name            string       `json:"companyName" db:"company_name"`
 	JobURL                  string       `json:"externalUrl" db:"job_url"`
+	ApiEndpoint             string       `json:"apiendpoint" db:"api_endpoint"`
 	JobCategoryId           *string      `json:"jobCategoryId,omitempty" db:"jobCategoryId"`
 	Location                *string      `json:"location,omitempty" db:"location"`
 	JobRequisitionLocation  *string      `json:"jobRequisitionLocation,omitempty" db:"jobRequisitionLocation"`
