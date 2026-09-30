@@ -5,9 +5,14 @@ while IFS= read -r file; do
     type="${type^^}"
     #echo $type
     if [ "$type" = "OUTPUT" ]; then
-        ./start insert $file COMPANY_WORK
+        #./start insert $file COMPANY_WORK
         ./start insert $file JOBS_WORK
         ./start insert $file JOB_DESCRIPTIONS_WORK
+        #./start insert $file JOB_LIFECYCLE_WORK
+    
+    else
+        ./start insert $file COMPANY_WORK
+        ./start insert $file JOBS_WORK_PARTIAL
         ./start insert $file JOB_LIFECYCLE_WORK
         
     fi
