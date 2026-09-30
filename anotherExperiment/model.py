@@ -673,6 +673,7 @@ def create_tables(conn) -> None:
                     company_id              INT             NOT NULL,
                     company_name            VARCHAR(128)    NOT NULL,    
                     job_url                 TEXT            NOT NULL,
+                    api_endpoint            TEXT,
                     jobCategoryId           TEXT,
                     location                TEXT,                  
                     jobRequisitionLocation  TEXT,
