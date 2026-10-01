@@ -2435,7 +2435,7 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 			continue
 		}
 
-		skipped, err := AddNewRow(value, tablename)
+		skipped, err := AddNewRow(value, "JOBS_WORK")
 
 		if err != nil {
 			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
