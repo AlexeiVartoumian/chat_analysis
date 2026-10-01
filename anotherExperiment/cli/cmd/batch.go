@@ -1707,7 +1707,7 @@ func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, file
 }
 
 func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, filepath string) error {
-	if strings.HasPrefix(filepath, "output") {
+	if strings.HasPrefix(filepath, "processedJobs") {
 		_, time, err := parseFilename(filepath)
 
 		if err != nil {
