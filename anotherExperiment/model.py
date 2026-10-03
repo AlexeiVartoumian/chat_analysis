@@ -377,7 +377,8 @@ def create_tables(conn) -> None:
                 job_page_url         TEXT, 
                 last_scanned_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),                     
                 timezone             VARCHAR(64),              
-                company_url          TEXT                       
+                company_url          TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE                       
             );
         """)
 
@@ -650,6 +651,7 @@ def create_tables(conn) -> None:
                     last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                     job_posting_site_id     VARCHAR(64),
                     job_board_public_url    TEXT,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
                     UNIQUE (slug, wd_instance)
                 );
             """)
@@ -769,6 +771,7 @@ def create_tables(conn) -> None:
                     company_name            VARCHAR(128)    NOT NULL,
                     last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                     company_apply_url       TEXT ,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
                     CONSTRAINT company_lev_name_uniq 
                     UNIQUE (company_name);
                 );
