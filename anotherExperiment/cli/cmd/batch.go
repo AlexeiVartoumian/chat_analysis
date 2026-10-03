@@ -420,7 +420,7 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 	} else {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
 	}
-	workflowid := meta_data[0]
+	workflowid, _, err := parseFilename(filepath)
 	timestamp, err := parseTimestamp(meta_data[1])
 	if err != nil {
 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
