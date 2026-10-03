@@ -37,6 +37,7 @@ type JOBS_DEED struct {
 	Taxonomy        *json.RawMessage `json:"taxonomy,omitempty" db:"taxonomy"`
 }
 
+// check
 type JobAsh struct {
 	JobID            string           `json:"job_id" db:"job_id"`
 	Title            string           `json:"title" db:"title"`
