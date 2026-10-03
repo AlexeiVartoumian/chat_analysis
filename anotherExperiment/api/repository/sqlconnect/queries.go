@@ -892,7 +892,7 @@ func (s *PostgresStore) RedirectLinkAsh() ([]models.JobRedirect_LinkAsh, error) 
 
 func (s *PostgresStore) SeekGreenJdChecker() ([]models.JobRedirect_LinkGreen, error) {
 
-	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_GREEN where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTIONS_GREEN WHERE jobs_GREEN.job_id = JOB_DESCRIPTIONS_GREEN.job_id) limit 75;`)
+	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_GREEN where not exists (SELECT * FROM JOB_DESCRIPTIONS_GREEN WHERE jobs_GREEN.job_id = JOB_DESCRIPTIONS_GREEN.job_id) limit 75;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
@@ -927,7 +927,7 @@ func (s *PostgresStore) SeekGreenJdChecker() ([]models.JobRedirect_LinkGreen, er
 
 func (s *PostgresStore) SeekAshJdChecker() ([]models.JobRedirect_LinkAsh, error) {
 
-	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_ASH where VISITED = FALSE and not exists (SELECT * FROM JOB_DESCRIPTIONS_ASH WHERE JOBS_ASH.job_id = JOB_DESCRIPTIONS_ASH.job_id) limit 75;`)
+	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_ASH where not exists (SELECT * FROM JOB_DESCRIPTIONS_ASH WHERE JOBS_ASH.job_id = JOB_DESCRIPTIONS_ASH.job_id) limit 75;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
