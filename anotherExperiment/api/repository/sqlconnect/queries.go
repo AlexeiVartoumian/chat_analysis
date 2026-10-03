@@ -698,10 +698,45 @@ func (s *PostgresStore) RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 }
 
 // TODO ADD TIMESTAMP ON TABLE FOR LASTSCAN
+// func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
+
+// 	rows, err := s.db.Query(`
+// 	SELECT location_name , company_url , COMPANY_ASH.company_id , last_scanned_at from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id order by last_scanned_at ASC limit 75;
+// 	`)
+
+// 	if err != nil {
+// 		return nil, utils.ErrorHandler(err, "error on upload")
+// 	}
+
+// 	defer rows.Close()
+
+// 	var output []models.AshCompany
+// 	for rows.Next() {
+
+// 		var res models.AshCompany
+
+// 		err = rows.Scan(&res.LocationName, &res.CompanyUrl, &res.CompanyId, &res.Lastscannedat)
+
+// 		if err != nil {
+// 			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+// 		}
+
+//			output = append(output, res)
+//		}
+//		return output, nil
+//	}
 func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 
 	rows, err := s.db.Query(`
-	SELECT location_name , company_url , COMPANY_ASH.company_id , last_scanned_at from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id order by last_scanned_at ASC limit 75;
+	SELECT json_build_object(
+		'company_url', c.company_url,
+		'job_ids',     json_agg(j.job_id)
+		)
+		FROM company_ash c
+		JOIN jobs_ash j ON j.company_id = c.company_id
+		GROUP BY c.company_id
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
 	`)
 
 	if err != nil {
@@ -725,7 +760,6 @@ func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 	}
 	return output, nil
 }
-
 func (s *PostgresStore) SeekGreenCompany() ([]models.GreenbyCompany, error) {
 
 	rows, err := s.db.Query(`
