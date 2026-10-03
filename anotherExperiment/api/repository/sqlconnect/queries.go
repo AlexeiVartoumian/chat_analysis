@@ -995,6 +995,30 @@ func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error
 	return results, nil
 }
 
+func (s *PostgresStore) SeekWorkJdChecker() ([]models.SeekWorkJob, error) {
+
+	rows, err := s.db.Query(`SELECT api_endpoint from JOBS_WORK where not exists (SELECT from JOB_DESCRIPTIONS_WORK WHERE jobs_work.job_id = job_descriptions_work.job_id) limit 350;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.SeekWorkJob
+
+	for rows.Next() {
+
+		var res models.SeekWorkJob
+
+		rows.Scan(&res.APIEndpoint)
+
+		results = append(results, res)
+	}
+	rows.Close()
+
+	return results, nil
+}
+
 func (s *PostgresStore) SendWorkweek(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_WORKWEEK, error) {
 
 	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
