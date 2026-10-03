@@ -104,6 +104,10 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SeekAshCompany),
 	))
 
+	mux.Handle("POST /sendlevCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendlevCompany),
+	))
+
 	mux.Handle("POST /seekGreenCompany", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SeekGreenCompany),
 	))

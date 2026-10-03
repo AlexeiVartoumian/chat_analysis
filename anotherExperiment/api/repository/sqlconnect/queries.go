@@ -760,6 +760,43 @@ func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
 	}
 	return output, nil
 }
+
+func (s *PostgresStore) SeekLevCompany() ([]models.AshCompany, error) {
+
+	rows, err := s.db.Query(`
+	SELECT json_build_object(
+		'company_url', c.company_apply_url,
+		'job_ids',     json_agg(j.job_id)
+		)
+		FROM company_lev c
+		JOIN jobs_lev j ON j.company_id = c.company_id
+		GROUP BY c.company_id
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "error on upload")
+	}
+
+	defer rows.Close()
+
+	var output []models.AshCompany
+	for rows.Next() {
+
+		var res models.AshCompany
+
+		err = rows.Scan(&res.LocationName, &res.CompanyUrl, &res.CompanyId, &res.Lastscannedat)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		}
+
+		output = append(output, res)
+	}
+	return output, nil
+}
+
 func (s *PostgresStore) SeekGreenCompany() ([]models.GreenbyCompany, error) {
 
 	rows, err := s.db.Query(`
