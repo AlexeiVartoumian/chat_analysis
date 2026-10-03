@@ -473,18 +473,31 @@ func Job_and_search_loader_ash(records []map[string]string, tablename string, fi
 			}
 		}
 
-		JobSearchWorkflow := models.JOB_SEARCH_TERM_ASH{
-			Job_id:      value.JobID,
-			Workflow_id: workflowid,
-			Is_new_job:  skipped == 0,
-		}
-		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
-		if err != nil {
-			fmt.Println("job search term insert failed for job_id", value.JobID, ErrorHandler(err, "yep"))
-		}
+		// JobSearchWorkflow := models.JOB_SEARCH_TERM_ASH{
+		// 	Job_id:      value.JobID,
+		// 	Workflow_id: workflowid,
+		// 	Is_new_job:  skipped == 0,
+		// }
+		// _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ASH")
+		// if err != nil {
+		// 	fmt.Println("job search term insert failed for job_id", value.JobID, ErrorHandler(err, "yep"))
+		// }
 	}
 
-	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	newJobs := len(records) - DuplicateCount
+	_, err = db.Exec(`
+		INSERT INTO SEARCH_WORKFLOW_ASH (workflow_id, run_at, total_jobs_found, net_new_jobs)
+		VALUES ($1, $2, $3, $4)
+		ON CONFLICT (workflow_id) DO UPDATE SET
+			run_at           = LEAST(SEARCH_WORKFLOW_ASH.run_at, EXCLUDED.run_at),
+			total_jobs_found = SEARCH_WORKFLOW_ASH.total_jobs_found + EXCLUDED.total_jobs_found,
+			net_new_jobs     = SEARCH_WORKFLOW_ASH.net_new_jobs + EXCLUDED.net_new_jobs`,
+		workflowid, timestamp, len(records), newJobs,
+	)
+	if err != nil {
+		fmt.Println("workflow upsert failed:", ErrorHandler(err, "yep"))
+	}
 }
 
 func Update_jobs_ash(records []map[string]string) {
