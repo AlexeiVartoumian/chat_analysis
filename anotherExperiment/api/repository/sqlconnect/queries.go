@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 	"github.com/pgvector/pgvector-go"
 )
@@ -725,52 +726,77 @@ func (s *PostgresStore) RedirectAshLead() ([]models.JobRedirect_DEED, error) {
 //		}
 //		return output, nil
 //	}
-func (s *PostgresStore) SeekAshCompany() ([]models.AshCompany, error) {
+func (s *PostgresStore) SeekAshCompany(firstrun bool) ([]models.AshCompany, error) {
 
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_ASH SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
 	rows, err := s.db.Query(`
-	SELECT json_build_object(
-		'company_url', c.company_url,
-		'job_ids',     json_agg(j.job_id)
-		)
+		SELECT c.company_id,
+		       c.company_url,
+		       array_agg(j.job_id::text) AS job_ids
 		FROM company_ash c
 		JOIN jobs_ash j ON j.company_id = c.company_id
-		GROUP BY c.company_id
+		JOIN job_lifecycle_ash l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_url, c.last_scanned_at
 		ORDER BY c.last_scanned_at ASC NULLS FIRST
 		LIMIT 1;
 	`)
-
 	if err != nil {
-		return nil, utils.ErrorHandler(err, "error on upload")
+		return nil, utils.ErrorHandler(err, "seek ash company query failed")
 	}
-
 	defer rows.Close()
 
 	var output []models.AshCompany
+	var companyIDs []string
 	for rows.Next() {
-
 		var res models.AshCompany
-
-		err = rows.Scan(&res.LocationName, &res.CompanyUrl, &res.CompanyId, &res.Lastscannedat)
-
-		if err != nil {
-			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		var companyID string
+		if err := rows.Scan(&companyID, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek ash company scan failed")
 		}
-
 		output = append(output, res)
+		companyIDs = append(companyIDs, companyID)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek ash company rows failed")
+	}
+	for _, companyID := range companyIDs {
+		if _, err := s.db.Exec(
+			`UPDATE company_ash SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			companyID,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
 	return output, nil
 }
 
-func (s *PostgresStore) SeekLevCompany() ([]models.AshCompany, error) {
+func (s *PostgresStore) SeekLevCompany(firstrun bool) ([]models.LevCompany, error) {
 
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_LEV SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
 	rows, err := s.db.Query(`
-	SELECT json_build_object(
-		'company_url', c.company_apply_url,
-		'job_ids',     json_agg(j.job_id)
-		)
+		SELECT c.company_id ,c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
 		FROM company_lev c
 		JOIN jobs_lev j ON j.company_id = c.company_id
-		GROUP BY c.company_id
+		JOIN job_lifecycle_lev l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
 		ORDER BY c.last_scanned_at ASC NULLS FIRST
 		LIMIT 1;
 	`)
@@ -781,18 +807,29 @@ func (s *PostgresStore) SeekLevCompany() ([]models.AshCompany, error) {
 
 	defer rows.Close()
 
-	var output []models.AshCompany
+	var output []models.LevCompany
+	var companyIDs []string
 	for rows.Next() {
 
-		var res models.AshCompany
-
-		err = rows.Scan(&res.LocationName, &res.CompanyUrl, &res.CompanyId, &res.Lastscannedat)
-
-		if err != nil {
-			return nil, utils.ErrorHandler(err, "Scann load error on redirectlink")
+		var res models.LevCompany
+		var companyID string
+		if err := rows.Scan(&companyID, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek ash company scan failed")
 		}
 
 		output = append(output, res)
+		companyIDs = append(companyIDs, companyID)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek lev company rows failed")
+	}
+	for _, companyID := range companyIDs {
+		if _, err := s.db.Exec(
+			`UPDATE company_lev SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			companyID,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
 	}
 	return output, nil
 }

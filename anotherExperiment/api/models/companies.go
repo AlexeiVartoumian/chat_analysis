@@ -22,15 +22,23 @@ type CompanyDetail struct {
 	Company_name string `json:"name"`
 }
 
+// type AshCompany struct {
+// 	Teamname       string
+// 	DepartmentName string
+// 	LocationName   string
+// 	CompanyUrl     string
+// 	CompanyId      string
+// 	Lastscannedat  time.Time
+// }
 type AshCompany struct {
-	Teamname       string
-	DepartmentName string
-	LocationName   string
-	CompanyUrl     string
-	CompanyId      string
-	Lastscannedat  time.Time
+	CompanyURL string   `json:"company_url"`
+	JobIDs     []string `json:"job_ids"`
 }
 
+type LevCompany struct {
+	CompanyURL string   `json:"company_apply_url "`
+	JobIDs     []string `json:"job_ids"`
+}
 type GreenbyCompany struct {
 	JobId         int    `json:"job_id,omitempty" db:"job_id"`
 	CompanyId     int    `json:"company_id,omitempty" db:"company_id"`

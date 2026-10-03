@@ -1140,31 +1140,73 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	//dont expect this to be a recurring job
-	JobAshCompany, err := h.Store.SeekAshCompany()
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
-		return
-	}
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobAshCompany []models.LevCompany
+			var err error
+			if index == 0 {
+				JobAshCompany, err = h.Store.SeekLevCompany(true)
+			}
+			JobAshCompany, err = h.Store.SeekLevCompany(false)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
 
-	payload, err := json.Marshal(JobAshCompany)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
-		return
-	}
+			payload, err := json.Marshal(JobAshCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
 
-	numberof := strconv.Itoa(req.NumberAccounts)
-	cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-	cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
 
-	if err := cmd.Start(); err != nil {
-		log.Println(err)
-		http.Error(w, "failed to start job", http.StatusInternalServerError)
-		return
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+		}
+	} else {
+		JobAshCompany, err := h.Store.SeekAshCompany(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobAshCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobAshCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -1794,32 +1836,83 @@ func (h *Handler) SendlevCompany(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	//dont expect this to be a recurring job
-	JobAshCompany, err := h.Store.SeekLevCompany()
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
-		return
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobAshCompany []models.LevCompany
+			var err error
+			if index == 0 {
+				JobAshCompany, err = h.Store.SeekLevCompany(true)
+			}
+			JobAshCompany, err = h.Store.SeekLevCompany(false)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobAshCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			cmd := exec.Command("python3", "/home/ubuntu/levcompany.py")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		JobAshCompany, err := h.Store.SeekLevCompany(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobAshCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobAshCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		cmd := exec.Command("python3", "/home/ubuntu/levcompany.py")
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted levcompany. have a good day"),
+		StatusCode: 200,
 	}
 
-	payload, err := json.Marshal(JobAshCompany)
-	if err != nil {
-		log.Println(err)
-		http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
-		return
-	}
-
-	numberof := strconv.Itoa(req.NumberAccounts)
-	cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-	cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	if err := cmd.Start(); err != nil {
-		log.Println(err)
-		http.Error(w, "failed to start job", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(response)
 }
