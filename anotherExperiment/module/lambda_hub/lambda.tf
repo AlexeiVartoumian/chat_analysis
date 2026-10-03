@@ -222,25 +222,25 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_deed" {
 }
 
 
-resource "aws_lambda_event_source_mapping" "ddb_stream_trigger_work" {
-  event_source_arn  = var.account_pool_table_stream_arn
-  function_name     = aws_lambda_function.orchestrator_work.arn
-  starting_position = "LATEST"
-  batch_size        = 10
-  enabled           = true
+# resource "aws_lambda_event_source_mapping" "ddb_stream_trigger_work" {
+#   event_source_arn  = var.account_pool_table_stream_arn
+#   function_name     = aws_lambda_function.orchestrator_work.arn
+#   starting_position = "LATEST"
+#   batch_size        = 10
+#   enabled           = true
 
-  filter_criteria {
-    filter {
-      pattern = jsonencode({
-        dynamodb = {
-          NewImage = {
-            status = { S = ["FREE"] }
-          }
-        }
-      })
-    }
-  }
-}
+#   filter_criteria {
+#     filter {
+#       pattern = jsonencode({
+#         dynamodb = {
+#           NewImage = {
+#             status = { S = ["FREE"] }
+#           }
+#         }
+#       })
+#     }
+#   }
+# }
 
 resource "aws_lambda_permission" "allow_eventbridge"{
   statement_id  = "AllowEventBridgeInvoke"

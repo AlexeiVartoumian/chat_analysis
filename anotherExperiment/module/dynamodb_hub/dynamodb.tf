@@ -190,8 +190,8 @@ resource "aws_dynamodb_table" "accountpoolwork" {
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "account"
 
-  stream_enabled = true
-  stream_view_type = "NEW_AND_OLD_IMAGES"
+  # stream_enabled = true
+  # stream_view_type = "NEW_AND_OLD_IMAGES"
 
   attribute {
     name = "account"
