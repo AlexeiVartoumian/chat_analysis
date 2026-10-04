@@ -89,7 +89,7 @@ resource "aws_sqs_queue_policy" "sqs_hub_requests_work"{
     queue_url = aws_sqs_queue.sqs_hub_requests_work.id
     policy = templatefile("${path.module}/sqs_access.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id
-        sqs_queuename  = aws_sqs_queue.sqs_hub_requests.name
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_work.name
     })
 }
 
