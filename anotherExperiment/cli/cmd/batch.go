@@ -561,10 +561,11 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 		return
 	} else if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
-	} else {
-		//TODO FIX THIS shoulg this e GreenJobsBy company ?
-		meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
 	}
+	// } else {
+	// 	//TODO FIX THIS shoulg this e GreenJobsBy company ?
+	// 	meta_data = strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+	// }
 
 	workflowid := meta_data[0]
 	timestamp, err := parseTimestamp(meta_data[1])
