@@ -250,10 +250,10 @@ resource "aws_lambda_permission" "allow_eventbridge"{
   source_arn    = var.eventbridge_rule_arn
 }
 
-# resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
-#   event_source_arn = var.sqs_coordinator_work_arn  
-#   function_name    = aws_lambda_function.orchestrator_work.arn
-#   batch_size       = 1  
-#   enabled          = true
-#   depends_on = [aws_lambda_function.orchestrator_work]
-# }
+resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
+  event_source_arn = var.sqs_coordinator_work_arn  
+  function_name    = aws_lambda_function.orchestrator_work.arn
+  batch_size       = 1  
+  enabled          = true
+  depends_on = [aws_lambda_function.orchestrator_work]
+}

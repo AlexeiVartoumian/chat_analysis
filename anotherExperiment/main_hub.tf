@@ -43,7 +43,7 @@ module "lambda_hub"{
     s3_output_bucket_work_store_name = module.s3.s3_bucket_output_work_store_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
-    account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
+    #account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
     eventbridge_rule_arn = module.eventbridge_hub.file_created_rule_arn
 
     account_pool_table_lev = module.dynamodb_hub.accountpoollev_table_name
@@ -78,7 +78,7 @@ module "iam_hub_attachments" {
     
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
-    account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
+    #account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
 
     
     account_pool_table_lev = module.dynamodb_hub.accountpoollev_table_name

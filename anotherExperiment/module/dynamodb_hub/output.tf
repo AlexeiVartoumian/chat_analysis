@@ -38,10 +38,10 @@ output "accountpoolwork_table_arn" {
   value = aws_dynamodb_table.accountpoolwork.arn
 }
 
-output "accountpoolwork_stream_arn" {
+# output "accountpoolwork_stream_arn" {
   
-  value       = aws_dynamodb_table.accountpoolwork.stream_arn
-}
+#   value       = aws_dynamodb_table.accountpoolwork.stream_arn
+# }
 
 
 

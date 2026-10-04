@@ -27,9 +27,9 @@ variable "account_pool_table_work_arn"{
     type = string
 }
 
-variable "account_pool_table_stream_arn"{
-    type = string
-}
+# variable "account_pool_table_stream_arn"{
+#     type = string
+# }
 
 variable "account_pool_table_lev"{
     type = string
