@@ -16,7 +16,7 @@ S3_BUCKET = "output-store-work-store-390746273208"
 SQS_QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/390746273208/workflow-cordinator-work"
 def send_csv(leads, workflow_id, urls , path):
     s3 = boto3.client('s3')
-    sqs = boto3.client('sqs')
+    sqs = boto3.client('sqs' , "eu-west-2")
     with open("/tmp/processedJobs.csv" , "w" , newline='' , encoding="utf-8") as csv_file:
         field_names = ["jobCategory" , "jobCategoryId" , "title" ,"externalPath" , "locationsText" , "job_id" ,"bulletFields", "companyName", "apiendpoint" , "job_url", "public_url","wd_instance"]
                 
