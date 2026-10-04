@@ -526,7 +526,8 @@ def create_tables(conn) -> None:
                 job_board_public_url    TEXT,
                 domainurl               TEXT,
                 company_url             TEXT,
-                company_about           TEXT                
+                company_about           TEXT,
+                visited              BOOLEAN            NOT NULL DEFAULT FALSE,                
             );
         """)
         cur.execute("""
