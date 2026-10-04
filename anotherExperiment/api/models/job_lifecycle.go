@@ -11,3 +11,8 @@ type JobLifeCycle struct {
 	NextScanAt        *time.Time `json:"next_scan_at,omitempty" db:"next_scan_at"`
 	SuspendedCount    int        `json:"suspended_count,omitempty" db:"suspended_count"`
 }
+type GreenLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}

@@ -1147,19 +1147,19 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			var JobAshCompany []models.LevCompany
+			var GreenLifecycle []models.GreenLifecycle
 			var err error
 			if index == 0 {
-				JobAshCompany, err = h.Store.SeekLevCompany(true)
+				GreenLifecycle, err = h.Store.SeekGreenLifecycle(true)
 			}
-			JobAshCompany, err = h.Store.SeekLevCompany(false)
+			GreenLifecycle, err = h.Store.SeekGreenLifecycle(false)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 				return
 			}
 
-			payload, err := json.Marshal(JobAshCompany)
+			payload, err := json.Marshal(GreenLifecycle)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
@@ -1167,7 +1167,7 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			}
 
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd := exec.Command("python3", "/home/ubuntu/greenlifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -1179,17 +1179,17 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		JobAshCompany, err := h.Store.SeekAshCompany(false)
+		GreenLifecycle, err := h.Store.SeekGreenLifecycle(false)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 			return
 		}
-		if len(JobAshCompany) == 0 {
+		if len(GreenLifecycle) == 0 {
 			fmt.Println("Job Done either second last run or last run ")
 			return
 		}
-		payload, err := json.Marshal(JobAshCompany)
+		payload, err := json.Marshal(GreenLifecycle)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
@@ -1197,7 +1197,7 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 		}
 
 		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/greenLifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -1915,4 +1915,87 @@ func (h *Handler) SendlevCompany(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendGreenLifecycle(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobAshCompany []models.GreenLifecycle
+			var err error
+			if index == 0 {
+				JobAshCompany, err = h.Store.SeekGreenLifecycle(true)
+			}
+			JobAshCompany, err = h.Store.SeekGreenLifecycle(false)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobAshCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+		}
+	} else {
+		JobAshCompany, err := h.Store.SeekAshCompany(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobAshCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobAshCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -148,5 +148,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendWorkweekJd),
 	))
 
+	mux.Handle("POST /sendgreenlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendGreenLifecycle),
+	))
+
 	return mux
 }

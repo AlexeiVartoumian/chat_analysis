@@ -36,9 +36,10 @@ type AshCompany struct {
 }
 
 type LevCompany struct {
-	CompanyURL string   `json:"company_apply_url "`
+	CompanyURL string   `json:"company_apply_url"`
 	JobIDs     []string `json:"job_ids"`
 }
+
 type GreenbyCompany struct {
 	JobId         int    `json:"job_id,omitempty" db:"job_id"`
 	CompanyId     int    `json:"company_id,omitempty" db:"company_id"`

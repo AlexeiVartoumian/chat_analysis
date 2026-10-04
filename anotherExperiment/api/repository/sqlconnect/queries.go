@@ -779,6 +779,58 @@ func (s *PostgresStore) SeekAshCompany(firstrun bool) ([]models.AshCompany, erro
 	return output, nil
 }
 
+func (s *PostgresStore) SeekGreenLifecycle(firstrun bool) ([]models.GreenLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_ASH SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_green c
+		JOIN jobs_green j ON j.company_id = c.company_id
+		JOIN job_lifecycle_green l ON l.job_id = j.job_id
+		WHERE l.job_state = FALSE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek ash company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.GreenLifecycle
+
+	for rows.Next() {
+		var res models.GreenLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek ash company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek ash company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_green SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
+}
 func (s *PostgresStore) SeekLevCompany(firstrun bool) ([]models.LevCompany, error) {
 
 	if firstrun == true {
