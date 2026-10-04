@@ -1147,19 +1147,19 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			var GreenLifecycle []models.GreenLifecycle
+			var AshbCompany []models.AshCompany
 			var err error
 			if index == 0 {
-				GreenLifecycle, err = h.Store.SeekGreenLifecycle(true)
+				AshbCompany, err = h.Store.SeekAshCompany(true)
 			}
-			GreenLifecycle, err = h.Store.SeekGreenLifecycle(false)
+			AshbCompany, err = h.Store.SeekAshCompany(false)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 				return
 			}
 
-			payload, err := json.Marshal(GreenLifecycle)
+			payload, err := json.Marshal(AshbCompany)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
@@ -1167,7 +1167,7 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			}
 
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("python3", "/home/ubuntu/greenlifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -1179,17 +1179,17 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	} else {
-		GreenLifecycle, err := h.Store.SeekGreenLifecycle(false)
+		AshbCompany, err := h.Store.SeekAshCompany(false)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 			return
 		}
-		if len(GreenLifecycle) == 0 {
+		if len(AshbCompany) == 0 {
 			fmt.Println("Job Done either second last run or last run ")
 			return
 		}
-		payload, err := json.Marshal(GreenLifecycle)
+		payload, err := json.Marshal(AshbCompany)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
@@ -1197,7 +1197,7 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 		}
 
 		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", "/home/ubuntu/greenLifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/ashcompany.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
