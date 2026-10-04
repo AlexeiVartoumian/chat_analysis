@@ -154,7 +154,7 @@ for count in range(numberof):
             f"export profile_id={shlex.quote(file['profile_id'])} && "
             f"echo {shlex.quote(encoded)} | base64 -d > /tmp/leads.json && "
             f"cd /opt/myapp && "
-            f"timeout 1800 /venv/bin/python3 greenlifeycle.py < /tmp/leads.json > /tmp/last_run.log 2>&1; "
+            f"timeout 1800 /venv/bin/python3 greenlifecycle.py < /tmp/leads.json > /tmp/last_run.log 2>&1; "
             f"echo EXIT_CODE:$? > /tmp/exit_code.txt"
         )
 
