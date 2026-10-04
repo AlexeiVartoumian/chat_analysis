@@ -1210,6 +1210,7 @@ func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error
 
 func (s *PostgresStore) SeekWorkJdChecker() ([]models.SeekWorkJob, error) {
 
+	//TODO fix compare againt open only and then aggreaget by company
 	rows, err := s.db.Query(`SELECT api_endpoint from JOBS_WORK where not exists (SELECT from JOB_DESCRIPTIONS_WORK WHERE jobs_work.job_id = job_descriptions_work.job_id) limit 350;`)
 
 	if err != nil {
