@@ -783,7 +783,7 @@ func (s *PostgresStore) SeekGreenLifecycle(firstrun bool) ([]models.GreenLifecyc
 
 	if firstrun == true {
 		_, err := s.db.Exec(`
-		UPDATE COMPANY_ASH SET visited = FALSE`)
+		UPDATE COMPANY_GREEN SET visited = FALSE`)
 		if err != nil {
 			return nil, utils.ErrorHandler(err, " first run errored on db output")
 		}
