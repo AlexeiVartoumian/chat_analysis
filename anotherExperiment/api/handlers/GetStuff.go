@@ -2068,7 +2068,7 @@ func (h *Handler) SendWorkLifecycle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", "/home/ubuntu//worklifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/worklifecycle.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
