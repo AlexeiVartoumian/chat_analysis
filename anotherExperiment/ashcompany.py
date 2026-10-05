@@ -109,9 +109,9 @@ def acquire_lock(workflow_id):
 scroller_count = 1
 numberof = int(numberof)
 for count in range(numberof):
-
+    workflow_id = str(uuid.uuid4())
     if first_run == "true":
-        workflow_id = str(uuid.uuid4())
+        
         file = acquire_lock(workflow_id)
         scroller_worker = f"ashcompany-{scroller_count}"
         scroller_count+=1
@@ -137,9 +137,6 @@ for count in range(numberof):
             }
         )
 
-
-
-    workflow_id = str(uuid.uuid4())
 
     ssm_client = boto3.client('ssm', region_name="eu-west-2")
 
