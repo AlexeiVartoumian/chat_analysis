@@ -137,7 +137,6 @@ for count in range(numberof):
             }
         )
 
-
     ssm_client = boto3.client('ssm', region_name="eu-west-2")
 
     if instance_id:
