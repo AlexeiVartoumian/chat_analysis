@@ -1672,6 +1672,8 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 	// 	}
 
 }
+
+// TODO do a diff on deadlinks vs new jobs vs current jobs to derive last seen listed at
 func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, filepath string) error {
 	if strings.HasPrefix(filepath, "processedJobslever") {
 		_, time, err := parseFilename(filepath)
@@ -2547,7 +2549,13 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 		fmt.Println("bad timestamp parse")
 		return err
 	}
+	if strings.HasPrefix(filepath, "deadlink") {
+		for _, record := range records {
+			db.Exec("UPDATE JOB_LIFECYCLE_LEV SET first_seen_closed_at = $1 , job_state = $2 where job_id = $3", timestamp, false, record["job_id"])
 
+		}
+		return nil
+	}
 	InsertTime := timestamp
 	DuplicateCount := 0
 	SearchWorkflow := models.SearchWorkflowLev{
