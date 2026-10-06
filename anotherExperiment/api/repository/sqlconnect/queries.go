@@ -742,7 +742,8 @@ func (s *PostgresStore) SeekAshCompany(firstrun bool) ([]models.AshCompany, erro
 		FROM company_ash c
 		JOIN jobs_ash j ON j.company_id = c.company_id
 		JOIN job_lifecycle_ash l ON l.job_id = j.job_id
-		WHERE l.job_state = TRUE
+		WHERE (l.job_state = TRUE
+		       OR (l.job_state = FALSE AND l.first_seen_closed_at IS NULL))
 		  AND c.visited = FALSE
 		GROUP BY c.company_id, c.company_url, c.last_scanned_at
 		ORDER BY c.last_scanned_at ASC NULLS FIRST
