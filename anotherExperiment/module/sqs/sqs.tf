@@ -93,7 +93,7 @@ resource "aws_sqs_queue_policy" "request_access_worker"{
 resource "aws_sqs_queue" "workflow_crossaccount_lev" {
   name                      = "workflow-crossaccount-lev"
   delay_seconds             = 90
-  max_message_size          = 2048
+  max_message_size          = 1048576
   message_retention_seconds = 86400
   receive_wait_time_seconds = 10
   visibility_timeout_seconds = 1500
