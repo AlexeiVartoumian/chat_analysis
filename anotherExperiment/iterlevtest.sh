@@ -10,8 +10,11 @@ while IFS= read -r file; do
         ./start insert $file JOB_LIFECYCLE_LEV
     elif [ "$type" = "JOBDESCRIPTIONSLEVER" ]; then
         ./start insert $file JOB_DESCRIPTIONS_LEV
+    
+    elif [ "$type" = "DEADLINKSLEVER" ]; then
+        ./start insert $file JOBS_LEV
         
-    fi
+    fi 
 done < <(jq -r '.[][][][]' keys_lev.json)
 
 
