@@ -16,6 +16,3 @@ while IFS= read -r file; do
         
     fi 
 done < <(jq -r '.[][][][]' keys_lev.json)
-
-
-
