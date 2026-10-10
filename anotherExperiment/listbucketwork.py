@@ -86,7 +86,7 @@ with open("newkeys_work.txt" , "w" , encoding="utf-8") as f :
 def forgive(key , mydict ):
 
     if key not in mydict:
-        mydict[key] =  [0]     
+        mydict[key] =  [0]  *2
     return mydict
 
 def dblforgive(key , mydict ):
@@ -153,6 +153,12 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
             
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
+            output[timeline_key][0][unique].append(document)
+
+        if document.startswith("deadlinks"):
+                    
+            #output[timeline_key][0][records[unique][0]] = document
+            forgive(unique ,output[timeline_key][1])
             output[timeline_key][0][unique].append(document)
      
         
