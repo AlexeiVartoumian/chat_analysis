@@ -1256,7 +1256,7 @@ func (s *PostgresStore) SendWorkweek(first_run bool, number_accounts int) ([]mod
 	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
 	if first_run == true {
 		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM WORK_LINK
-		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 10`)
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "yep yep but no")
