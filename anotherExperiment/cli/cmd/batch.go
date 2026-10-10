@@ -1723,7 +1723,12 @@ func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, file
 }
 
 func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, filepath string) error {
-	if strings.HasPrefix(filepath, "processedJobs") {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
+	if strings.HasPrefix(filepath, "processedJobs") || strings.HasPrefix(filepath, "output-processedJobs-jd") {
 		_, time, err := parseFilename(filepath)
 
 		if err != nil {
@@ -1742,11 +1747,36 @@ func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, fil
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			AddNewRow(value, "JOB_LIFECYCLE_WORK")
+			//AddNewRow(value, "JOB_LIFECYCLE_WORK")
+			_, err = db.Exec(`
+				INSERT INTO "JOB_LIFECYCLE_WORK"
+					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (job_id) DO UPDATE
+				SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
 
 		}
 	} else {
+		//DEADLINKS
 		fmt.Println("please implement")
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		for _, record := range records {
+
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+		}
 	}
 	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
 	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
