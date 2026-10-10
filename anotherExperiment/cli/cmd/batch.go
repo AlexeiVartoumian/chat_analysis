@@ -1823,7 +1823,7 @@ func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, fil
 		}
 		for _, record := range records {
 
-			_, err = db.Exec("UPDATE JOB_LIFECYCLE_DEED SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_WORK SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
 		}
 	}
 	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
