@@ -18,4 +18,4 @@ while IFS= read -r file; do
     elif [ "$type" = "DEADLINKSWORKDAY" ]; then
         ./start insert $file JOB_LIFECYCLE_WORK
     fi
-done < <(jq -r '.[][][]' keys_work.json)
+done < <(jq -r '.[][][][]' keys_work.json)
