@@ -1548,7 +1548,17 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			AddNewRow(value, "JOB_LIFECYCLE_ASH")
+			_, err = db.Exec(`
+			INSERT INTO job_lifecycle_ash
+				(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (job_id) DO UPDATE
+			SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+			//AddNewRow(value, "JOB_LIFECYCLE_ASH")
 
 		}
 	} else if strings.HasPrefix(filepath, "AshJobsByCompany") {
@@ -1566,7 +1576,17 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			AddNewRow(value, "JOB_LIFECYCLE_ASH")
+			//AddNewRow(value, "JOB_LIFECYCLE_ASH")
+			_, err = db.Exec(`
+			INSERT INTO job_lifecycle_ash
+				(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (job_id) DO UPDATE
+			SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
 
 		}
 	} else if strings.HasPrefix(filepath, "updatedJobsAsh") {
@@ -1630,6 +1650,12 @@ func Jobs_LifecycleAshLoader(records []map[string]string, tablename string, file
 
 }
 func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, filepath string) {
+
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
 	if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data := strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
 
@@ -1646,8 +1672,14 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			AddNewRow(value, "JOB_LIFECYCLE_GREEN")
-
+			//AddNewRow(value, "JOB_LIFECYCLE_GREEN")
+			_, err = db.Exec(`
+			INSERT INTO job_lifecycle_green
+				(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (job_id) DO UPDATE
+			SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, true, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
 		}
 	} else {
 		fmt.Println("please implement")
@@ -1675,6 +1707,13 @@ func Jobs_LifecycleGreenLoader(records []map[string]string, tablename string, fi
 
 // TODO do a diff on deadlinks vs new jobs vs current jobs to derive last seen listed at
 func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+		return ErrorHandler(err, "whoops")
+	}
+	defer db.Close()
 	if strings.HasPrefix(filepath, "processedJobslever") {
 		_, time, err := parseFilename(filepath)
 
@@ -1694,8 +1733,17 @@ func Jobs_LifecycleLevLoader(records []map[string]string, tablename string, file
 				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-			AddNewRow(value, "JOB_LIFECYCLE_LEV")
-
+			//AddNewRow(value, "JOB_LIFECYCLE_LEV")
+			_, err = db.Exec(`
+	INSERT INTO job_lifecycle_lev
+		(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+	VALUES ($1, $2, $3, $4, $5)
+	ON CONFLICT (job_id) DO UPDATE
+	SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
 		}
 	} else {
 		fmt.Println("please implement")
