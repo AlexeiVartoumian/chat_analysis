@@ -14,6 +14,8 @@ while IFS= read -r file; do
         ./start insert $file COMPANY_WORK
         ./start insert $file JOBS_WORK_PARTIAL
         ./start insert $file JOB_LIFECYCLE_WORK
-        
+    
+    elif [ "$type" = "DEADLINKSWORKDAY" ]; then
+        ./start insert $file JOB_LIFECYCLE_WORK
     fi
 done < <(jq -r '.[][][][]' keys_work.json)
