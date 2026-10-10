@@ -1209,10 +1209,17 @@ func (s *PostgresStore) SeekDeedJdChecker() ([]models.JobRedirect_LinkAsh, error
 	return results, nil
 }
 
-func (s *PostgresStore) SeekWorkJdChecker() ([]models.SeekWorkJob, error) {
+func (s *PostgresStore) SeekWorkJdChecker(firstrun bool) ([]models.SeekWorkJob, error) {
 
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE JOB_LIFECYCLE_WORK SET visited = FALSE WHERE job_state = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
 	//TODO fix compare againt open only and then aggreaget by company
-	rows, err := s.db.Query(`SELECT api_endpoint from JOBS_WORK where not exists (SELECT from JOB_DESCRIPTIONS_WORK WHERE jobs_work.job_id = job_descriptions_work.job_id) limit 350;`)
+	rows, err := s.db.Query(`SELECT JOBS_WORK.job_id ,api_endpoint from JOBS_WORK JOIN job_lifecycle_work l ON l.job_id = jobs_work.job_id where l.job_state = TRUE and  l.visited = False and not exists (SELECT from JOB_DESCRIPTIONS_WORK WHERE jobs_work.job_id = job_descriptions_work.job_id) limit 350;`)
 
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "yep yep but no")
@@ -1225,11 +1232,21 @@ func (s *PostgresStore) SeekWorkJdChecker() ([]models.SeekWorkJob, error) {
 
 		var res models.SeekWorkJob
 
-		rows.Scan(&res.APIEndpoint)
+		rows.Scan(&res.JobID, &res.APIEndpoint)
 
 		results = append(results, res)
 	}
-	rows.Close()
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range results {
+		if _, err := s.db.Exec(
+			`UPDATE JOB_LIFECYCLE_WORK SET visited = TRUE WHERE job_id = $1`,
+			greenLifecycle.JobID,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
 
 	return results, nil
 }

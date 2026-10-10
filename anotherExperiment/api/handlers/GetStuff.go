@@ -1624,7 +1624,7 @@ func (h *Handler) SendWorkweekJd(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			MissingJd, err := h.Store.SeekWorkJdChecker()
+			MissingJd, err := h.Store.SeekWorkJdChecker(true)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1645,7 +1645,7 @@ func (h *Handler) SendWorkweekJd(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		MissingJd, err := h.Store.SeekWorkJdChecker()
+		MissingJd, err := h.Store.SeekWorkJdChecker(false)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
