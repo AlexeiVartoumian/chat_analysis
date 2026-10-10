@@ -2022,8 +2022,10 @@ func (h *Handler) SendWorkLifecycle(w http.ResponseWriter, r *http.Request) {
 			var err error
 			if index == 0 {
 				JobAshCompany, err = h.Store.SeekWorkLifecycle(true)
+			} else {
+				JobAshCompany, err = h.Store.SeekWorkLifecycle(false)
 			}
-			JobAshCompany, err = h.Store.SeekWorkLifecycle(false)
+
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
