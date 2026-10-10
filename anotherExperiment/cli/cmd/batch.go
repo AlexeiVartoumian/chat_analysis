@@ -1776,7 +1776,7 @@ func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, fil
 		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
 	}
 	defer db.Close()
-	if strings.HasPrefix(filepath, "processedJobs") || strings.HasPrefix(filepath, "output-processedJobs-jd") {
+	if strings.HasPrefix(filepath, "processedJobs") || strings.HasPrefix(filepath, "output-processedJobs") {
 		_, time, err := parseFilename(filepath)
 
 		if err != nil {
@@ -1797,7 +1797,7 @@ func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, fil
 			}
 			//AddNewRow(value, "JOB_LIFECYCLE_WORK")
 			_, err = db.Exec(`
-				INSERT INTO "JOB_LIFECYCLE_WORK"
+				INSERT INTO JOB_LIFECYCLE_WORK
 					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
 				VALUES ($1, $2, $3, $4, $5)
 				ON CONFLICT (job_id) DO UPDATE
