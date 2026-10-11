@@ -2594,24 +2594,28 @@ func LoadFullJobs(records []map[string]string) error {
 }
 func UpdateJobWork(db *sql.DB, j models.JobWork) (bool, error) {
 	res, err := db.Exec(`
-    UPDATE jobs_work SET
-        title                   = $2,
-        job_url                 = $3,
-        jobcategoryid           = COALESCE($4, jobcategoryid),
-        location                = COALESCE($5, location),
-        jobrequisitionlocation  = $6,
-        country                 = $7,
-        dateposted              = $8,
-        postedon                = $9,
-        timelefttoapply         = $10,
-        enddate                 = $11,
-        jobpostingenddateastext = $12,
-        hiringorganization      = $13
-    WHERE job_id = $1 AND company_id = $14`,
+    INSERT INTO jobs_work (
+        job_id, title, company_id, company_name, job_url, jobcategoryid, location,
+        jobrequisitionlocation, country, dateposted, postedon, timelefttoapply,
+        enddate, jobpostingenddateastext, hiringorganization
+    ) VALUES ($1,$2,$14,$15,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+    ON CONFLICT (job_id) DO UPDATE SET
+        title                   = EXCLUDED.title,
+        job_url                 = EXCLUDED.job_url,
+        jobcategoryid           = COALESCE(EXCLUDED.jobcategoryid, jobs_work.jobcategoryid),
+        location                = COALESCE(EXCLUDED.location, jobs_work.location),
+        jobrequisitionlocation  = EXCLUDED.jobrequisitionlocation,
+        country                 = EXCLUDED.country,
+        dateposted              = EXCLUDED.dateposted,
+        postedon                = EXCLUDED.postedon,
+        timelefttoapply         = EXCLUDED.timelefttoapply,
+        enddate                 = EXCLUDED.enddate,
+        jobpostingenddateastext = EXCLUDED.jobpostingenddateastext,
+        hiringorganization      = EXCLUDED.hiringorganization`,
 		j.JobID, j.Title, j.JobURL, j.JobCategoryId, j.Location,
 		j.JobRequisitionLocation, j.Country, j.Date_published, j.PostedOn,
 		j.TimeLeftToApply, j.EndDate, j.JobPostingEndDateAsText,
-		j.HiringOrganization, j.CompanyID,
+		j.HiringOrganization, j.CompanyID, j.Company_name,
 	)
 	if err != nil {
 		return false, err
