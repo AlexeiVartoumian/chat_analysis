@@ -8,7 +8,7 @@ while IFS= read -r file; do
         #./start insert $file COMPANY_WORK
         ./start insert $file JOBS_WORK
         ./start insert $file JOB_DESCRIPTIONS_WORK
-        #./start insert $file JOB_LIFECYCLE_WORK
+        ./start insert $file JOB_LIFECYCLE_WORK
     
     elif [ "$type" = "PROCESSEDJOBS" ]; then
         ./start insert $file COMPANY_WORK
