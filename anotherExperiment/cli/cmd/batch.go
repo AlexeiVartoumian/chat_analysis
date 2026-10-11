@@ -213,6 +213,10 @@ func CsvFile(filepath string, tablename string) error {
 
 	if tablename == "JOBS_WORK" && len(records) > 0 {
 		LoadFullJobs(records)
+		if err := LoadFullJobs(records); err != nil {
+			fmt.Println("LoadFullJobs failed:", err)
+			return err
+		}
 		return nil
 	}
 	if tablename == "JOBS_LEV" && len(records) > 0 {
