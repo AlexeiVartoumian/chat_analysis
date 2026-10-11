@@ -888,6 +888,19 @@ def create_tables(conn) -> None:
                         file_name            VARCHAR(256) PRIMARY KEY
                     );
                     """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS ORAC_LINK(
+                    job_id_link          BIGINT          PRIMARY KEY,
+                    job_url              VARCHAR(1024)   NOT NULL,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                    mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                    CONSTRAINT fk_job_link_
+                        FOREIGN KEY (job_id_link)
+                        REFERENCES JOBS (job_id)
+                        ON DELETE CASCADE 
+            );
+            """)
         
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS COMPANY_ORAC (
@@ -901,6 +914,19 @@ def create_tables(conn) -> None:
                     UNIQUE (company_name);
                     );
                     """)
+
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS DEPARTMENT_ORAC (
+                        department_id        BIGINT       PRIMARY KEY,
+                        department_name      TEXT,
+                        company_id           BIGINT         NOT NULL,
+        
+                        CONSTRAINT fk_department_company
+                            FOREIGN KEY (company_id)
+                            REFERENCES COMPANY_ORAC (company_id)
+                            ON DELETE CASCADE
+                    );
+                """)
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS JOBS_ORAC (
                     job_id                  TEXT            PRIMARY KEY,
@@ -910,18 +936,70 @@ def create_tables(conn) -> None:
                     job_url                 TEXT            NOT NULL,
                     api_url                 TEXT,
                     posted_at               TIMESTAMPTZ,
+                    posted_at               TIMESTAMPTZ,
+                    study_level             TEXT,
+                    business_unit_id        BIGINT ,
+                    legal_employer_id       BIGINT ,
+                    company_id              BIGINT NOT NULL,
                     jobType                 TEXT,
-                    location                TEXT,                  
+                    primary_location        TEXT,                  
                     country                 TEXT,
-                    createdAt               TIMESTAMPTZ,
-                    salaryRange             JSONB,
+                    work_location             JSONB,
                     
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
-                        REFERENCES COMPANY_LEV (company_id)
+                        REFERENCES COMPANY_ORAC (company_id)
                         ON DELETE CASCADE 
                 );  
                 """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_ORAC (
+                job_id               TEXT          PRIMARY KEY,
+                shortjobDescription  TEXT          NOT NULL,
+                jobDescription       TEXT  ,
+
+            CONSTRAINT fk_description_job
+                FOREIGN KEY (job_id)
+                REFERENCES JOBS_ORAC(job_id)
+                ON DELETE CASCADE
+            );
+             """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_ORAC (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_ORAC (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_WORK (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_WORK(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_ORAC (job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_ORAC (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
         
 
 
