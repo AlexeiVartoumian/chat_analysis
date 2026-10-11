@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// tidy
 const (
 	// KeyLength defines the number of random bytes to generate
 	// 32 bytes = 256 bits of entropy, sufficient for security
