@@ -910,8 +910,8 @@ def create_tables(conn) -> None:
                     last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                     company_apply_url       TEXT ,
                     visited              BOOLEAN         NOT NULL DEFAULT FALSE,
-                    CONSTRAINT company_lev_name_uniq 
-                    UNIQUE (company_name);
+                    CONSTRAINT company_orac_name_uniq 
+                    UNIQUE (company_name)
                     );
                     """)
 
@@ -931,16 +931,15 @@ def create_tables(conn) -> None:
                 CREATE TABLE IF NOT EXISTS JOBS_ORAC (
                     job_id                  TEXT            PRIMARY KEY,
                     title                   TEXT            NOT NULL,
-                    company_id              INT             NOT NULL,
+                    company_id              BIGINT NOT NULL,
                     company_name            VARCHAR(128)    ,    
                     job_url                 TEXT            NOT NULL,
                     api_url                 TEXT,
                     posted_at               TIMESTAMPTZ,
-                    posted_at               TIMESTAMPTZ,
+                    posted_end_date         TIMESTAMPTZ,
                     study_level             TEXT,
                     business_unit_id        BIGINT ,
                     legal_employer_id       BIGINT ,
-                    company_id              BIGINT NOT NULL,
                     jobType                 TEXT,
                     primary_location        TEXT,                  
                     country                 TEXT,
@@ -980,7 +979,7 @@ def create_tables(conn) -> None:
                     );
                 """)
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_WORK (
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_ORAC (
                 workflow_id         UUID      PRIMARY KEY,
                 run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
                 total_jobs_found    INTEGER     NOT NULL,
@@ -989,7 +988,7 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_WORK(
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_ORAC(
                 job_id              TEXT         NOT NULL,
                 workflow_id         UUID        NOT NULL,
                 is_new_job          BOOLEAN     NOT NULL DEFAULT false,
