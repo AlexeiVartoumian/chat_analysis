@@ -82,3 +82,248 @@
         }
     ]
 }
+
+"""
+SCP evaluation animation: multiple principals, multiple Deny SCPs per level -> GIF
+Edit CONFIG to match your real org, then run:  python scp_multi_principal.py
+Requires: pip install pillow
+"""
+from PIL import Image, ImageDraw, ImageFont
+
+# ============================ CONFIG ============================
+W, H = 1280, 720
+OUT = "scp_multi_principal.gif"
+ACTION = "ec2:TerminateInstances"
+
+# Org nodes: id -> (kind, name, box [x1, y1, x2, y2])
+NODES = {
+    "root": ("ROOT",    "Root",             [160, 72, 660, 222]),
+    "ou":   ("OU",      "Workloads",        [40, 262, 780, 422]),
+    "acct": ("ACCOUNT", "prod-app  111111111111", [160, 462, 660, 602]),
+}
+
+# Policy cards: id -> (node, title, [lines], box)
+CARDS = {
+    "root_deny": ("root", "SCP: DenyEC2Terminate",
+                  ["Deny ec2:TerminateInstances",
+                   "Except: PlatformAdmin, Automation, BreakGlass"],
+                  [245, 112, 575, 212]),
+    "ou_a": ("ou", "SCP: EC2ServiceAllowList",
+             ["Deny NotAction ec2:*, s3:*, logs:*",
+              "Except: Automation, BreakGlass"],
+             [95, 302, 395, 412]),
+    "ou_b": ("ou", "SCP: EC2ActionAllowList",
+             ["Deny EC2 except Run/Start/Stop/Describe*",
+              "Except: Automation, BreakGlass"],
+             [455, 302, 755, 412]),
+    "iam": ("acct", "IAM identity policy", ["(depends on principal)"],
+            [245, 502, 575, 592]),
+}
+
+# Principals traced one after another.
+# steps: (card_id, passed?, log text). Stop at the first failure.
+PRINCIPALS = [
+    {
+        "name": "AdminRole", "colour": (255, 153, 0),
+        "iam": ["AdministratorAccess"],
+        "excluded": "none",
+        "steps": [("root_deny", False, "Root: matches Deny, not excluded")],
+        "result": (False, "Denied at Root SCP"),
+    },
+    {
+        "name": "PlatformAdminRole", "colour": (138, 77, 255),
+        "iam": ["AdministratorAccess"],
+        "excluded": "Root SCP only",
+        "steps": [
+            ("root_deny", True,  "Root: excluded via PrincipalArn"),
+            ("ou_a",      True,  "SCP-A: ec2:* is on the allow list"),
+            ("ou_b",      False, "SCP-B: not an allowed action, not excluded"),
+        ],
+        "result": (False, "Denied at Workloads SCP-B"),
+    },
+    {
+        "name": "AutomationRole", "colour": (0, 161, 201),
+        "iam": ["Allow ec2:Describe* only"],
+        "excluded": "all SCPs",
+        "steps": [
+            ("root_deny", True,  "Root: excluded via PrincipalArn"),
+            ("ou_a",      True,  "SCP-A: excluded (and ec2:* listed)"),
+            ("ou_b",      True,  "SCP-B: excluded via PrincipalArn"),
+            ("iam",       False, "IAM: no Allow, implicit deny"),
+        ],
+        "result": (False, "Denied by IAM (no permission)"),
+    },
+    {
+        "name": "BreakGlassRole", "colour": (29, 129, 2),
+        "iam": ["Allow ec2:TerminateInstances"],
+        "excluded": "all SCPs",
+        "steps": [
+            ("root_deny", True, "Root: excluded via PrincipalArn"),
+            ("ou_a",      True, "SCP-A: excluded (and ec2:* listed)"),
+            ("ou_b",      True, "SCP-B: excluded via PrincipalArn"),
+            ("iam",       True, "IAM: explicitly allows the action"),
+        ],
+        "result": (True, "ALLOWED"),
+    },
+]
+
+FOOTER = ["FullAWSAccess is also attached at every level (not shown).",
+          "A principal must be excluded from EVERY Deny that matches, and IAM must still allow."]
+# ================================================================
+
+SQUID = (35, 47, 62); ORG_PINK = (231, 21, 123); BG = (242, 243, 243)
+GREY = (120, 132, 133); WHITE = (255, 255, 255); LINE = (213, 219, 219)
+GREEN = (29, 129, 2); RED = (209, 50, 18); CARD_BG = (252, 236, 245); IAM_BG = (232, 240, 250)
+
+F = "/usr/share/fonts/truetype/dejavu/"
+def font(sz, bold=False):
+    return ImageFont.truetype(F + ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"), sz)
+f_title, f_node, f_card = font(24, True), font(16, True), font(13, True)
+f_reg, f_small, f_mark, f_res = font(13), font(11), font(20, True), font(14, True)
+
+
+def fit_text(d, xy, text, maxw, size=12, fill=SQUID, bold=False):
+    while size > 8 and d.textlength(text, font=font(size, bold)) > maxw:
+        size -= 1
+    d.text(xy, text, font=font(size, bold), fill=fill)
+
+
+def draw_icon(d, kind, x, y):
+    if kind == "ACCOUNT":
+        d.rounded_rectangle([x, y, x + 22, y + 22], 4, fill=SQUID)
+        d.ellipse([x + 7, y + 4, x + 15, y + 12], fill=WHITE)
+        d.pieslice([x + 4, y + 12, x + 18, y + 26], 180, 360, fill=WHITE)
+    else:
+        d.rectangle([x, y + 4, x + 10, y + 8], fill=ORG_PINK)
+        d.rounded_rectangle([x, y + 7, x + 24, y + 22], 3, fill=ORG_PINK)
+        if kind == "ROOT":
+            d.text((x + 8, y + 7), "R", font=f_small, fill=WHITE)
+
+
+def badge(d, x, y, ok):
+    c = GREEN if ok else RED
+    d.ellipse([x - 14, y - 14, x + 14, y + 14], fill=c, outline=WHITE, width=2)
+    d.text((x - 7, y - 13), "✓" if ok else "✗", font=f_mark, fill=WHITE)
+
+
+def draw_frame(st):
+    img = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(img)
+    d.rectangle([0, 0, W, 48], fill=SQUID)
+    d.rectangle([0, 48, W, 52], fill=(255, 153, 0))
+    d.text((20, 11), f"SCP evaluation: {ACTION}", font=f_title, fill=WHITE)
+
+    # connectors between nodes
+    order = ["root", "ou", "acct"]
+    for a, b in zip(order, order[1:]):
+        ax = (NODES[a][2][0] + NODES[a][2][2]) // 2
+        d.line([(ax, NODES[a][2][3]), (ax, NODES[b][2][1])], fill=GREY, width=3)
+
+    # nodes
+    for nid, (kind, name, box) in NODES.items():
+        d.rounded_rectangle(box, 10, fill=WHITE, outline=SQUID, width=2)
+        draw_icon(d, kind, box[0] + 12, box[1] + 9)
+        d.text((box[0] + 44, box[1] + 10), name, font=f_node, fill=SQUID)
+        d.text((box[2] - 12 - d.textlength(kind, font=f_small), box[1] + 13), kind,
+               font=f_small, fill=GREY)
+
+    # cards
+    p = st["principal"]
+    for cid, (_, title, lines, box) in CARDS.items():
+        mark = st["marks"].get(cid)
+        is_iam = cid == "iam"
+        outline = (LINE if mark is None else (GREEN if mark else RED))
+        d.rounded_rectangle(box, 6, fill=IAM_BG if is_iam else CARD_BG, outline=outline,
+                            width=1 if mark is None else 3)
+        tcol = (35, 90, 160) if is_iam else ORG_PINK
+        maxw = box[2] - box[0] - 20
+        fit_text(d, (box[0] + 10, box[1] + 8), title, maxw, 13, tcol, bold=True)
+        body = (p["iam"] if (is_iam and p) else lines)
+        for i, ln in enumerate(body):
+            fit_text(d, (box[0] + 10, box[1] + 32 + i * 20), ln, maxw, 12, SQUID)
+        if mark is not None:
+            badge(d, box[2] - 4, box[1] + 2, mark)
+
+    # side panel
+    px, pr = 820, W - 20
+    d.rounded_rectangle([px, 66, pr, H - 18], 10, fill=WHITE, outline=LINE, width=2)
+    y = 80
+    if p:
+        d.ellipse([px + 16, y, px + 36, y + 20], fill=p["colour"])
+        d.text((px + 44, y), p["name"], font=f_node, fill=SQUID)
+        y += 28
+        d.text((px + 18, y), "IAM: " + ", ".join(p["iam"]), font=f_reg, fill=SQUID); y += 20
+        d.text((px + 18, y), "Excluded from: " + p["excluded"], font=f_reg, fill=SQUID); y += 26
+    d.line([(px + 16, y), (pr - 16, y)], fill=LINE); y += 10
+    d.text((px + 18, y), "Evaluation", font=f_card, fill=SQUID); y += 24
+    for ok, text in st["log"]:
+        fit_text(d, (px + 18, y), ("✓ " if ok else "✗ ") + text, pr - px - 36, 13,
+                 GREEN if ok else RED)
+        y += 22
+
+    # results scoreboard
+    y = 470
+    d.line([(px + 16, y - 10), (pr - 16, y - 10)], fill=LINE)
+    d.text((px + 18, y), "Results", font=f_card, fill=SQUID); y += 26
+    for colour, name, ok, text in st["results"]:
+        d.rounded_rectangle([px + 16, y, pr - 16, y + 32], 6, fill=GREEN if ok else RED)
+        d.ellipse([px + 24, y + 7, px + 42, y + 25], fill=colour, outline=WHITE, width=2)
+        fit_text(d, (px + 50, y + 8), f"{name}: {text}", pr - px - 80, 14, WHITE, bold=True)
+        y += 38
+
+    for i, ln in enumerate(FOOTER):
+        d.text((20, H - 58 + i * 20), ln, font=f_reg, fill=SQUID)
+    return img, d
+
+
+def token(d, colour, x, y, n):
+    d.ellipse([x - 16, y - 16, x + 16, y + 16], fill=colour, outline=SQUID, width=2)
+    d.text((x - 5, y - 10), str(n), font=f_node, fill=WHITE)
+
+
+frames, durs = [], []
+def emit(st, tok=None, ms=45):
+    img, d = draw_frame(st)
+    if tok:
+        token(d, *tok)
+    frames.append(img); durs.append(ms)
+
+
+def park(cid):
+    box = CARDS[cid][3]
+    return box[0] - 20, (box[1] + box[3]) // 2
+
+
+def move(st, colour, n, a, b, steps=18):
+    for i in range(steps + 1):
+        t = i / steps; t = t * t * (3 - 2 * t)
+        emit(st, (colour, a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, n))
+
+
+st = {"principal": None, "marks": {}, "log": [], "results": []}
+emit(st, ms=2000)
+
+for n, p in enumerate(PRINCIPALS, 1):
+    st.update(principal=p, marks={}, log=[])
+    c = p["colour"]
+    pos = (100, 96)
+    emit(st, (c, *pos, n), ms=1500)          # show who is entering
+    for cid, ok, text in p["steps"]:
+        target = park(cid)
+        move(st, c, n, pos, target)
+        pos = target
+        st["marks"][cid] = ok
+        st["log"].append((ok, text))
+        emit(st, (c, *pos, n), ms=1500)
+        if not ok:
+            break
+    ok, text = p["result"]
+    st["results"].append((c, p["name"], ok, text))
+    emit(st, (c, *pos, n), ms=2500)
+
+st.update(principal=None, marks={}, log=[])
+emit(st, ms=5000)
+
+q = [f.quantize(colors=128, method=Image.Quantize.MEDIANCUT) for f in frames]
+q[0].save(OUT, save_all=True, append_images=q[1:], duration=durs, loop=0, optimize=True)
+print(f"Saved {OUT}: {len(frames)} frames, {sum(durs)/1000:.0f}s")
