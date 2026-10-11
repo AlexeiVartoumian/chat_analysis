@@ -2544,7 +2544,7 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORK")
 	}
-	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, "JOBS_WORK")
 
 	return nil
 }
