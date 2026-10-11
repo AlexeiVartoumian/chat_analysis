@@ -2594,20 +2594,20 @@ func LoadFullJobs(records []map[string]string) error {
 }
 func UpdateJobWork(db *sql.DB, j models.JobWork) (bool, error) {
 	res, err := db.Exec(`
-        UPDATE jobs_work SET
-            title                        = $2,
-            job_url                      = $3,
-            job_category_id              = COALESCE($4, job_category_id),
-            location                     = COALESCE($5, location),
-            job_requisition_location     = $6,
-            country                      = $7,
-            date_published               = $8,
-            posted_on                    = $9,
-            time_left_to_apply           = $10,
-            end_date                     = $11,
-            job_posting_end_date_as_text = $12,
-            hiring_organization          = $13
-        WHERE job_id = $1 AND company_id = $14`,
+    UPDATE jobs_work SET
+        title                   = $2,
+        job_url                 = $3,
+        jobcategoryid           = COALESCE($4, jobcategoryid),
+        location                = COALESCE($5, location),
+        jobrequisitionlocation  = $6,
+        country                 = $7,
+        dateposted              = $8,
+        postedon                = $9,
+        timelefttoapply         = $10,
+        enddate                 = $11,
+        jobpostingenddateastext = $12,
+        hiringorganization      = $13
+    WHERE job_id = $1 AND company_id = $14`,
 		j.JobID, j.Title, j.JobURL, j.JobCategoryId, j.Location,
 		j.JobRequisitionLocation, j.Country, j.Date_published, j.PostedOn,
 		j.TimeLeftToApply, j.EndDate, j.JobPostingEndDateAsText,
