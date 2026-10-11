@@ -826,7 +826,7 @@ func Jobs_MetadataLoaderFill(records []map[string]string) {
 			}
 			if strings.Contains(value.CompanyApplyUrl, "greenhouse") {
 				if _, err := db.Exec(
-					`INSERT INTO redirect_deed (job_id) VALUES ($1)`,
+					`INSERT INTO redirect_link (job_id) VALUES ($1)`,
 					value.JobId,
 				); err != nil {
 					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
@@ -845,6 +845,15 @@ func Jobs_MetadataLoaderFill(records []map[string]string) {
 			if strings.Contains(value.CompanyApplyUrl, "workday") {
 				if _, err := db.Exec(
 					`INSERT INTO WORK_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
+					value.JobId, value.CompanyApplyUrl,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
+			if strings.Contains(value.CompanyApplyUrl, "oracle") {
+				if _, err := db.Exec(
+					`INSERT INTO ORAC_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
 					value.JobId, value.CompanyApplyUrl,
 				); err != nil {
 					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
