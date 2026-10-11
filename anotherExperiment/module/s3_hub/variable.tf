@@ -88,3 +88,15 @@ variable "s3_bucket_name_output_lev_store" {
     description = "name of bucket"
     default = "output-store-lev-store"
 }
+
+variable "s3_bucket_name_output_orac_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-orac-cache"
+}
+
+variable "s3_bucket_name_output_orac_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-orac-store"
+}

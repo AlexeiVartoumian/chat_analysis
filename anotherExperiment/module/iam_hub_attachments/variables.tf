@@ -82,6 +82,10 @@ variable sqs_coordinator_arn_lev {
     type = string
 }
 
+variable sqs_coordinator_arn_orac {
+    type = string
+}
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }
@@ -130,5 +134,17 @@ variable s3_output_bucket_work_store_arn {
  }
 
  variable s3_output_bucket_lev_store_arn{
+    type = string
+ }
+
+
+ variable account_pool_table_orac{
+    type = string
+ }
+  variable s3_output_bucket_orac_cache_arn {
+    type = string
+ }
+
+ variable s3_output_bucket_orac_store_arn{
     type = string
  }

@@ -79,3 +79,18 @@ output "workflow_crossaccount_lev_queue_arn" {
     description = "sqs arn"
     value = aws_sqs_queue.workflow_crossaccount_lev.arn   
 }
+
+output "workflow_crossaccount_orac_queue_id"{
+    description = "sqs_queue_url "
+    value = aws_sqs_queue.workflow_crossaccount_orac.id
+}
+
+output "workflow_crossaccount_orac_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.workflow_crossaccount_orac.name
+}
+
+output "workflow_crossaccount_orac_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.workflow_crossaccount_orac.arn   
+}

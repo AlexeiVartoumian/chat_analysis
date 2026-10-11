@@ -59,3 +59,12 @@ output "accountpool_stream_lev_arn" {
   value       = aws_dynamodb_table.accountpoollev.stream_arn
 }
 
+
+output "accountpoolorac_table_name"{
+  value = aws_dynamodb_table.accountpoolorac.name
+}
+
+
+output "accountpoolorac_table_arn" {
+  value = aws_dynamodb_table.accountpoolorac.arn
+}

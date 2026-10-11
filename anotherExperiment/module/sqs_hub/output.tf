@@ -67,3 +67,18 @@ output "coordinator_lev_sqs_queue_name" {
     value = aws_sqs_queue.sqs_hub_requests_lev.name
 }
 
+
+output "coordinator_orac_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_orac.arn   
+}
+
+output "coordinator_orac_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_orac.id  
+}
+
+output "coordinator_orac_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_orac.name
+}

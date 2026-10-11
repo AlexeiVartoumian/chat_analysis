@@ -84,3 +84,18 @@ resource "aws_s3_bucket" "output_store_lev_store" {
 
 }
 
+
+resource "aws_s3_bucket" "output_store_orac_cache" {
+
+    bucket = "${local.s3_bucket_name_output_orac_cache}-${data.aws_caller_identity.current.account_id}"
+
+}
+
+resource "aws_s3_bucket" "output_store_orac_store" {
+
+    bucket = "${local.s3_bucket_name_output_orac_store }-${data.aws_caller_identity.current.account_id}"
+
+}
+
+
+

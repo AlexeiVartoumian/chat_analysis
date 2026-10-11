@@ -38,7 +38,12 @@
                 "${s3_output_bucket_lev_cache_arn}",
                 "${s3_output_bucket_lev_cache_arn}/*",
                 "${s3_output_bucket_lev_store_arn}",
-                "${s3_output_bucket_lev_store_arn}/*" 
+                "${s3_output_bucket_lev_store_arn}/*",
+                "${s3_output_bucket_orac_cache_arn}",
+                "${s3_output_bucket_orac_cache_arn}/*",
+                "${s3_output_bucket_orac_store_arn}",
+                "${s3_output_bucket_orac_store_arn}/*" 
+
 
             ]
         }

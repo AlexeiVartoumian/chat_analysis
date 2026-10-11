@@ -210,3 +210,33 @@ output "s3_bucket_output_lev_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_lev_store.bucket
 }
+
+
+output "s3_bucket_output_orac_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_cache.arn
+}
+output "s3_bucket_output_orac_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_cache.id
+}
+
+output "s3_bucket_output_orac_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_cache.bucket
+}
+
+
+output "s3_bucket_output_orac_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_store.arn
+}
+output "s3_bucket_output_orac_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_store.id
+}
+
+output "s3_bucket_output_orac_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_orac_store.bucket
+}

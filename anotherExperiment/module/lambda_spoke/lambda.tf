@@ -1,3 +1,10 @@
+
+data "archive_file" "requests_hub_layer" {
+  type        = "zip"
+  source_dir  = "${path.root}/module/sources/layer"
+  output_path = "${path.root}/module/sources/python.zip"
+}
+
 data "archive_file" "reader_path" {
     type = "zip"
     source_file = "${path.root}/module/sources/package/reader.py"
@@ -34,6 +41,22 @@ data "archive_file" "lev_path" {
     type = "zip"
     source_file = "${path.root}/module/sources/lev/seek_lev_posts.py"
     output_path = "${path.root}/module/sources/lev/seek_lev_posts.zip"
+}
+
+data "archive_file" "orac_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orac/seek_orac_posts.py"
+    output_path = "${path.root}/module/sources/orac/seek_orac_posts.zip"
+}
+
+resource "aws_lambda_layer_version" "requests_hub_layer" {
+
+    filename         = data.archive_file.requests_hub_layer.output_path
+    source_code_hash = data.archive_file.requests_hub_layer.output_base64sha256
+    layer_name = "requests_layer_data_source"
+    compatible_runtimes = ["python3.14", "python3.13", "python3.12", "python3.11", "python3.10"]
+
+    depends_on = [data.archive_file.requests_hub_layer]
 }
 
 resource "aws_lambda_function" "reader" {
@@ -154,6 +177,31 @@ resource "aws_lambda_function" "lev" {
     depends_on = [ aws_cloudwatch_log_group.lev ]
 }
 
+resource "aws_lambda_function" "orac" {
+    
+    filename = data.archive_file.orac_path.output_path
+    //source_code_hash = data.archive_file.zip.output_base64sha256
+    source_code_hash = data.archive_file.orac_path.output_base64sha256
+    function_name = "orac"
+    role =  var.iam_role_arn_spoke
+    handler = "orac.lambda_handler"
+    runtime =  "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            file_pool = var. dynamodb_accountpoolorac_name
+            s3_source_bucket = var.s3_orac_source_name
+            s3_output_bucket_name = var.s3_orac_output_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
+        }
+    }
+    memory_size = 356
+    depends_on = [ aws_cloudwatch_log_group.orac ]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -196,6 +244,14 @@ resource "aws_lambda_permission" "allow_sqs_lev" {
   source_arn    = var.sqs_worklev_arn
 }
 
+resource "aws_lambda_permission" "allow_sqs_orac" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orac.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_orac_arn
+}
+
 resource "aws_lambda_event_source_mapping" "reader_trigger" {
   event_source_arn = var.sqs_request_access_arn
   function_name    = aws_lambda_function.reader.arn
@@ -236,6 +292,14 @@ resource "aws_lambda_event_source_mapping" "lev_trigger" {
   depends_on = [aws_lambda_function.lev]
 }
 
+resource "aws_lambda_event_source_mapping" "orac_trigger" {
+  event_source_arn = var.sqs_orac_arn
+  function_name    = aws_lambda_function.orac.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.orac]
+}
+
 resource "aws_cloudwatch_log_group" "reader" {
     name = "/aws/lambda/readerv2"
     retention_in_days = 7
@@ -260,5 +324,10 @@ resource "aws_cloudwatch_log_group" "go_workboot" {
 
 resource "aws_cloudwatch_log_group" "lev" {
     name = "/aws/lambda/lev"
+    retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "orac" {
+    name = "/aws/lambda/orac"
     retention_in_days = 7
 }

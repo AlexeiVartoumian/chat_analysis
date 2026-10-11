@@ -15,7 +15,8 @@
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_2}",
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_3}",
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_queue_work}",
-                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_worklev_queue}"
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_worklev_queue}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_orac_queue}"
             ]
         }
     ]

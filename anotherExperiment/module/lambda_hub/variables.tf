@@ -27,6 +27,10 @@ variable "account_pool_table_work_arn"{
     type = string
 }
 
+variable "account_pool_table_orac_arn"{
+    type = string
+}
+
 # variable "account_pool_table_stream_arn"{
 #     type = string
 # }
@@ -60,3 +64,11 @@ variable "sqs_coordinator_work_arn" {
     type = string
 }
 
+
+variable "sqs_coordinator_orac_id" {
+    type = string
+}
+
+variable "sqs_cordinator_orac_arn" {
+    type = string
+}

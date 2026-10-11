@@ -44,6 +44,12 @@ data "archive_file" "orchestrator_path_lev" {
     output_path = "${path.root}/module/sources/orchestrator_lev/orchestrator_lev.zip"
 }
 
+data "archive_file" "orchestrator_path_orac" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orchestrator_orac/orchestrator_orac.py"
+    output_path = "${path.root}/module/sources/orchestrator_orac/orchestrator_orac.zip"
+}
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -203,6 +209,28 @@ resource "aws_lambda_function" "seek_work_posts" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+resource "aws_lambda_function" "orchestrator_orac" {
+    
+    filename = data.archive_file.orchestrator_path_orac.output_path
+    source_code_hash = data.archive_file.orchestrator_path_orac.output_base64sha256
+    function_name = "orac"
+    role = var.aws_iam_role_main_arn
+    handler = "orac.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_work_store_name
+            sqs_queue_id = var.sqs_coordinator_orac_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+            account_pool_table_orac= var.account_pool_table_orac_arn
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
 
 
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
@@ -250,10 +278,37 @@ resource "aws_lambda_permission" "allow_eventbridge"{
   source_arn    = var.eventbridge_rule_arn
 }
 
+
+resource "aws_lambda_permission" "allow_sqs_request_work" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_work.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_coordinator_work_arn
+}
+
 resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
   event_source_arn = var.sqs_coordinator_work_arn  
   function_name    = aws_lambda_function.orchestrator_work.arn
   batch_size       = 1  
   enabled          = true
   depends_on = [aws_lambda_function.orchestrator_work]
+}
+
+
+
+resource "aws_lambda_permission" "allow_sqs_request_orac" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_orac.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_orac_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_orac" {
+  event_source_arn = var.sqs_cordinator_orac_arn
+  function_name    = aws_lambda_function.orchestrator_orac.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.orchestrator_orac]
 }

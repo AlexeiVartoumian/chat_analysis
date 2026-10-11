@@ -58,11 +58,23 @@ variable "dynamodb_accountpoollev_name" {
   type = string 
 }
 
+variable "dynamodb_accountpoolorac_name" {
+    type = string
+}
+
 variable "s3_work_source_name"{
     type = string
 }
 
 variable "s3_work_output_name"{
+    type = string
+}
+
+variable "s3_orac_source_name"{
+    type = string
+}
+
+variable "s3_orac_output_name"{
     type = string
 }
 
@@ -84,5 +96,13 @@ variable "sqs_worklev_id" {
 }
 
 variable "sqs_worklev_arn" {
+    type = string 
+}
+
+variable "sqs_orac_id" {
+    type = string
+}
+
+variable "sqs_orac_arn" {
     type = string 
 }

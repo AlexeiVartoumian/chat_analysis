@@ -16,6 +16,7 @@ module "iam_spoke_attachments_{{ account }}" {
     sqs_queue_3 = module.sqs_spoke_{{ account }}.workflow_lambda3_trigger_sqs_queue_name
     sqs_workd_queue = module.sqs_spoke_{{ account }}.workflow_crossaccount_work_queue_name
     sqs_worklev_queue = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_name
+    sqs_orac_queue = module.sqs_spoke_{{ account }}.workflow_crossaccount_orac_queue_name
     bucket_reader_spoke = module.iam_spoke_{{ account }}.iam_spoke_role_name
     fargate_spoke = module.iam_spoke_{{ account }}.iam_fargate_task_execution_role_name
     hub_account = var.hub_account
@@ -57,10 +58,18 @@ module "lambda_spoke_{{ account }}" {
 
     sqs_worklev_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_id
     sqs_worklev_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_lev_queue_arn
+    
+    sqs_orac_id = module.sqs_spoke_{{ account }}.workflow_crossaccount_orac_queue_id
+    sqs_orac_arn = module.sqs_spoke_{{ account }}.workflow_crossaccount_orac_queue_arn
+    
     dynamodb_accountpoolwork_name = module.dynamodb_hub.accountpoolwork_table_name
     dynamodb_accountpoollev_name = module.dynamodb_hub.accountpoollev_table_name
+    dynamodb_accountpoolorac_name = module.dynamodb_hub.accountpoolorac_table_name
     s3_work_source_name = module.s3.s3_bucket_output_work_store_name
     s3_work_output_name = module.s3.s3_bucket_output_work_cache_name
+
+    s3_orac_source_name = module.s3.s3_bucket_output_orac_store_name
+    s3_orac_output_name = module.s3.s3_bucket_output_orac_cache_name
 
     s3_lev_output_name = module.s3.s3_bucket_output_lev_cache_name
     
