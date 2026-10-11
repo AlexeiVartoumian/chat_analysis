@@ -883,6 +883,45 @@ def create_tables(conn) -> None:
                 );
                 """)
 
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS FILE_KEYS_ORAC (
+                        file_name            VARCHAR(256) PRIMARY KEY
+                    );
+                    """)
+        
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS COMPANY_ORAC (
+                    company_id              BIGINT          PRIMARY KEY,
+                    company_name            VARCHAR(128)    ,
+                    orac_instance           VARCHAR(128)    ,
+                    last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                    company_apply_url       TEXT ,
+                    visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                    CONSTRAINT company_lev_name_uniq 
+                    UNIQUE (company_name);
+                    );
+                    """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOBS_ORAC (
+                    job_id                  TEXT            PRIMARY KEY,
+                    title                   TEXT            NOT NULL,
+                    company_id              INT             NOT NULL,
+                    company_name            VARCHAR(128)    ,    
+                    job_url                 TEXT            NOT NULL,
+                    api_url                 TEXT,
+                    posted_at               TIMESTAMPTZ,
+                    jobType                 TEXT,
+                    location                TEXT,                  
+                    country                 TEXT,
+                    createdAt               TIMESTAMPTZ,
+                    salaryRange             JSONB,
+                    
+                    CONSTRAINT fk_jobs_company
+                        FOREIGN KEY (company_id)
+                        REFERENCES COMPANY_LEV (company_id)
+                        ON DELETE CASCADE 
+                );  
+                """)
         
 
 
