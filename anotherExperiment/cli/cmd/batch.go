@@ -766,16 +766,24 @@ func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription
 }
 
 func Jobs_DescriptionLevLoader(record map[string]string) (models.JobDescription_Lev, error) {
+	reqs := strings.TrimSpace(record["requirements"])
 
-	job_id := record["job_id"]
-
-	Job_Description := models.JobDescription_Lev{
-		JobId:           job_id,
-		JobDescription:  record["jobDescription"],
-		Requirements:    json.RawMessage(record["requirements"]),
-		AdditionalPlain: record["additionalPlain"],
+	var reqJSON json.RawMessage
+	switch {
+	case reqs == "":
+		reqJSON = json.RawMessage("[]") // or "null" if the column allows NULL
+	case json.Valid([]byte(reqs)):
+		reqJSON = json.RawMessage(reqs)
+	default:
+		return models.JobDescription_Lev{}, fmt.Errorf("job %s: requirements is not valid JSON", record["job_id"])
 	}
-	return Job_Description, nil
+
+	return models.JobDescription_Lev{
+		JobId:           record["job_id"],
+		JobDescription:  record["jobDescription"],
+		Requirements:    reqJSON,
+		AdditionalPlain: record["additionalPlain"],
+	}, nil
 }
 
 func Jobs_MetadataLoader(record map[string]string) (models.Jobs_metadata, error) {
