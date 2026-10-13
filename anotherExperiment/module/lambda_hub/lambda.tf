@@ -213,9 +213,9 @@ resource "aws_lambda_function" "orchestrator_orac" {
     
     filename = data.archive_file.orchestrator_path_orac.output_path
     source_code_hash = data.archive_file.orchestrator_path_orac.output_base64sha256
-    function_name = "orac"
+    function_name = "orchestrator_orac"
     role = var.aws_iam_role_main_arn
-    handler = "orac.lambda_handler"
+    handler = "orchestrator_orac.lambda_handler"
     runtime = "python3.13" 
     timeout     = 900
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]

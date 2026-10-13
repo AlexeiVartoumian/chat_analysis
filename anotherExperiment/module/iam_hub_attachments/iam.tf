@@ -52,7 +52,8 @@ resource "aws_iam_role_policy" "send_spoke_sqs" {
           for account_id in var.spoke_accounts : [
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-requests-test",
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-work",
-            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-lev"
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-lev",
+             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-orac"
           ]
         ])
       }
@@ -184,7 +185,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_orac ]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev  ]  # pass the actual SQS ARN directly
       }
     ]
   })
