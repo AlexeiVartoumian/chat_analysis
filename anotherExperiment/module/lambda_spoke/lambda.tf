@@ -184,7 +184,7 @@ resource "aws_lambda_function" "orac" {
     source_code_hash = data.archive_file.orac_path.output_base64sha256
     function_name = "orac"
     role =  var.iam_role_arn_spoke
-    handler = "orac.lambda_handler"
+    handler = "seek_orac_posts.lambda_handler"
     runtime =  "python3.13" 
     timeout     = 900
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]
