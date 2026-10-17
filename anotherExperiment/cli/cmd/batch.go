@@ -2495,9 +2495,9 @@ func Company_OracLoader(record map[string]string) (models.COMPANY_ORAC, error) {
 
 	company_work := models.COMPANY_ORAC{
 		Orac_instance:     record["orac_instance"],
-		CompanyName:       record["site_number"],
-		Company_apply_url: record["company_name"],
-		SiteNumber:        record["company_apply_url"],
+		CompanyName:       record["company_name"],
+		Company_apply_url: record["company_apply_url"],
+		SiteNumber:        record["site_number"],
 	}
 	return company_work, nil
 }
