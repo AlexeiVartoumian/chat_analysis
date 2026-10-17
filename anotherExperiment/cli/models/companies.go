@@ -44,6 +44,14 @@ type COMPANY_WORK struct {
 	PublicUrl        string `json:"public_url,omitempty" db:"job_board_public_url"`
 }
 
+type COMPANY_ORAC struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	Orac_instance     string `json:"orac_instance,omitempty" db:"orac_instance"`
+	CompanyName       string `json:"company_name,omitempty" db:"company_name"` //to repopulate downstream
+	Company_apply_url string `json:"company_apply_url,omitempty" db:"company_apply_url"`
+	SiteNumber        string `json:"site_number,omitempty" db:"site_number"`
+}
+
 type COMPANY_LEV struct {
 	//Job_id      int       `json:"id,omitempty" db:"job_id"`
 	CompanyName      string `json:"companyName,omitempty" db:"name"`

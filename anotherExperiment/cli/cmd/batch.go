@@ -207,7 +207,7 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	if tablename == "COMPANY_ORAC" && len(records) > 0 {
-		Company_Work(records, tablename)
+
 		Company_Orac(records, tablename)
 		return nil
 	}
@@ -227,6 +227,11 @@ func CsvFile(filepath string, tablename string) error {
 	}
 	if tablename == "JOBS_LEV" && len(records) > 0 {
 		Job_and_search_loader_lev(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOBS_ORAC" && len(records) > 0 {
+		Job_and_search_loader_orac(records, tablename, filepath)
 		return nil
 	}
 
@@ -2339,17 +2344,16 @@ func Company_WorkLoader(record map[string]string) (models.COMPANY_WORK, error) {
 	return company_work, nil
 }
 
-func Company_OracLoader(record map[string]string) (models.COMPANY_WORK, error) {
+func Company_OracLoader(record map[string]string) (models.COMPANY_ORAC, error) {
 	for k, v := range record {
 		fmt.Printf("key=%q value=%q\n", k, v)
 	}
 
-	company_work := models.COMPANY_WORK{
-		Slug:             record["companyName"],
-		WdayInstance:     record["wd_instance"],
-		CompanyName:      record["companyName"],
-		JobPostingSiteId: record["jobPostingSiteId"],
-		PublicUrl:        record["public_url"],
+	company_work := models.COMPANY_ORAC{
+		Orac_instance:     record["orac_instance"],
+		CompanyName:       record["site_number"],
+		Company_apply_url: record["company_name"],
+		SiteNumber:        record["company_apply_url"],
 	}
 	return company_work, nil
 }
@@ -2403,13 +2407,13 @@ func Company_Orac(records []map[string]string, tablename string) {
 	for _, record := range records {
 		fmt.Println(record)
 		fmt.Println(" ")
-		value, _ := Company_WorkLoader(record)
+		value, _ := Company_OracLoader(record)
 
-		_, err = db.Exec("INSERT INTO company_orac (slug, wd_instance, company_name, job_posting_site_id,job_board_public_url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (slug, wd_instance) DO UPDATE SET company_name = EXCLUDED.company_name;",
-			value.Slug, value.WdayInstance, value.CompanyName, value.JobPostingSiteId, value.PublicUrl)
+		_, err = db.Exec("INSERT INTO company_orac (orac_instance, company_name, company_apply_url, site_number) VALUES ($1, $2, $3, $4) ON CONFLICT (orac_instance, site_number) DO UPDATE SET company_name = EXCLUDED.company_name;",
+			value.Orac_instance, value.CompanyName, value.Company_apply_url, value.SiteNumber)
 
 		if err != nil {
-			fmt.Println("failed to insert for job_id", value.Slug, ErrorHandler(err, "redirect update failed"))
+			fmt.Println("failed to insert for job_id", value.Orac_instance, ErrorHandler(err, "redirect update failed"))
 			continue
 		}
 	}
@@ -2498,6 +2502,23 @@ func GetCompanyLevID(db *sql.DB, company_name string) (int, error) {
 
 	return companyID, nil
 }
+
+func GetCompanyOracID(db *sql.DB, orac_instance string, site_number string) (int, error) {
+	var companyID int
+	err := db.QueryRow(
+		"SELECT company_id FROM company_orac WHERE orac_instance = $1 AND site_number =$2",
+		orac_instance, site_number,
+	).Scan(&companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no company found for sitenumber=%q orac_instance=%q", orac_instance)
+		}
+		return 0, fmt.Errorf("failed to query company_id: %w", err)
+	}
+
+	return companyID, nil
+}
 func insertJobCategory(db *sql.DB, record map[string]string, companyID int) error {
 	categoryID := record["jobCategoryId"]
 	categoryName := record["jobCategory"]
@@ -2520,6 +2541,27 @@ func insertJobCategory(db *sql.DB, record map[string]string, companyID int) erro
 	return nil
 }
 func insertJobTeamLev(db *sql.DB, record map[string]string, companyID int) error {
+	teamName := record["team"]
+	department := record["department"]
+
+	if teamName == "" {
+		return nil
+	}
+
+	_, err := db.Exec(`
+	INSERT INTO company_lev_team (team_name, company_id, department)
+	VALUES ($1, $2, NULLIF($3, ''))
+	ON CONFLICT (team_name, company_id) DO NOTHING;`,
+		teamName, companyID, department)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert team %q: %w", teamName, err)
+	}
+
+	return nil
+}
+
+func insertJobTeamOrac(db *sql.DB, record map[string]string, companyID int) error {
 	teamName := record["team"]
 	department := record["department"]
 
@@ -2721,6 +2763,87 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 	for index, record := range records {
 
 		company_id, err := GetCompanyLevID(db, record["companyName"])
+		if err != nil {
+			fmt.Println(err, "error could not find companyId")
+			return err
+		}
+		err = insertJobTeamLev(db, record, company_id)
+
+		if err != nil {
+			fmt.Println("failed to insert Actual values from job category:", err)
+			continue
+		}
+		value, err := JobLoaderLev(record, company_id)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_LEV{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_LEV")
+	}
+	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+
+	return nil
+}
+
+func Job_and_search_loader_orac(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, time, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(time)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+	if strings.HasPrefix(filepath, "deadlink") {
+		for _, record := range records {
+			db.Exec("UPDATE JOB_LIFECYCLE_ORAC SET first_seen_closed_at = $1 , job_state = $2 where job_id = $3", timestamp, false, record["job_id"])
+
+		}
+		return nil
+	}
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflowOrac{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_ORAC")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	for index, record := range records {
+
+		company_id, err := GetCompanyOracID(db, record["orac_instance"], record["site_number"])
+
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
 			return err
