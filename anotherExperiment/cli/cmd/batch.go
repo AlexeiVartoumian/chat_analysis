@@ -206,6 +206,12 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_ORAC" && len(records) > 0 {
+		Company_Work(records, tablename)
+		Company_Orac(records, tablename)
+		return nil
+	}
+
 	if tablename == "JOBS_WORK_PARTIAL" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
 		return nil
@@ -2333,6 +2339,21 @@ func Company_WorkLoader(record map[string]string) (models.COMPANY_WORK, error) {
 	return company_work, nil
 }
 
+func Company_OracLoader(record map[string]string) (models.COMPANY_WORK, error) {
+	for k, v := range record {
+		fmt.Printf("key=%q value=%q\n", k, v)
+	}
+
+	company_work := models.COMPANY_WORK{
+		Slug:             record["companyName"],
+		WdayInstance:     record["wd_instance"],
+		CompanyName:      record["companyName"],
+		JobPostingSiteId: record["jobPostingSiteId"],
+		PublicUrl:        record["public_url"],
+	}
+	return company_work, nil
+}
+
 // func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
 // 	for k, v := range record {
 // 		fmt.Printf("key=%q value=%q\n", k, v)
@@ -2361,6 +2382,30 @@ func Company_Work(records []map[string]string, tablename string) {
 		value, _ := Company_WorkLoader(record)
 
 		_, err = db.Exec("INSERT INTO company_work (slug, wd_instance, company_name, job_posting_site_id,job_board_public_url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (slug, wd_instance) DO UPDATE SET company_name = EXCLUDED.company_name;",
+			value.Slug, value.WdayInstance, value.CompanyName, value.JobPostingSiteId, value.PublicUrl)
+
+		if err != nil {
+			fmt.Println("failed to insert for job_id", value.Slug, ErrorHandler(err, "redirect update failed"))
+			continue
+		}
+	}
+}
+
+func Company_Orac(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		fmt.Println(record)
+		fmt.Println(" ")
+		value, _ := Company_WorkLoader(record)
+
+		_, err = db.Exec("INSERT INTO company_orac (slug, wd_instance, company_name, job_posting_site_id,job_board_public_url) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (slug, wd_instance) DO UPDATE SET company_name = EXCLUDED.company_name;",
 			value.Slug, value.WdayInstance, value.CompanyName, value.JobPostingSiteId, value.PublicUrl)
 
 		if err != nil {
