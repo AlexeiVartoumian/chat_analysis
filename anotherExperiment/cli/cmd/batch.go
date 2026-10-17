@@ -93,6 +93,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_ORAC" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
