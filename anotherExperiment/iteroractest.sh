@@ -12,4 +12,4 @@ while IFS= read -r file; do
         ./start insert $file JOB_LIFECYCLE_ORAC
     
     fi
-done < <(jq -r '.[][][]' keys_orac.json)
+done < <(jq -r '.[][][][]' keys_orac.json)
