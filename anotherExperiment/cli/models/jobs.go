@@ -107,6 +107,28 @@ type JobLev struct {
 	CreatedAt    time.Time        `json:"createdAt,omitempty" db:"createdAt"`
 	SalaryRange  *json.RawMessage `json:"salaryRange,omitempty" db:"salaryRange"`
 }
+
+type JobOrac struct {
+	JobID             string  `json:"job_id" db:"job_id"`
+	Title             string  `json:"title" db:"title"`
+	CompanyID         int64   `json:"company_id" db:"company_id"`
+	Company_name      string  `json:"companyName" db:"company_name"`
+	JobURL            string  `json:"job_url" db:"job_url"`
+	ApiURL            string  `json:"api_url" db:"api_url"`
+	PostedAt          *string `json:"posted_at,omitempty" db:"posted_at"`
+	PostedEndDate     *string `json:"posted_end_date,omitempty" db:"posted_end_date"`
+	StudyLevel        string  `json:"study_level" db:"study_level"`
+	Business_unit_id  int64   `json:"business_unit_id" db:"business_unit_id"`
+	Legal_employer_id int64   `json:"legal_employer_id" db:"legal_employer_id"`
+	JobType           string  `json:"jobType" db:"jobtype"`
+	JobFamily         string  `json:"job_family" db:"job_family"`
+	JobFunction       string  `json:"job_function" db:"job_function"`
+	WorkplaceType     string  `json:"workplace_type" db:"workplace_type"`
+	PrimaryLocation   string  `json:"primary_location,omitempty" db:"primary_location"`
+	Location          *string `json:"work_location,omitempty" db:"work_location"`
+	Country           string  `json:"country,omitempty" db:"country"`
+	Organization_id   int64   `json:"organization_id" db:"organization_id"`
+}
 type Everything struct {
 	JOBS
 	Jobs_metadata

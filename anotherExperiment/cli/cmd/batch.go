@@ -191,6 +191,12 @@ func CsvFile(filepath string, tablename string) error {
 		Jobs_LifecycleLevLoader(records, tablename, filepath)
 		return nil
 	}
+
+	if tablename == "JOB_LIFECYCLE_ORAC" && len(records) > 0 {
+		Jobs_LifecycleOracLoader(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -1459,6 +1465,49 @@ func JobLoaderLev(record map[string]string, companyid int) (models.JobLev, error
 	return job, nil
 }
 
+func toInt64(s string) int64 {
+	n, _ := strconv.ParseInt(s, 10, 64) // empty or bad -> 0
+	return n
+}
+
+func strPtr(s string) *string {
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+func JobLoaderOrac(record map[string]string, companyID int64) (models.JobOrac, error) {
+
+	if record["job_id"] == "" || record["title"] == "" || record["job_url"] == "" {
+		return models.JobOrac{}, fmt.Errorf("missing job_id/title/job_url in %v", record)
+	}
+
+	job := models.JobOrac{
+		JobID:             record["job_id"],
+		Title:             record["title"],
+		CompanyID:         companyID,
+		Company_name:      record["company_name"],
+		JobURL:            record["job_url"],
+		ApiURL:            record["api_url"],
+		PostedAt:          strPtr(record["posted_at"]),
+		PostedEndDate:     strPtr(record["posted_end_date"]),
+		StudyLevel:        record["study_level"],
+		Business_unit_id:  toInt64(record["business_unit_id"]),
+		Legal_employer_id: toInt64(record["legal_employer_id"]),
+		JobType:           record["jobType"],
+		JobFamily:         record["job_family"],
+		JobFunction:       record["job_function"],
+		WorkplaceType:     record["workplace_type"],
+		PrimaryLocation:   record["primary_location"],
+		Location:          strPtr(record["work_location"]),
+		Country:           record["country"],
+		Organization_id:   toInt64(record["organization_id"]),
+	}
+
+	return job, nil
+}
+
 // func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
 // 	_, err := db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, value.CompanyID)
 // 	if err != nil {
@@ -1880,6 +1929,84 @@ func Jobs_LifecycleWorkLoader(records []map[string]string, tablename string, fil
 
 }
 
+func Jobs_LifecycleOracLoader(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
+	if strings.HasPrefix(filepath, "processedJobs") {
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleOracmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			//AddNewRow(value, "JOB_LIFECYCLE_WORK")
+			_, err = db.Exec(`
+				INSERT INTO JOB_LIFECYCLE_ORAC
+					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (job_id) DO UPDATE
+				SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+
+		}
+	} else {
+		//DEADLINKS
+		fmt.Println("please implement")
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		for _, record := range records {
+
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_ORAC SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+		}
+	}
+	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+	// 	timestamp, err := parseTimestamp(meta_data[1])
+
+	// 	if err != nil {
+	// 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	// 	}
+	// 	for index, record := range records {
+
+	// 		value, err := Jobs_LifecycleAshmodel(record, timestamp)
+	// 		if err != nil {
+	// 			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+	// 			continue
+	// 		}
+	// 		AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+	// 	}
+	return nil
+
+}
+
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -2032,6 +2159,21 @@ func Jobs_LifecycleGreenmodel(record map[string]string, timestamp time.Time) (mo
 
 }
 func Jobs_LifecycleWorkmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWork, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleWork{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleOracmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWork, error) {
 
 	nextScan := timestamp.AddDate(0, 0, 7)
 	Job_lifeCycle := models.JobLifeCycleWork{
@@ -2257,6 +2399,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_WORK SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_LEV":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_LEV SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_ORAC":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ORAC SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
@@ -2503,8 +2647,8 @@ func GetCompanyLevID(db *sql.DB, company_name string) (int, error) {
 	return companyID, nil
 }
 
-func GetCompanyOracID(db *sql.DB, orac_instance string, site_number string) (int, error) {
-	var companyID int
+func GetCompanyOracID(db *sql.DB, orac_instance string, site_number string) (int64, error) {
+	var companyID int64
 	err := db.QueryRow(
 		"SELECT company_id FROM company_orac WHERE orac_instance = $1 AND site_number =$2",
 		orac_instance, site_number,
@@ -2561,24 +2705,16 @@ func insertJobTeamLev(db *sql.DB, record map[string]string, companyID int) error
 	return nil
 }
 
-func insertJobTeamOrac(db *sql.DB, record map[string]string, companyID int) error {
-	teamName := record["team"]
-	department := record["department"]
-
-	if teamName == "" {
-		return nil
-	}
-
+func insertJobTeamOrac(db *sql.DB, companyID int64, departmentID int64) error {
 	_, err := db.Exec(`
-	INSERT INTO company_lev_team (team_name, company_id, department)
-	VALUES ($1, $2, NULLIF($3, ''))
-	ON CONFLICT (team_name, company_id) DO NOTHING;`,
-		teamName, companyID, department)
+	INSERT INTO department_orac (department_id, company_id)
+	VALUES ($1, $2)
+	ON CONFLICT (company_id, department_id) DO NOTHING;`,
+		departmentID, companyID)
 
 	if err != nil {
-		return fmt.Errorf("failed to insert team %q: %w", teamName, err)
+		return fmt.Errorf("failed to insert department %d: %w", departmentID, err)
 	}
-
 	return nil
 }
 
@@ -2848,13 +2984,18 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 			fmt.Println(err, "error could not find companyId")
 			return err
 		}
-		err = insertJobTeamLev(db, record, company_id)
 
-		if err != nil {
-			fmt.Println("failed to insert Actual values from job category:", err)
-			continue
+		if orgStr := record["organization_id"]; orgStr != "" {
+			orgID, err := strconv.ParseInt(orgStr, 10, 64)
+			if err == nil {
+				if err := insertJobTeamOrac(db, company_id, orgID); err != nil {
+					fmt.Println(err)
+				}
+			}
 		}
-		value, err := JobLoaderLev(record, company_id)
+
+		//value, err := JobLoaderLev(record, company_id)
+		value, err := JobLoaderOrac(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
@@ -2868,12 +3009,12 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 		}
 		DuplicateCount += skipped
 
-		JobSearchWorkflow := models.JOB_SEARCH_TERM_LEV{
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_ORAC{
 			Job_id:      value.JobID,
 			Workflow_id: uuid,
 			Is_new_job:  skipped == 0,
 		}
-		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_LEV")
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ORAC")
 	}
 	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
 
