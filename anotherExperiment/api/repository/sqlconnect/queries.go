@@ -1467,6 +1467,101 @@ func (s *PostgresStore) SendOracQuery(first_run bool, number_accounts int) ([]mo
 
 }
 
+func (s *PostgresStore) SeekOracLifecycle(firstrun bool) ([]models.OracLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_ORAC SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_orac c
+		JOIN jobs_orac j ON j.company_id = c.company_id
+		JOIN job_lifecycle_orac l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek orac company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.OracLifecycle
+
+	for rows.Next() {
+		var res models.OracLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_work SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
+}
+
+func (s *PostgresStore) SeekOracJdChecker(firstrun bool) ([]models.SeekOracJob, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE JOB_LIFECYCLE_ORAC SET visited = FALSE WHERE job_state = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	//TODO fix compare againt open only and then aggreaget by company
+	rows, err := s.db.Query(`SELECT JOBS_ORAC.job_id ,api_url from JOBS_ORAC JOIN job_lifecycle_orac l ON l.job_id = jobs_orac.job_id where l.job_state = TRUE and  l.visited = False and not exists (SELECT from JOB_DESCRIPTIONS_ORAC WHERE jobs_orac.job_id = job_descriptions_orac.job_id) limit 350;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.SeekOracJob
+
+	for rows.Next() {
+
+		var res models.SeekOracJob
+
+		rows.Scan(&res.Job_id, &res.APIEndpoint)
+
+		results = append(results, res)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range results {
+		if _, err := s.db.Exec(
+			`UPDATE JOB_LIFECYCLE_ORAC SET visited = TRUE WHERE job_id = $1`,
+			greenLifecycle.Job_id,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return results, nil
+}
+
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';

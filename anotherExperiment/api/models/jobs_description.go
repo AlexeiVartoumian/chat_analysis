@@ -46,3 +46,8 @@ type SeekWorkJob struct {
 	PublicURL     string `json:"public_url"`
 	WDInstance    string `json:"wd_instance"`
 }
+
+type SeekOracJob struct {
+	Job_id      string `json:"job_id"`
+	APIEndpoint string `json:"api_url"`
+}

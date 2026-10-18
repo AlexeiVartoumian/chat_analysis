@@ -160,5 +160,13 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendOrac),
 	))
 
+	mux.Handle("POST /sendoraclifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendOracLifecycle),
+	))
+
+	mux.Handle("POST /sendoracJd", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendOracJd),
+	))
+
 	return mux
 }

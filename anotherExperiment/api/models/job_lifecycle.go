@@ -21,3 +21,9 @@ type WorkLifecycle struct {
 	CompanyURL string   `json:"company_apply_url"`
 	JobIDs     []string `json:"job_ids"`
 }
+
+type OracLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}
