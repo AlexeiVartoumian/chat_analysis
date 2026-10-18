@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log"
+	"path/filepath"
 
 	"bufio"
 	"fmt"
@@ -348,7 +349,7 @@ func Job_And_search_loader(records []map[string]string, tablename string, filepa
 	if tablename != "JOBS" {
 		for index, record := range records {
 
-			value, err := JobLoaderDeed(record)
+			value, err := JobLoaderDeed(record, timestamp)
 			if err != nil {
 				fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
@@ -1140,55 +1141,70 @@ func JobLoader(record map[string]string) (models.JOBS, error) {
 
 }
 
-func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
-
-	//companyid, _ := GetCompanyByIdFromName(record["company"])
-	job_id := record["job_id"]
-
-	Company_id := record["company_id"]
-
-	var organic_apply int
-
-	_, err3 := strconv.Atoi(record["organic_apply"])
-	if err3 != nil {
-		//could be a solo person posting the job
-		organic_apply = -1
-	} else {
-		organic_apply, err3 = strconv.Atoi(record["organic_apply"])
-		if err3 != nil {
-			return models.JOBS_DEED{}, ErrorHandler(err3, "uh oh Company id fail parse")
-		}
+func scrapeTimeFromFile(path, prefix string) (time.Time, error) {
+	name := filepath.Base(path)
+	if !strings.HasPrefix(name, prefix+"-") {
+		return time.Time{}, fmt.Errorf("unexpected filename %q (want prefix %q)", name, prefix)
 	}
+	parts := strings.Split(strings.TrimSuffix(strings.TrimPrefix(name, prefix+"-"), ".csv"), "_")
+	if len(parts) < 2 {
+		return time.Time{}, fmt.Errorf("no timestamp in %q", name)
+	}
+	return parseTimestamp(parts[len(parts)-1])
+}
 
-	// is_repost, err := strconv.ParseBool(record["is_repost"])
+func parseBoolDefault(s string, def bool) (bool, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return def, nil
+	}
+	return strconv.ParseBool(s)
+}
 
-	// if err != nil {
-	// 	return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is repost fail bool parse")
-	// }
-
-	// is_latest, err := strconv.ParseBool(record["is_latest"])
-
-	// if err != nil {
-	// 	return models.JOBS_DEED{}, ErrorHandler(err, "uh oh is latest fail bool parse")
-	// }
-
-	indeed_applyable, err := strconv.ParseBool(record["indeedApplyable"])
-
+func parseIntDefault(s string, def int) int {
+	v, err := strconv.Atoi(strings.TrimSpace(s))
 	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh fail bool parse")
+		return def
+	}
+	return v
+}
+
+var daysAgoRe = regexp.MustCompile(`^(\d+)\+?\s*days?\s+ago$`)
+
+func parseJobDate(s string, ref time.Time) (t time.Time, isMin bool, ok bool) {
+	s = strings.ToLower(strings.TrimSpace(s))
+	switch {
+	case s == "":
+		return time.Time{}, false, false
+	case s == "just posted" || s == "today":
+		return ref, false, true
+	}
+	if m := daysAgoRe.FindStringSubmatch(s); m != nil {
+		n, _ := strconv.Atoi(m[1])
+		return ref.AddDate(0, 0, -n), strings.Contains(s, "+"), true
+	}
+	if ms, err := strconv.ParseInt(s, 10, 64); err == nil {
+		return time.UnixMilli(ms).UTC(), false, true
+	}
+	return time.Time{}, false, false
+}
+
+func JobLoaderDeed(record map[string]string, scrapedAt time.Time) (models.JOBS_DEED, error) {
+
+	job_id := strings.TrimSpace(record["job_id"])
+	if job_id == "" {
+		return models.JOBS_DEED{}, ErrorHandler(errors.New("empty job_id"), "uh oh missing job id")
 	}
 
-	date_pub, err := strconv.ParseInt(record["date_published"], 10, 64)
-	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh date published fail bool parse")
-	}
-	date_published := time.Unix(date_pub/1000, 0)
+	organic_apply := parseIntDefault(record["organic_apply"], -1)
 
-	date_ad, err := strconv.ParseInt(record["date_advertised"], 10, 64)
+	indeed_applyable, err := parseBoolDefault(record["indeedApplyable"], false)
 	if err != nil {
-		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh date published fail bool parse")
+		return models.JOBS_DEED{}, ErrorHandler(err, "uh oh indeedApplyable fail bool parse")
 	}
-	date_advertised := time.Unix(date_ad/1000, 0)
+
+	date_published, _, _ := parseJobDate(record["date_published"], scrapedAt)
+	date_advertised, _, _ := parseJobDate(record["date_advertised"], scrapedAt)
 
 	job := models.JOBS_DEED{
 		Job_id:          job_id,
@@ -1198,7 +1214,7 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 		Job_url:         record["job_url"],
 		Search_term:     record["search_term"],
 		Organic_apply:   organic_apply,
-		Company_id:      Company_id,
+		Company_id:      record["company_id"],
 		Salary:          record["salary"],
 		Location:        record["location"],
 		IndeedApplyable: indeed_applyable,
@@ -1206,8 +1222,16 @@ func JobLoaderDeed(record map[string]string) (models.JOBS_DEED, error) {
 	}
 
 	return job, nil
-
 }
+func parseNullBool(s string) (sql.NullBool, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return sql.NullBool{Valid: false}, nil
+	}
+	b, err := strconv.ParseBool(s)
+	return sql.NullBool{Bool: b, Valid: err == nil}, err
+}
+
 func NullableJSON(s string) *json.RawMessage {
 	if s == "" {
 		return nil
