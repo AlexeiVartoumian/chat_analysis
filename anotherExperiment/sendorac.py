@@ -33,46 +33,56 @@ import uuid
 import boto3
 
 QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/390746273208/workflow-cordinator-orac"
+SOURCE_BUCKET = "output-store-orac-store-390746273208"
+
 
 values = sys.stdin.read()
+data = json.loads(values)
 
-# stdin is JSON from Go: {"job_id": "...", "url": "..."} (a one-item list also works)
-link = json.loads(values)
-if isinstance(link, list):
-    link = link[0]
+items = data if isinstance(data, list) else [data]
+first = items[0]
+
+workflow_id = str(uuid.uuid4())
+s3 = boto3.client("s3", region_name="eu-west-2")
+sqs = boto3.client("sqs", region_name="eu-west-2")
 
 workflow_id = str(uuid.uuid4())
 message = None
+def to_s3(workflow):
+    """Write Go's payload as-is to S3; return the file name."""
+    file_name = f"{workflow}-{workflow_id}.json"
+    s3.put_object(Bucket=SOURCE_BUCKET, Key=file_name, Body=json.dumps(data).encode("utf-8"))
+    return file_name
 
-if link.get("company_id") and link.get("company_apply_url"):
-    # lifecycle: rescan a company we already know
+if first.get("company_id") and first.get("company_apply_url"):
+    # lifecycle: company + its known job_ids, in a file
     message = {
         "workflow": "lifecycle",
         "workflow_id": workflow_id,
-        "company_id": link["company_id"],
-        "company_apply_url": link["company_apply_url"],
+        "company_id": first["company_id"],
+        "file_name": to_s3("lifecycle"),
     }
 
-elif link.get("job_id") and link.get("api_url"):
-    # detail: fetch the full description for one job
+elif first.get("job_id") and first.get("api_url"):
+    # detail: up to 350 job_id + api_url rows, in a file
     message = {
         "workflow": "detail",
         "workflow_id": workflow_id,
-        "job_id": link["job_id"],
-        "api_url": link["api_url"],
+        "file_name": to_s3("detail"),
     }
 
-elif link.get("job_id") and link.get("url"):
-    # normal: a new LinkedIn link to chase
+elif first.get("job_id") and first.get("url"):
+    # normal: one new link, small enough for the message itself
     message = {
         "workflow": "normal",
         "workflow_id": workflow_id,
-        "company_apply_url": link["url"],
-        "link_id": link["job_id"],
+        "company_apply_url": first["url"],
+        "link_id": first["job_id"],
     }
 
+
 else:
-    raise SystemExit(f"don't know which workflow this is: {link}")
+    raise SystemExit(f"don't know which workflow this is")
 
 
 
