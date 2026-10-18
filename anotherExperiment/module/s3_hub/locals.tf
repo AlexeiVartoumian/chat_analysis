@@ -24,4 +24,7 @@ locals{
 
     s3_bucket_name_output_orac_cache = var.s3_bucket_name_output_orac_cache
     s3_bucket_name_output_orac_store = var.s3_bucket_name_output_orac_store
+
+    s3_bucket_name_output_smart_cache = var.s3_bucket_name_output_smart_cache
+    s3_bucket_name_output_smart_store = var.s3_bucket_name_output_smart_store
 }

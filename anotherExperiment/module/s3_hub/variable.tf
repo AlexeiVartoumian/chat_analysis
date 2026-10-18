@@ -100,3 +100,15 @@ variable "s3_bucket_name_output_orac_store" {
     description = "name of bucket"
     default = "output-store-orac-store"
 }
+
+variable "s3_bucket_name_output_smart_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-smart-cache"
+}
+
+variable "s3_bucket_name_output_smart_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-smart-store"
+}

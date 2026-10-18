@@ -53,7 +53,8 @@ resource "aws_iam_role_policy" "send_spoke_sqs" {
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-requests-test",
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-work",
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-lev",
-             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-orac"
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-orac",
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-smart"
           ]
         ])
       }
@@ -131,6 +132,8 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_lev_store_arn = var.s3_output_bucket_lev_store_arn
     s3_output_bucket_orac_cache_arn = var.s3_output_bucket_orac_cache_arn
     s3_output_bucket_orac_store_arn = var.s3_output_bucket_orac_store_arn
+    s3_output_bucket_smart_cache_arn = var.s3_output_bucket_smart_cache_arn
+    s3_output_bucket_smart_store_arn = var.s3_output_bucket_smart_store_arn
   })
 }
 
@@ -149,6 +152,7 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     accountpool_table_lev = var.account_pool_table_lev
     account_pool_table_stream_lev_arn = var.account_pool_table_stream_lev_arn
     accountpool_table_orac = var.account_pool_table_orac
+     accountpool_table_smart = var.account_pool_table_smart
   })
 }
 

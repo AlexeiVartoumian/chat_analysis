@@ -68,3 +68,12 @@ output "accountpoolorac_table_name"{
 output "accountpoolorac_table_arn" {
   value = aws_dynamodb_table.accountpoolorac.arn
 }
+
+output "accountpoolsmart_table_name"{
+  value = aws_dynamodb_table.accountpoolsmart.name
+}
+
+
+output "accountpoolsmart_table_arn" {
+  value = aws_dynamodb_table.accountpoolsmart.arn
+}

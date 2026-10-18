@@ -36,6 +36,7 @@ module "lambda_hub"{
     sqs_coordinator_work_arn = module.sqs_hub.coordinator_work_sqs_queue_arn
     sqs_coordinator_orac_id = module.sqs_hub.coordinator_orac_sqs_queue_id
     sqs_cordinator_orac_arn = module.sqs_hub.coordinator_orac_sqs_queue_arn
+    sqs_coordinator_smart_sqs_queue_id = module.sqs_hub.coordinator_orac_sqs_queue_id
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name
@@ -43,6 +44,7 @@ module "lambda_hub"{
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     coordinator_work_sqs_queue_id = module.sqs_hub.coordinator_work_sqs_queue_id  
     s3_output_bucket_work_store_name = module.s3.s3_bucket_output_work_store_name
+    s3_output_bucket_smart_store_name = module.s3.s3_bucket_output_smart_store_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
     account_pool_table_orac_arn = module.dynamodb_hub.accountpoolorac_table_arn
@@ -80,6 +82,8 @@ module "iam_hub_attachments" {
     sqs_coordinator_arn_lev = module.sqs_hub.coordinator_lev_sqs_queue_arn 
 
     sqs_coordinator_arn_orac = module.sqs_hub.coordinator_orac_sqs_queue_arn
+
+    sqs_coordinator_arn_smart = module.sqs_hub.coordinator_smart_sqs_queue_arn
     
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
@@ -90,6 +94,8 @@ module "iam_hub_attachments" {
     account_pool_table_stream_lev_arn = module.dynamodb_hub.accountpool_stream_lev_arn
 
     account_pool_table_orac = module.dynamodb_hub.accountpoolorac_table_name
+
+    account_pool_table_smart = module.dynamodb_hub.accountpoolsmart_table_name
 
     
     s3_output_bucket_ash_cache_arn = module.s3.s3_bucket_output_ash_cache_arn
@@ -109,6 +115,9 @@ module "iam_hub_attachments" {
 
     s3_output_bucket_orac_cache_arn = module.s3.s3_bucket_output_orac_cache_arn
     s3_output_bucket_orac_store_arn = module.s3.s3_bucket_output_orac_store_arn
+
+    s3_output_bucket_smart_cache_arn = module.s3.s3_bucket_output_smart_cache_arn
+    s3_output_bucket_smart_store_arn = module.s3.s3_bucket_output_smart_store_arn
     providers = {
         aws = aws.hub
     }

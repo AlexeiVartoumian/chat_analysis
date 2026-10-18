@@ -240,3 +240,33 @@ output "s3_bucket_output_orac_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_orac_store.bucket
 }
+
+
+output "s3_bucket_output_smart_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_cache.arn
+}
+output "s3_bucket_output_smart_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_cache.id
+}
+
+output "s3_bucket_output_smart_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_cache.bucket
+}
+
+
+output "s3_bucket_output_smart_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_store.arn
+}
+output "s3_bucket_output_smart_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_store.id
+}
+
+output "s3_bucket_output_smart_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_smart_store.bucket
+}

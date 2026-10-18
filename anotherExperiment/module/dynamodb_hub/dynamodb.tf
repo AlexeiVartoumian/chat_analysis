@@ -289,3 +289,38 @@ resource "aws_dynamodb_table" "accountpoolorac" {
     Name = "accountpoolorac"
   }
 }
+
+
+resource "aws_dynamodb_table" "accountpoolsmart" {
+  name         = "accountpoolsmart"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "account"
+
+  # stream_enabled = true
+  # stream_view_type = "NEW_AND_OLD_IMAGES"
+
+  attribute {
+    name = "account"
+    type = "S"
+  }
+
+  attribute {
+    name = "status"
+    type = "S"
+  }
+
+  attribute {
+    name = "locked_at"
+    type = "N"
+  }
+  global_secondary_index {
+    name            = "status-index"
+    hash_key        = "status"
+    range_key       = "locked_at"
+    projection_type = "ALL"
+  }
+
+  tags = {
+    Name = "accountpoolsmart"
+  }
+}

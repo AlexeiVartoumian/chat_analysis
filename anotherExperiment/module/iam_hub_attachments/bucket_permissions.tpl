@@ -42,7 +42,11 @@
                 "${s3_output_bucket_orac_cache_arn}",
                 "${s3_output_bucket_orac_cache_arn}/*",
                 "${s3_output_bucket_orac_store_arn}",
-                "${s3_output_bucket_orac_store_arn}/*" 
+                "${s3_output_bucket_orac_store_arn}/*",
+                "${s3_output_bucket_smart_cache_arn}",
+                "${s3_output_bucket_smart_cache_arn}/*",
+                "${s3_output_bucket_smart_store_arn}",
+                "${s3_output_bucket_smart_store_arn}/*"  
 
 
             ]

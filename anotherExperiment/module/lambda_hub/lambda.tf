@@ -50,6 +50,12 @@ data "archive_file" "orchestrator_path_orac" {
     output_path = "${path.root}/module/sources/orchestrator_orac/orchestrator_orac.zip"
 }
 
+data "archive_file" "seek_smart_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.py"
+    output_path = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.zip"
+}
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -232,6 +238,27 @@ resource "aws_lambda_function" "orchestrator_orac" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+
+resource "aws_lambda_function" "seek_smart_posts" {
+    filename = data.archive_file.seek_smart_posts.output_path
+    source_code_hash = data.archive_file.seek_smart_posts.output_base64sha256
+    function_name = "seeksmartposts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_smart_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_smart_store_name
+            //sqs_queue_id = var.sqs_coordinator_smart_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
 
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"

@@ -82,3 +82,18 @@ output "coordinator_orac_sqs_queue_name" {
     description = "sqs_queue_name"
     value = aws_sqs_queue.sqs_hub_requests_orac.name
 }
+
+output "coordinator_smart_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_smart.arn   
+}
+
+output "coordinator_smart_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_smart.id  
+}
+
+output "coordinator_smart_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_smart.name
+}

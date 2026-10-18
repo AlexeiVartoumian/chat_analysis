@@ -38,7 +38,10 @@
                 "${account_pool_table_stream_lev_arn}",
                 
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_orac}",
-                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_orac}/index/status-index"
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_orac}/index/status-index",
+
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_smart}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_smart}/index/status-index"
 
                 
             ]
