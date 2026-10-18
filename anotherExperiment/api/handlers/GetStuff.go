@@ -1151,8 +1151,9 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			var err error
 			if index == 0 {
 				AshbCompany, err = h.Store.SeekAshCompany(true)
+			} else {
+				AshbCompany, err = h.Store.SeekAshCompany(false)
 			}
-			AshbCompany, err = h.Store.SeekAshCompany(false)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
