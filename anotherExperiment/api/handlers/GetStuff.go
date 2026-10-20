@@ -2344,7 +2344,7 @@ func (h *Handler) SendSmart(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			Urls, err := h.Store.SendOracQuery(req.FirstRun, req.NumberAccounts)
+			Urls, err := h.Store.SendSmartQuery(req.FirstRun, req.NumberAccounts)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -2352,7 +2352,7 @@ func (h *Handler) SendSmart(w http.ResponseWriter, r *http.Request) {
 			}
 			payload, _ := json.Marshal(Urls)
 
-			cmd := exec.Command("python3", "/home/ubuntu/sendorac.py", "1", firstRunStr, "")
+			cmd := exec.Command("python3", "/home/ubuntu/sendsmart.py", "1", firstRunStr, "")
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -2365,7 +2365,7 @@ func (h *Handler) SendSmart(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		Urls, err := h.Store.SendOracQuery(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendSmartQuery(req.FirstRun, req.NumberAccounts)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -2373,7 +2373,7 @@ func (h *Handler) SendSmart(w http.ResponseWriter, r *http.Request) {
 		}
 		payload, _ := json.Marshal(Urls)
 
-		cmd := exec.Command("python3", "/home/ubuntu/sendorac.py", "1", firstRunStr, req.InstanceID)
+		cmd := exec.Command("python3", "/home/ubuntu/sendsmart.py", "1", firstRunStr, req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr

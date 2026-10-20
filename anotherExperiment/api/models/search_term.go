@@ -40,6 +40,11 @@ type JOB_SEARCH_TERM_ORAC struct {
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
 }
 
+type JOB_SEARCH_TERM_SMART struct {
+	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`

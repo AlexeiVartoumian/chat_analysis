@@ -1565,6 +1565,77 @@ func (s *PostgresStore) SeekOracJdChecker(firstrun bool) ([]models.SeekOracJob, 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%ashby%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
 
 // SELECT count(*) FROM JOB_metadata, JOB_LIFECYCLE where JOB_METADATA.job_id = JOB_LIFECYCLE.job_id and company_apply_url LIKE '%greenhouse%' and JOB_LIFECYCLE.job_state LIKE 'LISTED';
+func (s *PostgresStore) SendSmartQuery(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_SMART, error) {
+
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM SMART_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_SMART
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_SMART
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM SMART_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_SMART
+
+		var res models.JOB_SEARCH_TERM_SMART
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+
+	}
+
+}
 
 func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {
 
