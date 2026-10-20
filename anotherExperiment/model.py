@@ -1066,7 +1066,7 @@ def create_tables(conn) -> None:
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
                         REFERENCES COMPANY_SMART (company_id)
-                        ON DELETE CASCADE
+                        ON DELETE CASCADE,
                     
                      CONSTRAINT fk_jobs_department
                         FOREIGN KEY (company_id, departmentId)
