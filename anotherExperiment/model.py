@@ -1030,7 +1030,7 @@ def create_tables(conn) -> None:
                     CONSTRAINT company_smart_site_uniq
                         UNIQUE (company_name)
                 );
-                    """)
+                """)
 
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS DEPARTMENT_SMART (
@@ -1048,29 +1048,78 @@ def create_tables(conn) -> None:
             """)
 
         cur.execute("""
-                CREATE TABLE IF NOT EXISTS JOBS_ORAC (
+                CREATE TABLE IF NOT EXISTS JOBS_SMART (
                     job_id                  TEXT            PRIMARY KEY,   
                     title                   TEXT            NOT NULL,
+                    company_id              BIGINT          NOT NULL,
                     refnumber               TEXT,
                     company_name            VARCHAR(128),
-                    organization_id         BIGINT,                         
-                    job_url                 TEXT            NOT NULL,
-                    api_url                 TEXT,
+                    location                JSONB,
                     industry                TEXT,
+                    departmentId            TEXT,                         
+                    job_url                 TEXT            NOT NULL,
+                    api_endpoint            TEXT,
                     function                TEXT,
                     releasedDate            TIMESTAMPTZ,
-                    locations               JSONB,
+                    experienceLevel         TEXT,
                     
-               
-                    
-                  
-
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
-                        REFERENCES COMPANY_ORAC (company_id)
+                        REFERENCES COMPANY_SMART (company_id)
                         ON DELETE CASCADE
                 );
+            """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_SMART (
+                job_id                TEXT          PRIMARY KEY,
+                jobDescription        TEXT          NOT NULL,
+                qualifIcations        TEXT,
+                additionalInformation TEXT,   
+
+            CONSTRAINT fk_description_job
+                FOREIGN KEY (job_id)
+                REFERENCES JOBS_SMART(job_id)
+                ON DELETE CASCADE
+            );
+            """
+        )
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_SMART (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_SMART (job_id)
+                    ON DELETE CASCADE
+                    );
                 """)
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_SMART (
+                    workflow_id         UUID      PRIMARY KEY,
+                    run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                    total_jobs_found    INTEGER     NOT NULL,
+                    net_new_jobs        INTEGER     NOT NULL
+                );
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_SMART(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_SMART (job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_SMART (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
 
         cur.execute("""
             CREATE TABLE redirect_link (
