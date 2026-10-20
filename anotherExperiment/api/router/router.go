@@ -168,5 +168,9 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendOracJd),
 	))
 
+	mux.Handle("POST /sendsmart", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendOrac),
+	))
+
 	return mux
 }
