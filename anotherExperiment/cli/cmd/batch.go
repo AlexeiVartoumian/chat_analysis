@@ -99,6 +99,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_SMART" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -250,6 +255,11 @@ func CsvFile(filepath string, tablename string) error {
 	fmt.Println("records length:", len(records))
 	if tablename == "JOB_LIFECYCLE_UPDATE_SUSPENDED" && len(records) > 0 {
 		Jobs_LifeCycleSuspendedRolesUpdater(records, filepath)
+		return nil
+	}
+
+	if tablename == "JOBS_ORAC" && len(records) > 0 {
+		Job_and_search_loader_orac(records, tablename, filepath)
 		return nil
 	}
 
