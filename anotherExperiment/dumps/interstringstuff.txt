@@ -39,3 +39,56 @@ https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_evaluation-l
 
 example on using null condition to ensure condition evaluates to false if there are no tags in the request.
 https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html
+
+
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "DenyEveryoneExceptTheTwoRoles",
+      "Effect": "Deny",
+      "Action": "ec2:runInstances",
+      "Resource": "*",
+      "Condition": {
+        "ArnNotLike": {
+          "aws:PrincipalArn": [
+            "arn:aws:iam::*:role/prod",
+            "arn:aws:iam::*:role/dev"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "ProdOnlyInOU1AndOU2",
+      "Effect": "Deny",
+      "Action": "ec2:runInstances",
+      "Resource": "*",
+      "Condition": {
+        "ArnLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:role/prod"
+        },
+        "ForAllValues:StringNotLike": {
+          "aws:PrincipalOrgPaths": [
+            "o-xxxx/r-xxxx/ou-parent/ou-1111/*",
+            "o-xxxx/r-xxxx/ou-parent/ou-2222/*"
+          ]
+        }
+      }
+    },
+    {
+      "Sid": "DevOnlyInOU2",
+      "Effect": "Deny",
+      "Action": "ec2:runInstances",
+      "Resource": "*",
+      "Condition": {
+        "ArnLike": {
+          "aws:PrincipalArn": "arn:aws:iam::*:role/dev"
+        },
+        "ForAllValues:StringNotLike": {
+          "aws:PrincipalOrgPaths": "o-xxxx/r-xxxx/ou-parent/ou-2222/*"
+        }
+      }
+    }
+  ]
+}
