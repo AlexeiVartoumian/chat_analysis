@@ -129,6 +129,23 @@ type JobOrac struct {
 	Country           string  `json:"country,omitempty" db:"country"`
 	Organization_id   int64   `json:"organization_id" db:"organization_id"`
 }
+
+type JobSmart struct {
+	JobID           string  `json:"job_id" db:"job_id"`
+	Title           string  `json:"title" db:"title"`
+	CompanyID       int64   `json:"company_id" db:"company_id"`
+	RefNumber       string  `json:"refNumber" db:"refnumber"`
+	CompanyName     string  `json:"companyName" db:"company_name"`
+	Location        *string `json:"location,omitempty" db:"location"`
+	Industry        string  `json:"industry" db:"industry"`
+	DepartmentID    *string `json:"departmentId,omitempty" db:"departmentid"`
+	JobURL          string  `json:"job_url" db:"job_url"`
+	ApiEndpoint     string  `json:"api_endpoint" db:"api_endpoint"`
+	Function        string  `json:"function" db:"function"`
+	ReleasedDate    *string `json:"releasedDate,omitempty" db:"releaseddate"`
+	ExperienceLevel string  `json:"experienceLevel" db:"experiencelevel"`
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

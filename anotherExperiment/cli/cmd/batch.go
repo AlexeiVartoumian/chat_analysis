@@ -1547,6 +1547,38 @@ func JobLoaderOrac(record map[string]string, companyID int64) (models.JobOrac, e
 	return job, nil
 }
 
+func JobLoaderSmart(record map[string]string, companyID int64) (models.JobSmart, error) {
+	if record["job_id"] == "" || record["title"] == "" || record["job_url"] == "" {
+		return models.JobSmart{}, fmt.Errorf("missing job_id/title/job_url in %v", record)
+	}
+
+	job := models.JobSmart{
+		JobID:           record["job_id"],
+		Title:           record["title"],
+		CompanyID:       companyID,
+		RefNumber:       record["refNumber"],
+		CompanyName:     record["companyName"],
+		Location:        jsonOrNil(record["location"]),
+		Industry:        record["industry"],
+		DepartmentID:    strPtr(record["departmentId"]),
+		JobURL:          record["job_url"],
+		ApiEndpoint:     record["api_endpoint"],
+		Function:        record["function"],
+		ReleasedDate:    strPtr(record["releasedDate"]),
+		ExperienceLevel: record["experienceLevel"],
+	}
+
+	return job, nil
+}
+
+// jsonOrNil returns nil for empty or invalid JSON so the JSONB insert doesn't fail.
+func jsonOrNil(s string) json.RawMessage {
+	if s == "" || !json.Valid([]byte(s)) {
+		return nil
+	}
+	return json.RawMessage(s)
+}
+
 // func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
 // 	_, err := db.Exec("UPDATE COMPANY_GREEN SET last_scanned_at = $1 WHERE company_id = $2", timestamp, value.CompanyID)
 // 	if err != nil {
@@ -2440,6 +2472,8 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_LEV SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_ORAC":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ORAC SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_SMART":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_SMART SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
@@ -2702,6 +2736,23 @@ func GetCompanyOracID(db *sql.DB, orac_instance string, site_number string) (int
 
 	return companyID, nil
 }
+
+func GetCompanySmartID(db *sql.DB, smart_companyname string) (int64, error) {
+	var companyID int64
+	err := db.QueryRow(
+		"SELECT company_id FROM company_smart WHERE company_name = $1",
+		smart_companyname,
+	).Scan(&companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no company found for smart_companyname=%q", smart_companyname)
+		}
+		return 0, fmt.Errorf("failed to query company_id: %w", err)
+	}
+
+	return companyID, nil
+}
 func insertJobCategory(db *sql.DB, record map[string]string, companyID int) error {
 	categoryID := record["jobCategoryId"]
 	categoryName := record["jobCategory"]
@@ -2753,6 +2804,19 @@ func insertJobTeamOrac(db *sql.DB, companyID int64, departmentID int64) error {
 
 	if err != nil {
 		return fmt.Errorf("failed to insert department %d: %w", departmentID, err)
+	}
+	return nil
+}
+
+func insertJobTeamSmart(db *sql.DB, departmentID string, department string, companyID int64) error {
+	_, err := db.Exec(`
+	INSERT INTO department_smart (department_id, department_name ,company_id)
+	VALUES ($1, $2 , $3)
+	ON CONFLICT (company_id, department_id) DO NOTHING;`,
+		departmentID, department, companyID)
+
+	if err != nil {
+		return fmt.Errorf("failed to insert department %s: %w", departmentID, err)
 	}
 	return nil
 }
@@ -3103,24 +3167,25 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 
 	for index, record := range records {
 
-		company_id, err := GetCompanyOracID(db, record["orac_instance"], record["site_number"])
+		company_id, err := GetCompanySmartID(db, record["companyName"])
 
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
 			return err
 		}
 
-		if orgStr := record["organization_id"]; orgStr != "" {
-			orgID, err := strconv.ParseInt(orgStr, 10, 64)
-			if err == nil {
-				if err := insertJobTeamOrac(db, company_id, orgID); err != nil {
-					fmt.Println(err)
-				}
+		if deptStr := record["departmentId"]; deptStr != "" {
+
+			dept := record["department"]
+
+			if err := insertJobTeamSmart(db, deptStr, dept, company_id); err != nil {
+				fmt.Println(err)
 			}
+
 		}
 
 		//value, err := JobLoaderLev(record, company_id)
-		value, err := JobLoaderOrac(record, company_id)
+		value, err := JobLoaderSmart(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			continue
@@ -3134,12 +3199,12 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 		}
 		DuplicateCount += skipped
 
-		JobSearchWorkflow := models.JOB_SEARCH_TERM_ORAC{
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_SMART{
 			Job_id:      value.JobID,
 			Workflow_id: uuid,
 			Is_new_job:  skipped == 0,
 		}
-		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ORAC")
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_SMART")
 	}
 	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
 
