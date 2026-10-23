@@ -229,6 +229,12 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_SMART" && len(records) > 0 {
+
+		Company_Smart(records, tablename)
+		return nil
+	}
+
 	if tablename == "JOBS_WORK_PARTIAL" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
 		return nil
@@ -2575,6 +2581,18 @@ func Company_OracLoader(record map[string]string) (models.COMPANY_ORAC, error) {
 	return company_work, nil
 }
 
+func Company_SmartLoader(record map[string]string) (models.COMPANY_SMART, error) {
+	name := record["companyName"]
+	if name == "" {
+		return models.COMPANY_SMART{}, fmt.Errorf("missing companyName in %v", record)
+	}
+
+	return models.COMPANY_SMART{
+		CompanyName:       name,
+		Company_apply_url: "https://jobs.smartrecruiters.com/" + name,
+	}, nil
+}
+
 // func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
 // 	for k, v := range record {
 // 		fmt.Printf("key=%q value=%q\n", k, v)
@@ -2636,6 +2654,31 @@ func Company_Orac(records []map[string]string, tablename string) {
 	}
 }
 
+func Company_Smart(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error:", err)
+		return
+	}
+	defer db.Close()
+
+	for i, record := range records {
+		value, err := Company_SmartLoader(record)
+		if err != nil {
+			fmt.Println(i, err)
+			continue
+		}
+
+		_, err = db.Exec(`
+			INSERT INTO company_smart (company_name, company_apply_url)
+			VALUES ($1, $2)
+			ON CONFLICT (company_name) DO UPDATE SET company_apply_url = EXCLUDED.company_apply_url;`,
+			value.CompanyName, value.Company_apply_url)
+		if err != nil {
+			fmt.Println("failed to insert company", value.CompanyName, ErrorHandler(err, "company insert failed"))
+		}
+	}
+}
 func Company_Lev(records []map[string]string) {
 	db, err := ConnectDb()
 	if err != nil {

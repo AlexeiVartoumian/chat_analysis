@@ -52,6 +52,13 @@ type COMPANY_ORAC struct {
 	SiteNumber        string `json:"site_number,omitempty" db:"site_number"`
 }
 
+type COMPANY_SMART struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+
+	CompanyName       string `json:"company_name,omitempty" db:"company_name"` //to repopulate downstream
+	Company_apply_url string `json:"company_apply_url,omitempty" db:"company_apply_url"`
+}
+
 type COMPANY_LEV struct {
 	//Job_id      int       `json:"id,omitempty" db:"job_id"`
 	CompanyName      string `json:"companyName,omitempty" db:"name"`
