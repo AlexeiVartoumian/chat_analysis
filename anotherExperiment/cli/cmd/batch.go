@@ -265,7 +265,7 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	if tablename == "JOBS_SMART" && len(records) > 0 {
-		Job_and_search_loader_orac(records, tablename, filepath)
+		Job_and_search_loader_SMART(records, tablename, filepath)
 		return nil
 	}
 
