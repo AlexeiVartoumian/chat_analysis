@@ -1572,11 +1572,11 @@ func JobLoaderSmart(record map[string]string, companyID int64) (models.JobSmart,
 }
 
 // jsonOrNil returns nil for empty or invalid JSON so the JSONB insert doesn't fail.
-func jsonOrNil(s string) json.RawMessage {
+func jsonOrNil(s string) *string {
 	if s == "" || !json.Valid([]byte(s)) {
 		return nil
 	}
-	return json.RawMessage(s)
+	return &s
 }
 
 // func Green_DepartmentUpdate(db *sql.DB, value models.JobGreen, timestamp time.Time) error {
