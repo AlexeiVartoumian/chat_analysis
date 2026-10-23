@@ -258,7 +258,7 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
-	if tablename == "JOBS_ORAC" && len(records) > 0 {
+	if tablename == "JOBS_SMART" && len(records) > 0 {
 		Job_and_search_loader_orac(records, tablename, filepath)
 		return nil
 	}
@@ -3010,6 +3010,92 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 		Net_new_found:    0,
 	}
 	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_ORAC")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	for index, record := range records {
+
+		company_id, err := GetCompanyOracID(db, record["orac_instance"], record["site_number"])
+
+		if err != nil {
+			fmt.Println(err, "error could not find companyId")
+			return err
+		}
+
+		if orgStr := record["organization_id"]; orgStr != "" {
+			orgID, err := strconv.ParseInt(orgStr, 10, 64)
+			if err == nil {
+				if err := insertJobTeamOrac(db, company_id, orgID); err != nil {
+					fmt.Println(err)
+				}
+			}
+		}
+
+		//value, err := JobLoaderLev(record, company_id)
+		value, err := JobLoaderOrac(record, company_id)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+
+		skipped, err := AddNewRow(value, tablename)
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			break
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_ORAC{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ORAC")
+	}
+	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+
+	return nil
+}
+
+func Job_and_search_loader_SMART(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, time, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(time)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+	if strings.HasPrefix(filepath, "deadlink") {
+		for _, record := range records {
+			db.Exec("UPDATE JOB_LIFECYCLE_SMART SET first_seen_closed_at = $1 , job_state = $2 where job_id = $3", timestamp, false, record["job_id"])
+
+		}
+		return nil
+	}
+	InsertTime := timestamp
+	DuplicateCount := 0
+	SearchWorkflow := models.SearchWorkflowSmart{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_SMART")
 	if err != nil {
 		fmt.Println("workflow insert failed:", err)
 		return err
