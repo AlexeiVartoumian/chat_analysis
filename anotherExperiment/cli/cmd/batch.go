@@ -2654,6 +2654,7 @@ func Company_Orac(records []map[string]string, tablename string) {
 	}
 }
 
+// TODO make extraction do one COMPANY file THEN JOB PROCESS .
 func Company_Smart(records []map[string]string, tablename string) {
 	db, err := ConnectDb()
 	if err != nil {
