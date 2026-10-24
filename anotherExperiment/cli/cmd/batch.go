@@ -172,7 +172,6 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	if tablename == "JOB_METADATA" && len(records) > 0 {
-
 		Jobs_MetadataLoaderFill(records)
 		return nil
 	}
@@ -722,6 +721,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTIONS_LEV":
 		return Jobs_DescriptionLevLoader(record)
 
+	case "JOB_DESCRIPTIONS_ORAC":
+		return Jobs_DescriptionOracLoader(record)
+
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
 
@@ -828,6 +830,18 @@ func Jobs_DescriptionLevLoader(record map[string]string) (models.JobDescription_
 		Requirements:    reqJSON,
 		AdditionalPlain: record["additionalPlain"],
 	}, nil
+}
+
+func Jobs_DescriptionOracLoader(record map[string]string) (models.JobDescription_Orac, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Orac{
+		JobId:               job_id,
+		ShortJobDescription: record["shortjobDescription"],
+		JobDescription:      record["jobDescription"],
+	}
+	return Job_Description, nil
 }
 
 func Jobs_MetadataLoader(record map[string]string) (models.Jobs_metadata, error) {
