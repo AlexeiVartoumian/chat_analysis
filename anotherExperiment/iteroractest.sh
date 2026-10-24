@@ -12,7 +12,7 @@ while IFS= read -r file; do
         ./start insert $file JOB_LIFECYCLE_ORAC
 
     elif [ "$type" = "JOB_DESCRIPTIONSORAC" ]; then
-        ./start insert $file JOB_DESCRIPTIONSORAC
+        ./start insert $file JOB_DESCRIPTIONS_ORAC
     
     elif [ "$type" = "DEADLINKS" ]; then
         ./start insert $file JOBS_ORAC
