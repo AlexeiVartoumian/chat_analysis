@@ -208,6 +208,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_LIFECYCLE_SMART" && len(records) > 0 {
+		Jobs_LifecycleSmartLoader(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -2084,6 +2089,84 @@ func Jobs_LifecycleOracLoader(records []map[string]string, tablename string, fil
 
 }
 
+func Jobs_LifecycleSmartLoader(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
+	}
+	defer db.Close()
+	if strings.HasPrefix(filepath, "processedJobs") {
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleSmartmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			//AddNewRow(value, "JOB_LIFECYCLE_WORK")
+			_, err = db.Exec(`
+				INSERT INTO JOB_LIFECYCLE_SMART
+					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (job_id) DO UPDATE
+				SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+
+		}
+	} else {
+		//DEADLINKS
+
+		_, time, err := parseFilename(filepath)
+
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(time)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		for _, record := range records {
+
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_SMART SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+		}
+	}
+	// } else if strings.HasPrefix(filepath, "AshJobsByCompany") {
+	// 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "AshJobsByCompany-")[1], ".csv")[0], "_")
+
+	// 	timestamp, err := parseTimestamp(meta_data[1])
+
+	// 	if err != nil {
+	// 		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+	// 	}
+	// 	for index, record := range records {
+
+	// 		value, err := Jobs_LifecycleAshmodel(record, timestamp)
+	// 		if err != nil {
+	// 			fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+	// 			continue
+	// 		}
+	// 		AddNewRow(value, "JOB_LIFECYCLE_ASH")
+
+	// 	}
+	return nil
+
+}
+
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -2251,6 +2334,21 @@ func Jobs_LifecycleWorkmodel(record map[string]string, timestamp time.Time) (mod
 }
 
 func Jobs_LifecycleOracmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWork, error) {
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleWork{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleSmartmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWork, error) {
 
 	nextScan := timestamp.AddDate(0, 0, 7)
 	Job_lifeCycle := models.JobLifeCycleWork{
