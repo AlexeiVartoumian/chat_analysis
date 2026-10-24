@@ -951,6 +951,7 @@ def create_tables(conn) -> None:
                     primary_location        TEXT,
                     country                 TEXT,
                     work_location           JSONB,
+                    compensation            JSONB,
 
                     CONSTRAINT fk_jobs_company
                         FOREIGN KEY (company_id)
