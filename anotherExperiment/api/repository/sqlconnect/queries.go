@@ -1637,6 +1637,48 @@ func (s *PostgresStore) SendSmartQuery(first_run bool, number_accounts int) ([]m
 
 }
 
+func (s *PostgresStore) SeekSmartJdChecker(firstrun bool) ([]models.SeekSmartJob, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE JOB_LIFECYCLE_SMART SET visited = FALSE WHERE job_state = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	//TODO fix compare againt open only and then aggreaget by company
+	rows, err := s.db.Query(`SELECT JOBS_SMART.job_id ,api_endpoint from JOBS_SMART JOIN job_lifecycle_smart l ON l.job_id = jobs_smart.job_id where l.job_state = TRUE and  l.visited = False and not exists (SELECT from JOB_DESCRIPTIONS_SMART WHERE jobs_smart.job_id = job_descriptions_smart.job_id) limit 350;`)
+
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.SeekSmartJob
+
+	for rows.Next() {
+
+		var res models.SeekSmartJob
+
+		rows.Scan(&res.Job_id, &res.APIEndpoint)
+
+		results = append(results, res)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range results {
+		if _, err := s.db.Exec(
+			`UPDATE JOB_LIFECYCLE_SMART SET visited = TRUE WHERE job_id = $1`,
+			greenLifecycle.Job_id,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return results, nil
+}
+
 func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {
 
 	db, err := ConnectDb(1)

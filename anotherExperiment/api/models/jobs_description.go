@@ -51,3 +51,8 @@ type SeekOracJob struct {
 	Job_id      string `json:"job_id"`
 	APIEndpoint string `json:"api_url"`
 }
+
+type SeekSmartJob struct {
+	Job_id      string `json:"job_id"`
+	APIEndpoint string `json:"api_endpoint"`
+}
