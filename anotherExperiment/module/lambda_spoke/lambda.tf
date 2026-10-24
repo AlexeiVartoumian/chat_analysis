@@ -49,6 +49,13 @@ data "archive_file" "orac_path" {
     output_path = "${path.root}/module/sources/orac/seek_orac_posts.zip"
 }
 
+data "archive_file" "smart_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.py"
+    output_path = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.zip"
+}
+
+
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
     filename         = data.archive_file.requests_hub_layer.output_path
@@ -202,6 +209,32 @@ resource "aws_lambda_function" "orac" {
     depends_on = [ aws_cloudwatch_log_group.orac ]
 }
 
+resource "aws_lambda_function" "smart" {
+    
+    filename = data.archive_file.smart_path.output_path
+    //source_code_hash = data.archive_file.zip.output_base64sha256
+    source_code_hash = data.archive_file.smart_path.output_base64sha256
+    function_name = "smart"
+    role =  var.iam_role_arn_spoke
+    handler = "seek_smart_posts.lambda_handler"
+    runtime =  "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            file_pool = var. dynamodb_accountpoolsmart_name
+            s3_source_bucket = var.s3_smart_source_name
+            s3_output_bucket_name = var.s3_smart_output_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
+        }
+    }
+    memory_size = 356
+    depends_on = [ aws_cloudwatch_log_group.smart ]
+}
+
+
 resource "aws_lambda_permission" "allow_sqs_request" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -252,6 +285,14 @@ resource "aws_lambda_permission" "allow_sqs_orac" {
   source_arn    = var.sqs_orac_arn
 }
 
+resource "aws_lambda_permission" "allow_sqs_smart" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.smart.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_smart_arn
+}
+
 resource "aws_lambda_event_source_mapping" "reader_trigger" {
   event_source_arn = var.sqs_request_access_arn
   function_name    = aws_lambda_function.reader.arn
@@ -300,6 +341,14 @@ resource "aws_lambda_event_source_mapping" "orac_trigger" {
   depends_on = [aws_lambda_function.orac]
 }
 
+resource "aws_lambda_event_source_mapping" "smart_trigger" {
+  event_source_arn = var.sqs_smart_arn
+  function_name    = aws_lambda_function.smart.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.smart]
+}
+
 resource "aws_cloudwatch_log_group" "reader" {
     name = "/aws/lambda/readerv2"
     retention_in_days = 7
@@ -329,5 +378,10 @@ resource "aws_cloudwatch_log_group" "lev" {
 
 resource "aws_cloudwatch_log_group" "orac" {
     name = "/aws/lambda/orac"
+    retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "smart" {
+    name = "/aws/lambda/smart"
     retention_in_days = 7
 }

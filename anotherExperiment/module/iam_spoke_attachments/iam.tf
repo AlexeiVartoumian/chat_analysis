@@ -14,6 +14,7 @@ resource "aws_iam_role_policy" "sqs" {
          sqs_queue_work = var.sqs_workd_queue
          sqs_worklev_queue = var.sqs_worklev_queue
          sqs_orac_queue = var.sqs_orac_queue
+         sqs_smart_queue = var.sqs_smart_queue
   })
 }
 resource "aws_iam_role_policy" "assume_hub_role" {

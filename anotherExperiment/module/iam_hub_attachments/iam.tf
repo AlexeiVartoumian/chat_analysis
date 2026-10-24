@@ -152,7 +152,7 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     accountpool_table_lev = var.account_pool_table_lev
     account_pool_table_stream_lev_arn = var.account_pool_table_stream_lev_arn
     accountpool_table_orac = var.account_pool_table_orac
-     accountpool_table_smart = var.account_pool_table_smart
+    accountpool_table_smart = var.account_pool_table_smart
   })
 }
 
@@ -189,7 +189,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev  ]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ]  # pass the actual SQS ARN directly
       }
     ]
   })

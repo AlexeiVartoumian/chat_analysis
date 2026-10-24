@@ -50,6 +50,12 @@ data "archive_file" "orchestrator_path_orac" {
     output_path = "${path.root}/module/sources/orchestrator_orac/orchestrator_orac.zip"
 }
 
+data "archive_file" "orchestrator_path_smart" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orchestrator_smart/orchestrator_smart.py"
+    output_path = "${path.root}/module/sources/orchestrator_smart/orchestrator_smart.zip"
+}
+
 data "archive_file" "seek_smart_posts" {
     type = "zip"
     source_file = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.py"
@@ -229,7 +235,7 @@ resource "aws_lambda_function" "orchestrator_orac" {
     environment {
         variables = {
             RoleArn = var.aws_iam_role_main_arn
-            output_bucket= var.s3_output_bucket_work_store_name
+            output_bucket= var.s3_output_bucket_orac_store_name
             sqs_queue_id = var.sqs_coordinator_orac_id
             //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
             account_pool_table_orac= var.account_pool_table_orac_arn
@@ -238,6 +244,29 @@ resource "aws_lambda_function" "orchestrator_orac" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+
+resource "aws_lambda_function" "orchestrator_smart" {
+    
+    filename = data.archive_file.orchestrator_path_smart.output_path
+    source_code_hash = data.archive_file.orchestrator_path_smart.output_base64sha256
+    function_name = "orchestrator_smart"
+    role = var.aws_iam_role_main_arn
+    handler = "orchestrator_smart.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_smart_store_name
+            sqs_queue_id = var.sqs_coordinator_smart_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+            account_pool_table_orac= var.account_pool_table_smart_arn
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
 
 resource "aws_lambda_function" "seek_smart_posts" {
     filename = data.archive_file.seek_smart_posts.output_path
@@ -338,4 +367,21 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_orac" {
   batch_size       = 10
   enabled          = true
   depends_on = [aws_lambda_function.orchestrator_orac]
+}
+
+
+resource "aws_lambda_permission" "allow_sqs_request_smart" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_smart.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_smart_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_smart" {
+  event_source_arn = var.sqs_cordinator_smart_arn
+  function_name    = aws_lambda_function.orchestrator_smart.arn
+  batch_size       = 10
+  enabled          = true
+  depends_on = [aws_lambda_function.orchestrator_smart]
 }

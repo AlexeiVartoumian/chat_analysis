@@ -23,6 +23,9 @@ variable "sqs_orac_queue" {
     type = string
 }
 
+variable "sqs_smart_queue" {
+    type = string
+}
 
 variable "bucket_reader_spoke" {
     type = string

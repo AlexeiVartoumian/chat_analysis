@@ -9,6 +9,9 @@ variable "sqs_coordinator_arn" {
 variable "sqs_coordinator_smart_sqs_queue_id" {
     type = string
 }
+variable "sqs_cordinator_smart_arn" {
+    type = string
+}
 
 variable "account_pool_table"{
     type = string
@@ -32,6 +35,10 @@ variable "account_pool_table_work_arn"{
 }
 
 variable "account_pool_table_orac_arn"{
+    type = string
+}
+
+variable "account_pool_table_smart_arn"{
     type = string
 }
 
@@ -65,6 +72,11 @@ variable "s3_output_bucket_work_store_name" {
 variable "s3_output_bucket_smart_store_name" {
     type = string
 }
+
+variable "s3_output_bucket_orac_store_name" {
+    type = string
+}
+
 
 
 variable "eventbridge_rule_arn"{

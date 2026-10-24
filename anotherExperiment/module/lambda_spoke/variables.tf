@@ -62,6 +62,10 @@ variable "dynamodb_accountpoolorac_name" {
     type = string
 }
 
+variable "dynamodb_accountpoolsmart_name" {
+    type = string
+}
+
 variable "s3_work_source_name"{
     type = string
 }
@@ -79,6 +83,14 @@ variable "s3_orac_output_name"{
 }
 
 variable "s3_lev_output_name"{
+    type = string
+}
+
+variable "s3_smart_source_name"{
+    type = string
+}
+
+variable "s3_smart_output_name"{
     type = string
 }
 
@@ -104,5 +116,13 @@ variable "sqs_orac_id" {
 }
 
 variable "sqs_orac_arn" {
+    type = string 
+}
+
+variable "sqs_smart_id" {
+    type = string
+}
+
+variable "sqs_smart_arn" {
     type = string 
 }
