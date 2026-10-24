@@ -1510,7 +1510,7 @@ func (s *PostgresStore) SeekOracLifecycle(firstrun bool) ([]models.OracLifecycle
 	}
 	for _, greenLifecycle := range output {
 		if _, err := s.db.Exec(
-			`UPDATE company_work SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			`UPDATE company_orac SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
 			greenLifecycle.CompanyId,
 		); err != nil {
 			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
@@ -1677,6 +1677,59 @@ func (s *PostgresStore) SeekSmartJdChecker(firstrun bool) ([]models.SeekSmartJob
 	}
 
 	return results, nil
+}
+
+func (s *PostgresStore) SeekSmartLifecycle(firstrun bool) ([]models.SmartLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_SMART SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_smart c
+		JOIN jobs_smart j ON j.company_id = c.company_id
+		JOIN job_lifecycle_smart l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek smart company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.SmartLifecycle
+
+	for rows.Next() {
+		var res models.SmartLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_smart SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
 }
 
 func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {

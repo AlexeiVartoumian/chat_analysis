@@ -2470,3 +2470,88 @@ func (h *Handler) SendSmartJD(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 
 }
+
+func (h *Handler) SendSmartLifecycle(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobSmartCompany []models.SmartLifecycle
+			var err error
+			if index == 0 {
+				JobSmartCompany, err = h.Store.SeekSmartLifecycle(true)
+			} else {
+				JobSmartCompany, err = h.Store.SeekSmartLifecycle(false)
+			}
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobSmartCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendorac.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+		}
+	} else {
+		JobsmartCompany, err := h.Store.SeekSmartLifecycle(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobsmartCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobsmartCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/sendsmart.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
