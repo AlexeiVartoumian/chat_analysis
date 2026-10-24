@@ -1008,6 +1008,14 @@ def create_tables(conn) -> None:
             );                    
         """)
 
+        #**********************************************************************************
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS FILE_KEYS_SMART (
+                        file_name            VARCHAR(256) PRIMARY KEY
+                    );
+                """)
+
+
         cur.execute("""
             CREATE TABLE IF NOT EXISTS SMART_LINK(
                 job_id_link          BIGINT          PRIMARY KEY,
