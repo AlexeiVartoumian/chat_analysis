@@ -149,17 +149,13 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
         timeline_key = datetime.strftime(timeline_key ,date_format)
 
         new_keys.append(document) 
-        if  document.startswith("processed") and not(document.startswith("processedJobs-jd") ):
-            
-            #output[timeline_key][0][records[unique][0]] = document
-            forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique].append(document)
+        if document.startswith("processed") and not document.startswith("processedJobs-jd"):
+            forgive(unique, output[timeline_key][0])
+            output[timeline_key][0][unique][0] = document
 
-        if  document.startswith("deadlinks"):
-                    
-            #output[timeline_key][0][records[unique][0]] = document
-            forgive(unique ,output[timeline_key][1])
-            output[timeline_key][0][unique].append(document)
+        if document.startswith("deadlinks"):
+            forgive(unique, output[timeline_key][0])
+            output[timeline_key][0][unique][1] = document
      
         
       
