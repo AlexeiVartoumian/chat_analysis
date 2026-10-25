@@ -605,7 +605,8 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 
 			case "green":
 				job_id, _ := strconv.Atoi(record["job_id"])
-				db.Exec("UPDATE job_lifecycle_green SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, true, job_id)
+				// db.Exec("UPDATE job_lifecycle_green SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, true, job_id)
+				db.Exec("UPDATE job_lifecycle_green SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, job_id)
 			default:
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 			}
