@@ -273,6 +273,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_DESCRIPTIONS_SMART" && len(records) > 0 {
+		Job_description_loader_SMART(records, tablename, filepath)
+		return nil
+	}
+
 	for index, record := range records {
 		fmt.Println(record)
 		fmt.Println(" ")
@@ -724,6 +729,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTIONS_ORAC":
 		return Jobs_DescriptionOracLoader(record)
 
+	// case "JOB_DESCRIPTIONS_SMART":
+	// 	return Jobs_DescriptionSmartLoader(record)
+
 	case "COMPANY_DETAIL":
 		return CompanyDetailLoader(record)
 
@@ -840,6 +848,19 @@ func Jobs_DescriptionOracLoader(record map[string]string) (models.JobDescription
 		JobId:               job_id,
 		ShortJobDescription: record["shortjobDescription"],
 		JobDescription:      record["jobDescription"],
+	}
+	return Job_Description, nil
+}
+
+func Jobs_DescriptionSmartLoader(record map[string]string) (models.JobDescription_Smart, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Smart{
+		JobId:                 job_id,
+		JobDescription:        record["job_description"],
+		Qualifications:        record["qualifications"],
+		Additionalinformation: record["additional_information"],
 	}
 	return Job_Description, nil
 }
@@ -3363,6 +3384,84 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_SMART")
 	}
 	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+
+	return nil
+}
+
+func Job_description_loader_SMART(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return fmt.Errorf("db conn: %w", err)
+	}
+	defer db.Close()
+
+	uuid, ts, err := parseFilename(filepath)
+	if err != nil {
+		return fmt.Errorf("parse filename %q: %w", filepath, err)
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		return fmt.Errorf("parse timestamp %q: %w", ts, err)
+	}
+	_, _ = uuid, timestamp // remove once you actually use them
+
+	// Fill the company description only if the company doesn't have one yet.
+	companyStmt, err := db.Prepare(`
+		UPDATE company_smart c
+		SET    company_description = $1
+		FROM   jobs_smart j
+		WHERE  j.job_id = $2
+		  AND  c.company_id = j.company_id
+		  AND  (c.company_description IS NULL OR c.company_description = '')`)
+	if err != nil {
+		return err
+	}
+	defer companyStmt.Close()
+
+	// Fill compensation only where it's currently NULL.
+	compStmt, err := db.Prepare(`
+		UPDATE jobs_smart
+		SET    compensation = $1
+		WHERE  job_id = $2
+		  AND  compensation IS NULL`)
+	if err != nil {
+		return err
+	}
+	defer compStmt.Close()
+
+	for i, record := range records {
+		jobID := strings.TrimSpace(record["job_id"])
+		if jobID == "" {
+			continue
+		}
+
+		// Insert into the description table
+		jobDescription, err := Jobs_DescriptionSmartLoader(record)
+
+		if err != nil {
+
+			return fmt.Errorf("loader on job id  %d job %s description insert: %w", i, jobID, err)
+		}
+		if _, err := AddNewRow(jobDescription, tablename); err != nil {
+			return fmt.Errorf("row %d job %s description insert: %w", i, jobID, err)
+		}
+
+		// Update company description
+		if desc := strings.TrimSpace(record["company_description"]); desc != "" {
+			if _, err := companyStmt.Exec(desc, jobID); err != nil {
+				return fmt.Errorf("row %d job %s company update: %w", i, jobID, err)
+			}
+		}
+
+		// Update compensation
+		if comp := strings.TrimSpace(record["compensation"]); comp != "" {
+			if !json.Valid([]byte(comp)) {
+				fmt.Printf("row %d job %s: invalid compensation JSON, skipping\n", i, jobID)
+			} else if _, err := compStmt.Exec(comp, jobID); err != nil {
+				return fmt.Errorf("row %d job %s compensation update: %w", i, jobID, err)
+			}
+		}
+	}
 
 	return nil
 }

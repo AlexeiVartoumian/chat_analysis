@@ -24,6 +24,13 @@ type JobDescription_Orac struct {
 	JobDescription      string `json:"jobDescription,omitempty" db:"jobdescription"`
 }
 
+type JobDescription_Smart struct {
+	JobId                 string `json:"job_id,omitempty" db:"job_id"`
+	JobDescription        string `json:"jobDescription,omitempty" db:"jobdescription"`
+	Qualifications        string `json:"qualifications,omitempty" db:"qualifications"`
+	Additionalinformation string `json:"additional_information,omitempty" db:"additionalinformation"`
+}
+
 type JobDescription_Ash struct {
 	JobId          string `json:"job_id,omitempty" db:"job_id"`
 	JobDescription string `json:"descriptionHtml,omitempty" db:"description_html"`
