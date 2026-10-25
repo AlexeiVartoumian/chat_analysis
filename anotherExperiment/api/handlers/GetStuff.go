@@ -1125,6 +1125,11 @@ func (h *Handler) SeekAshLead(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to start job", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("ashlead.py (%s) exited with error: %v", req.InstanceID, err)
+		}
+	}()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1178,6 +1183,11 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("ashcompany.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 		}
 	} else {
 		AshbCompany, err := h.Store.SeekAshCompany(false)
@@ -1208,6 +1218,11 @@ func (h *Handler) SeekAshCompany(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("ashcompany.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -1248,6 +1263,11 @@ func (h *Handler) SeekGreenCompany(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to start job", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("greenbycompany.py (%s) exited with error: %v", req.InstanceID, err)
+		}
+	}()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1290,6 +1310,11 @@ func (h *Handler) SeekGreenLead(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to start job", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("greenlead.py (%s) exited with error: %v", req.InstanceID, err)
+		}
+	}()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1332,6 +1357,11 @@ func (h *Handler) SeekGreenLeadLink(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "failed to start job", http.StatusInternalServerError)
 		return
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("greenlead.py (%s) exited with error: %v", req.InstanceID, err)
+		}
+	}()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1372,7 +1402,13 @@ func (h *Handler) SeekAshLeadLink(w http.ResponseWriter, r *http.Request) {
 		log.Println(err)
 		http.Error(w, "failed to start job", http.StatusInternalServerError)
 		return
+
 	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("ashlead.py (%s) exited with error: %v", req.InstanceID, err)
+		}
+	}()
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -1873,6 +1909,11 @@ func (h *Handler) SendlevCompany(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("levcompany.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 			time.Sleep(3 * time.Second)
 			fmt.Println("blasted the spot", len(payload))
 		}
@@ -1904,6 +1945,11 @@ func (h *Handler) SendlevCompany(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("levcompany.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 	w.Header().Set("Content-Type", "application/json")
 
@@ -1966,6 +2012,11 @@ func (h *Handler) SendGreenLifecycle(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("greenlifecycle.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 		}
 	} else {
 		JobAshCompany, err := h.Store.SeekGreenLifecycle(false)
@@ -1996,6 +2047,11 @@ func (h *Handler) SendGreenLifecycle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("greenlifecycle.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -2051,6 +2107,11 @@ func (h *Handler) SendWorkLifecycle(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("worklifecycle.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 		}
 	} else {
 		JobAshCompany, err := h.Store.SeekWorkLifecycle(false)
@@ -2081,6 +2142,11 @@ func (h *Handler) SendWorkLifecycle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("workflifecycle.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -2211,6 +2277,11 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendorac.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 		}
 	} else {
 		JobOracCompany, err := h.Store.SeekOracLifecycle(false)
@@ -2241,6 +2312,11 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendorac.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -2521,6 +2597,11 @@ func (h *Handler) SendSmartLifecycle(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendorac.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
 		}
 	} else {
 		JobsmartCompany, err := h.Store.SeekSmartLifecycle(false)
@@ -2551,6 +2632,11 @@ func (h *Handler) SendSmartLifecycle(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendsmart.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
