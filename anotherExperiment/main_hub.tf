@@ -37,7 +37,7 @@ module "lambda_hub"{
     sqs_coordinator_orac_id = module.sqs_hub.coordinator_orac_sqs_queue_id
     sqs_cordinator_orac_arn = module.sqs_hub.coordinator_orac_sqs_queue_arn
     sqs_cordinator_smart_arn = module.sqs_hub.coordinator_smart_sqs_queue_arn
-    sqs_coordinator_smart_sqs_queue_id = module.sqs_hub.coordinator_orac_sqs_queue_id
+    sqs_coordinator_smart_sqs_queue_id = module.sqs_hub.coordinator_smart_sqs_queue_id
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name

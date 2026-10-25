@@ -253,7 +253,7 @@ resource "aws_lambda_function" "orchestrator_smart" {
     role = var.aws_iam_role_main_arn
     handler = "orchestrator_smart.lambda_handler"
     runtime = "python3.13" 
-    timeout     = 900
+    timeout     = 60
     layers = [aws_lambda_layer_version.requests_hub_layer.arn]
    
     environment {
