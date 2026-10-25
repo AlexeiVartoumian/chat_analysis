@@ -790,18 +790,20 @@ func (s *PostgresStore) SeekGreenLifecycle(firstrun bool) ([]models.GreenLifecyc
 		}
 	}
 	rows, err := s.db.Query(`
-		SELECT c.company_id,
-		       c.company_url,
-		       array_agg(j.job_id::text) AS job_ids
-		FROM company_green c
-		JOIN jobs_green j ON j.company_id = c.company_id
-		JOIN job_lifecycle_green l ON l.job_id = j.job_id
-		WHERE l.job_state = FALSE
-		  AND c.visited = FALSE
-		GROUP BY c.company_id, c.company_url, c.last_scanned_at
-		ORDER BY c.last_scanned_at ASC NULLS FIRST
-		LIMIT 1;
-	`)
+	SELECT c.company_id,
+	       c.company_url,
+	       COALESCE(
+	         array_agg(j.job_id::text) FILTER (WHERE l.job_state = TRUE),
+	         '{}'
+	       ) AS job_ids
+	FROM company_green c
+	LEFT JOIN jobs_green j ON j.company_id = c.company_id
+	LEFT JOIN job_lifecycle_green l ON l.job_id = j.job_id
+	WHERE c.visited = FALSE
+	GROUP BY c.company_id, c.company_url, c.last_scanned_at
+	ORDER BY c.last_scanned_at ASC NULLS FIRST
+	LIMIT 1;
+`)
 	if err != nil {
 		return nil, utils.ErrorHandler(err, "seek ash company query failed")
 	}
