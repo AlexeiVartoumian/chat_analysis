@@ -11,9 +11,9 @@ client = boto3.client('s3')
 paginator = client.get_paginator('list_objects_v2')
 
 
-resp = client.list_objects(Bucket='output-store-smart-store-390746273208')
+resp = client.list_objects(Bucket='output-store-smart-cache-390746273208')
 
-pages = paginator.paginate(Bucket='output-store-smart-store-390746273208')
+pages = paginator.paginate(Bucket='output-store-smart-cache-390746273208')
 
 
 
