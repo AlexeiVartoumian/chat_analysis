@@ -1135,6 +1135,65 @@ def create_tables(conn) -> None:
             );                    
         """)
 
+        #*******************************************
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_BAMBI (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_BAMBI (
+                company_id              BIGINT          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_BAMBI (
+                department_id        BIGINT       PRIMARY KEY,
+                department_name      TEXT         NOT NULL,
+                parent_id            BIGINT       NULL,
+                company_id           BIGINT       NOT NULL,
+
+                CONSTRAINT fk_department_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_BAMBI (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_BAMBI (
+                job_id                  TEXT            PRIMARY KEY, --<job-id>-<companyId>
+                title                   TEXT            NOT NULL,
+                company_id              BIGINT          NOT NULL,
+                departmentId            BIGINT          NOT NULL,
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                location                TEXT,                  
+                isremote                TEXT,
+                compensation            TEXT,
+                datePosted              TIMESTAMPTZ,
+                postedOn                TEXT,
+                
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_BAMBI (company_id)
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_jobs_category
+                    FOREIGN KEY (departmentId)
+                    REFERENCES DEPARTMENT_BAMBI (departmentId)
+                    ON DELETE SET NULL    
+            );  
+            """)
+
+
         cur.execute("""
             CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
