@@ -57,6 +57,6 @@ resource "aws_launch_template" "example" {
   )
 
   monitoring {
-    enabled = true
+    enabled = false
   }
 }
