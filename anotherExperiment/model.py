@@ -1188,7 +1188,7 @@ def create_tables(conn) -> None:
                     ON DELETE CASCADE,
                 CONSTRAINT fk_jobs_category
                     FOREIGN KEY (departmentId)
-                    REFERENCES DEPARTMENT_BAMBI (departmentId)
+                    REFERENCES DEPARTMENT_BAMBI (department_id)
                     ON DELETE SET NULL    
             );  
             """)
