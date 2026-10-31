@@ -1259,9 +1259,76 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_BAMBI (workflow_id) ON DELETE CASCADE
             );                    
         """)
+        ##########################################################
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_WORKAB (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS WORKAB_LINK(
+                job_id_link          BIGINT          PRIMARY KEY,
+                job_url              VARCHAR(1024)   NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_link_
+                    FOREIGN KEY (job_id_link)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE 
+        );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_WORKAB (
+                company_id              TEXT          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_WORKAB (
+                job_id                  TEXT            PRIMARY KEY, --<job-id>-<companyId>
+                title                   TEXT            NOT NULL,
+                company_id              TEXT          NOT NULL,
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                location                TEXT,                  
+                department              JSONB,
+                compensation            TEXT,
+                workplace               TEXT,
+                published               TIMESTAMPTZ,
+               
+                
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_WORKAB (company_id)
+                    ON DELETE CASCADE  
+            );  
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_WORKAB (
+                job_id                TEXT          PRIMARY KEY,
+                description           TEXT,
+                requirements          TEXT,
+                benefits              TEXT,   
+
+            CONSTRAINT fk_description_job
+                FOREIGN KEY (job_id)
+                REFERENCES JOBS_WORKAB(job_id)
+                ON DELETE CASCADE
+            );
+            """
+        )
+
         
-
-
         cur.execute("""
             CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
@@ -1272,6 +1339,45 @@ def create_tables(conn) -> None:
             );
         """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_WORKAB (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_WORKAB (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+
+
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_WORKAB (
+                        workflow_id         UUID      PRIMARY KEY,
+                        run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                        total_jobs_found    INTEGER     NOT NULL,
+                        net_new_jobs        INTEGER     NOT NULL
+                    );
+                """)
+        
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_WORKAB(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_WORKAB(job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_WORKAB (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
       
 
    
