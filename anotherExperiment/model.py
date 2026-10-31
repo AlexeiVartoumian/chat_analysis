@@ -1185,7 +1185,7 @@ def create_tables(conn) -> None:
                 job_id                  TEXT            PRIMARY KEY, --<job-id>-<companyId>
                 title                   TEXT            NOT NULL,
                 company_id              BIGINT          NOT NULL,
-                departmentId            BIGINT          NOT NULL,
+                departmentId            BIGINT,          
                 company_name            VARCHAR(128)    NOT NULL,    
                 job_url                 TEXT            NOT NULL,
                 api_endpoint            TEXT,
