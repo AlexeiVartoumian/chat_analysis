@@ -1293,7 +1293,7 @@ def create_tables(conn) -> None:
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOBS_WORKAB (
-                job_id                  TEXT            PRIMARY KEY, --<job-id>-<companyId>
+                job_id                  TEXT            PRIMARY KEY, 
                 title                   TEXT            NOT NULL,
                 company_id              TEXT          NOT NULL,
                 company_name            VARCHAR(128)    NOT NULL,    
@@ -1328,17 +1328,6 @@ def create_tables(conn) -> None:
             """
         )
 
-        
-        cur.execute("""
-            CREATE TABLE redirect_link (
-                job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
-                status_green  VARCHAR(16) DEFAULT 'pending'
-                            CHECK (status_green IN ('pending', 'in_progress', 'done', 'failed')),
-                status_ash    VARCHAR(16) DEFAULT 'pending'
-                            CHECK (status_ash IN ('pending', 'in_progress', 'done', 'failed'))
-            );
-        """)
-
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_WORKAB (
                 job_id               TEXT            PRIMARY KEY,
@@ -1354,8 +1343,8 @@ def create_tables(conn) -> None:
                     ON DELETE CASCADE
                     );
                 """)
-
-
+        
+        
         cur.execute("""
                     CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_WORKAB (
                         workflow_id         UUID      PRIMARY KEY,
@@ -1378,6 +1367,19 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_WORKAB (workflow_id) ON DELETE CASCADE
             );                    
         """)
+
+        
+        cur.execute("""
+            CREATE TABLE redirect_link (
+                job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
+                status_green  VARCHAR(16) DEFAULT 'pending'
+                            CHECK (status_green IN ('pending', 'in_progress', 'done', 'failed')),
+                status_ash    VARCHAR(16) DEFAULT 'pending'
+                            CHECK (status_ash IN ('pending', 'in_progress', 'done', 'failed'))
+            );
+        """)
+
+        
       
 
    
