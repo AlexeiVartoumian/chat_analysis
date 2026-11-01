@@ -66,6 +66,14 @@ variable "dynamodb_accountpoolsmart_name" {
     type = string
 }
 
+variable "dynamodb_accountpoolbambi_name" {
+    type = string
+}
+
+variable "dynamodb_accountpoolworkaworka_name" {
+    type = string
+}
+
 variable "s3_work_source_name"{
     type = string
 }
@@ -93,6 +101,24 @@ variable "s3_smart_source_name"{
 variable "s3_smart_output_name"{
     type = string
 }
+
+variable "s3_bambi_source_name"{
+    type = string
+}
+
+variable "s3_bambi_output_name"{
+    type = string
+}
+
+variable "s3_workaworka_source_name"{
+    type = string
+}
+
+variable "s3_workaworka_output_name"{
+    type = string
+}
+
+
 
 
 variable "sqs_workd_id" {
@@ -125,4 +151,27 @@ variable "sqs_smart_id" {
 
 variable "sqs_smart_arn" {
     type = string 
+}
+
+variable "sqs_bambi_id" {
+    type = string
+}
+
+variable "sqs_bambi_arn" {
+    type = string 
+}
+
+variable "sqs_workaworka_id" {
+    type = string
+}
+
+variable "sqs_workaworka_arn" {
+    type = string 
+}
+
+
+variable "polling_enabled" {
+
+    type = bool
+    
 }

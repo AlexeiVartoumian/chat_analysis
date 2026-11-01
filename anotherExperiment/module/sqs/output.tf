@@ -109,3 +109,33 @@ output "workflow_crossaccount_smart_queue_arn" {
     description = "sqs arn"
     value = aws_sqs_queue.workflow_crossaccount_smart.arn   
 }
+
+output "workflow_crossaccount_bambi_queue_id"{
+    description = "sqs_queue_url "
+    value = aws_sqs_queue.workflow_crossaccount_bambi.id
+}
+
+output "workflow_crossaccount_bambi_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.workflow_crossaccount_bambi.name
+}
+
+output "workflow_crossaccount_bambi_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.workflow_crossaccount_bambi.arn   
+}
+
+output "workflow_crossaccount_workaworka_queue_id"{
+    description = "sqs_queue_url "
+    value = aws_sqs_queue.workflow_crossaccount_workaworka.id
+}
+
+output "workflow_crossaccount_workaworka_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.workflow_crossaccount_workaworka.name
+}
+
+output "workflow_crossaccount_workaworka_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.workflow_crossaccount_workaworka.arn   
+}

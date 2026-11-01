@@ -102,3 +102,19 @@ resource "aws_s3_bucket" "output_store_smart_cache" {
 resource "aws_s3_bucket" "output_store_smart_store" {
     bucket = "${local.s3_bucket_name_output_smart_store }-${data.aws_caller_identity.current.account_id}"
 }
+
+resource "aws_s3_bucket" "output_store_bambi_cache" {
+    bucket = "${local.s3_bucket_name_output_bambi_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_bambi_store" {
+    bucket = "${local.s3_bucket_name_output_bambi_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_workaworka_cache" {
+    bucket = "${local.s3_bucket_name_output_workaworka_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_workaworka_store" {
+    bucket = "${local.s3_bucket_name_output_workaworka_store }-${data.aws_caller_identity.current.account_id}"
+}

@@ -17,6 +17,8 @@
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_work}"
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_orac}"
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_smart}"
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_bambi}"
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_workaworka}"
             ]
         }
     ]

@@ -77,3 +77,21 @@ output "accountpoolsmart_table_name"{
 output "accountpoolsmart_table_arn" {
   value = aws_dynamodb_table.accountpoolsmart.arn
 }
+
+output "accountpoolbambi_table_name"{
+  value = aws_dynamodb_table.accountpoolbambi.name
+}
+
+
+output "accountpoolbambi_table_arn" {
+  value = aws_dynamodb_table.accountpoolbambi.arn
+}
+
+output "accountpoolworkaworka_table_name"{
+  value = aws_dynamodb_table.accountpoolworkaworka.name
+}
+
+
+output "accountpoolworkaworka_table_arn" {
+  value = aws_dynamodb_table.accountpoolworkaworka.arn
+}

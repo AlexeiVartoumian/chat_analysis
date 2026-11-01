@@ -20,3 +20,9 @@ variable "keys"{
 variable "ami_id" {
     type =string 
 }
+
+variable "polling_enabled" {
+  type        = bool
+  description = "Turn SQS polling on or off for all spokes"
+  nullable    = false
+}

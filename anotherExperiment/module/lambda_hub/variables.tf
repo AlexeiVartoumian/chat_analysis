@@ -13,6 +13,20 @@ variable "sqs_cordinator_smart_arn" {
     type = string
 }
 
+variable "sqs_coordinator_bambi_sqs_queue_id" {
+    type = string
+}
+variable "sqs_cordinator_bambi_arn" {
+    type = string
+}
+variable "sqs_coordinator_workaworka_sqs_queue_id" {
+    type = string
+}
+variable "sqs_cordinator_workaworka_arn" {
+    type = string
+}
+
+
 variable "account_pool_table"{
     type = string
 }
@@ -39,6 +53,14 @@ variable "account_pool_table_orac_arn"{
 }
 
 variable "account_pool_table_smart_arn"{
+    type = string
+}
+
+variable "account_pool_table_bambi_arn"{
+    type = string
+}
+
+variable "account_pool_table_workaworka_arn"{
     type = string
 }
 
@@ -77,6 +99,14 @@ variable "s3_output_bucket_orac_store_name" {
     type = string
 }
 
+variable "s3_output_bucket_bambi_store_name" {
+    type = string
+}
+
+variable "s3_output_bucket_workaworka_store_name" {
+    type = string
+}
+
 
 
 variable "eventbridge_rule_arn"{
@@ -93,4 +123,11 @@ variable "sqs_coordinator_orac_id" {
 
 variable "sqs_cordinator_orac_arn" {
     type = string
+}
+
+
+variable "polling_enabled" {
+
+    type = bool
+    
 }

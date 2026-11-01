@@ -1,11 +1,20 @@
 #!/bin/bash
 
+set -e
 
 
 WORKSPACE_DIRECTORY=$(pwd)
 PROVIDER="provider"
 
 TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+
+case "${1:-}" in
+  on)  echo "polling_enabled = true"  > polling.auto.tfvars ;;
+  off) echo "polling_enabled = false" > polling.auto.tfvars ;;
+  "")  ;;   # no argument: keep the current setting
+  *)   echo "usage: $0 [on|off]"; exit 1 ;;
+esac
 
 # if ls *.jinja > /dev/null 2>&1; then
 #     for f in *.jinja; do

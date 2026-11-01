@@ -56,11 +56,36 @@ data "archive_file" "orchestrator_path_smart" {
     output_path = "${path.root}/module/sources/orchestrator_smart/orchestrator_smart.zip"
 }
 
+data "archive_file" "orchestrator_path_bambi" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orchestrator_bambi/orchestrator_bambi.py"
+    output_path = "${path.root}/module/sources/orchestrator_bambi/orchestrator_bambi.zip"
+}
+
+data "archive_file" "orchestrator_path_workaworka" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/orchestrator_workaworka/orchestrator_workaworka.py"
+    output_path = "${path.root}/module/sources/orchestrator_workaworka/orchestrator_workaworka.zip"
+}
+
 data "archive_file" "seek_smart_posts" {
     type = "zip"
     source_file = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.py"
     output_path = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.zip"
 }
+
+data "archive_file" "seek_bambi_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_bambi_posts/seek_bambi_posts.py"
+    output_path = "${path.root}/module/sources/seek_bambi_posts/seek_bambi_posts.zip"
+}
+
+data "archive_file" "seek_workaworka_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_workab_posts/seek_workab_posts.py"
+    output_path = "${path.root}/module/sources/seek_workab_posts/seek_workab_posts.zip"
+}
+
 
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
@@ -105,7 +130,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger" {
   event_source_arn = var.sqs_coordinator_arn
   function_name    = aws_lambda_function.orchestrator.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orchestrator]
 }
 
@@ -268,6 +293,51 @@ resource "aws_lambda_function" "orchestrator_smart" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+resource "aws_lambda_function" "orchestrator_bambi" {
+    
+    filename = data.archive_file.orchestrator_path_bambi.output_path
+    source_code_hash = data.archive_file.orchestrator_path_bambi.output_base64sha256
+    function_name = "orchestrator_bambi"
+    role = var.aws_iam_role_main_arn
+    handler = "orchestrator_bambi.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 60
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_bambi_store_name
+            sqs_queue_id = var.sqs_coordinator_bambi_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+            account_pool_table_orac= var.account_pool_table_bambi_arn
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+resource "aws_lambda_function" "orchestrator_workaworka" {
+    
+    filename = data.archive_file.orchestrator_path_workaworka.output_path
+    source_code_hash = data.archive_file.orchestrator_path_workaworka.output_base64sha256
+    function_name = "orchestrator_workaworka"
+    role = var.aws_iam_role_main_arn
+    handler = "orchestrator_workaworka.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 60
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_workaworka_store_name
+            sqs_queue_id = var.sqs_coordinator_workaworka_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+            account_pool_table_orac= var.account_pool_table_workaworka_arn
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
 resource "aws_lambda_function" "seek_smart_posts" {
     filename = data.archive_file.seek_smart_posts.output_path
     source_code_hash = data.archive_file.seek_smart_posts.output_base64sha256
@@ -289,6 +359,48 @@ resource "aws_lambda_function" "seek_smart_posts" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+resource "aws_lambda_function" "seek_bambi_posts" {
+    filename = data.archive_file.seek_bambi_posts.output_path
+    source_code_hash = data.archive_file.seek_bambi_posts.output_base64sha256
+    function_name = "seekbambiposts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_bambi_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_bambi_store_name
+            sqs_queue_id = var.sqs_coordinator_bambi_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
+resource "aws_lambda_function" "seek_workaworka_posts" {
+    filename = data.archive_file.seek_workaworka_posts.output_path
+    source_code_hash = data.archive_file.seek_workaworka_posts.output_base64sha256
+    function_name = "seekworkaworkaposts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_workab_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+   
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_workaworka_store_name
+            sqs_queue_id = var.sqs_coordinator_workaworka_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -301,7 +413,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_deed" {
   event_source_arn = var.sqs_cordinator_deed_arn
   function_name    = aws_lambda_function.orchestrator_deed.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orchestrator_deed]
 }
 
@@ -311,7 +423,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_deed" {
 #   function_name     = aws_lambda_function.orchestrator_work.arn
 #   starting_position = "LATEST"
 #   batch_size        = 10
-#   enabled           = true
+#   enabled           = var.polling_enabled
 
 #   filter_criteria {
 #     filter {
@@ -347,7 +459,7 @@ resource "aws_lambda_event_source_mapping" "sqs_trigger_work" {
   event_source_arn = var.sqs_coordinator_work_arn  
   function_name    = aws_lambda_function.orchestrator_work.arn
   batch_size       = 1  
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orchestrator_work]
 }
 
@@ -365,7 +477,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_orac" {
   event_source_arn = var.sqs_cordinator_orac_arn
   function_name    = aws_lambda_function.orchestrator_orac.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orchestrator_orac]
 }
 
@@ -382,6 +494,38 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_smart" {
   event_source_arn = var.sqs_cordinator_smart_arn
   function_name    = aws_lambda_function.orchestrator_smart.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orchestrator_smart]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_bambi" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_bambi.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_bambi_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_bambi" {
+  event_source_arn = var.sqs_cordinator_bambi_arn
+  function_name    = aws_lambda_function.orchestrator_bambi.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.orchestrator_bambi]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_workaworka" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.orchestrator_workaworka.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_workaworka_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_workaworka" {
+  event_source_arn = var.sqs_cordinator_workaworka_arn
+  function_name    = aws_lambda_function.orchestrator_workaworka.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.orchestrator_workaworka]
 }

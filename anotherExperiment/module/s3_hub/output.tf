@@ -270,3 +270,62 @@ output "s3_bucket_output_smart_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_smart_store.bucket
 }
+
+
+output "s3_bucket_output_bambi_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_cache.arn
+}
+output "s3_bucket_output_bambi_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_cache.id
+}
+
+output "s3_bucket_output_bambi_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_cache.bucket
+}
+
+
+output "s3_bucket_output_bambi_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_store.arn
+}
+output "s3_bucket_output_bambi_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_store.id
+}
+
+output "s3_bucket_output_bambi_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_bambi_store.bucket
+}
+
+output "s3_bucket_output_workaworka_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_cache.arn
+}
+output "s3_bucket_output_workaworka_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_cache.id
+}
+
+output "s3_bucket_output_workaworka_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_cache.bucket
+}
+
+
+output "s3_bucket_output_workaworka_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_store.arn
+}
+output "s3_bucket_output_workaworka_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_store.id
+}
+
+output "s3_bucket_output_workaworka_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_workaworka_store.bucket
+}

@@ -112,3 +112,27 @@ variable "s3_bucket_name_output_smart_store" {
     description = "name of bucket"
     default = "output-store-smart-store"
 }
+
+variable "s3_bucket_name_output_bambi_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-bambi-cache"
+}
+
+variable "s3_bucket_name_output_bambi_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-bambi-store"
+}
+
+variable "s3_bucket_name_output_workaworka_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-workaworka-cache"
+}
+
+variable "s3_bucket_name_output_workaworka_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-workaworka-store"
+}

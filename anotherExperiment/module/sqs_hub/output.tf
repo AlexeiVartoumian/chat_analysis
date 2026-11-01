@@ -97,3 +97,33 @@ output "coordinator_smart_sqs_queue_name" {
     description = "sqs_queue_name"
     value = aws_sqs_queue.sqs_hub_requests_smart.name
 }
+
+output "coordinator_bambi_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_bambi.arn   
+}
+
+output "coordinator_bambi_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_bambi.id  
+}
+
+output "coordinator_bambi_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_bambi.name
+}
+
+output "coordinator_workaworka_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_workaworka.arn   
+}
+
+output "coordinator_workaworka_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_workaworka.id  
+}
+
+output "coordinator_workaworka_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_workaworka.name
+}

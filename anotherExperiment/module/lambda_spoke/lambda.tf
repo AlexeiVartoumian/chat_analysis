@@ -55,6 +55,19 @@ data "archive_file" "smart_path" {
     output_path = "${path.root}/module/sources/seek_smart_posts/seek_smart_posts.zip"
 }
 
+data "archive_file" "go_bambiboot_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/bambiboot/bootstrap"
+    output_path = "${path.root}/module/sources/bambiboot/bambiboot.zip"
+}
+
+data "archive_file" "go_workaworkaboot_path" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/workaworkaboot/bootstrap"
+    output_path = "${path.root}/module/sources/workaworkaboot/workaworkaboot.zip"
+}
+
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -157,6 +170,54 @@ resource "aws_lambda_function" "go_workboot" {
     }
     memory_size = 356
     depends_on = [ aws_cloudwatch_log_group.go_workboot ]
+}
+
+resource "aws_lambda_function" "go_bambiboot" {
+    
+    filename = data.archive_file.go_bambiboot_path.output_path
+    //source_code_hash = data.archive_file.zip.output_base64sha256
+    source_code_hash = data.archive_file.go_bambiboot_path.output_base64sha256
+    function_name = "go_bambiboot"
+    role =  var.iam_role_arn_spoke
+    handler = "bootstrap"
+    runtime = "provided.al2023"
+    timeout     = 900
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            file_pool = var. dynamodb_accountpoolbambi_name
+            s3_source_bucket = var.s3_bambi_source_name
+            s3_output_bucket_name = var.s3_bambi_output_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
+        }
+    }
+    memory_size = 356
+    depends_on = [ aws_cloudwatch_log_group.go_bambiboot ]
+}
+
+resource "aws_lambda_function" "go_workaworkaboot" {
+    
+    filename = data.archive_file.go_workaworkaboot_path.output_path
+    //source_code_hash = data.archive_file.zip.output_base64sha256
+    source_code_hash = data.archive_file.go_workaworkaboot_path.output_base64sha256
+    function_name = "go_workaworkaboot"
+    role =  var.iam_role_arn_spoke
+    handler = "bootstrap"
+    runtime = "provided.al2023"
+    timeout     = 900
+    environment {
+        variables = {
+            RoleArn = var.iam_role_main_arn
+            file_pool = var. dynamodb_accountpoolworkaworka_name
+            s3_source_bucket = var.s3_workaworka_source_name
+            s3_output_bucket_name = var.s3_workaworka_output_name
+            sqs_deadletter_url = var.sqs_deadletter_url
+            account_id = data.aws_caller_identity.current.account_id 
+        }
+    }
+    memory_size = 356
+    depends_on = [ aws_cloudwatch_log_group.go_workaworkaboot ]
 }
 
 
@@ -297,7 +358,7 @@ resource "aws_lambda_event_source_mapping" "reader_trigger" {
   event_source_arn = var.sqs_request_access_arn
   function_name    = aws_lambda_function.reader.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.reader]
 }
 
@@ -305,7 +366,7 @@ resource "aws_lambda_event_source_mapping" "processor_trigger" {
   event_source_arn = var.sqs_queue_2_arn
   function_name    = aws_lambda_function.processor.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
 depends_on = [aws_lambda_function.processor]
 }
 
@@ -313,7 +374,7 @@ resource "aws_lambda_event_source_mapping" "go_metadata_trigger" {
   event_source_arn = var.sqs_queue_3_arn
   function_name    = aws_lambda_function.go_metadata.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.go_metadata]
 }
 
@@ -321,7 +382,7 @@ resource "aws_lambda_event_source_mapping" "go_workboot_trigger" {
   event_source_arn = var.sqs_workd_arn
   function_name    = aws_lambda_function.go_workboot.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.go_workboot]
 }
 
@@ -329,7 +390,7 @@ resource "aws_lambda_event_source_mapping" "lev_trigger" {
   event_source_arn = var.sqs_worklev_arn
   function_name    = aws_lambda_function.lev.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.lev]
 }
 
@@ -337,7 +398,7 @@ resource "aws_lambda_event_source_mapping" "orac_trigger" {
   event_source_arn = var.sqs_orac_arn
   function_name    = aws_lambda_function.orac.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.orac]
 }
 
@@ -345,8 +406,24 @@ resource "aws_lambda_event_source_mapping" "smart_trigger" {
   event_source_arn = var.sqs_smart_arn
   function_name    = aws_lambda_function.smart.arn
   batch_size       = 10
-  enabled          = true
+  enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.smart]
+}
+
+resource "aws_lambda_event_source_mapping" "bambi_trigger" {
+  event_source_arn = var.sqs_bambi_arn
+  function_name    = aws_lambda_function.go_bambiboot.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.go_bambiboot]
+}
+
+resource "aws_lambda_event_source_mapping" "workaworka_trigger" {
+  event_source_arn = var.sqs_workaworka_arn
+  function_name    = aws_lambda_function.go_workaworkaboot.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.go_workaworkaboot]
 }
 
 resource "aws_cloudwatch_log_group" "reader" {
@@ -383,5 +460,15 @@ resource "aws_cloudwatch_log_group" "orac" {
 
 resource "aws_cloudwatch_log_group" "smart" {
     name = "/aws/lambda/smart"
+    retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "go_bambiboot" {
+    name = "/aws/lambda/go_bambiboot"
+    retention_in_days = 7
+}
+
+resource "aws_cloudwatch_log_group" "go_workaworkaboot" {
+    name = "/aws/lambda/go_workaworkaboot"
     retention_in_days = 7
 }

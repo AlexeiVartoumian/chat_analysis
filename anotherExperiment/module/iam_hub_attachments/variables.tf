@@ -90,6 +90,14 @@ variable sqs_coordinator_arn_smart {
     type = string
 }
 
+variable sqs_coordinator_arn_bambi {
+    type = string
+}
+
+variable sqs_coordinator_arn_workaworka {
+    type = string
+}
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }
@@ -149,6 +157,15 @@ variable s3_output_bucket_work_store_arn {
   variable account_pool_table_smart{
     type = string
  }
+
+variable account_pool_table_bambi{
+    type = string
+ }
+
+variable account_pool_table_workaworka{
+    type = string
+ }
+
 variable s3_output_bucket_orac_cache_arn {
     type = string
  }
@@ -162,5 +179,22 @@ variable s3_output_bucket_orac_cache_arn {
  }
 
  variable s3_output_bucket_smart_store_arn{
+    type = string
+ }
+
+ variable s3_output_bucket_bambi_cache_arn {
+    type = string
+ }
+
+ variable s3_output_bucket_bambi_store_arn{
+    type = string
+ }
+
+variable s3_output_bucket_workaworka_cache_arn {
+    type = string
+ }
+
+ 
+ variable s3_output_bucket_workaworka_store_arn{
     type = string
  }

@@ -41,7 +41,13 @@
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_orac}/index/status-index",
 
                 "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_smart}",
-                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_smart}/index/status-index"
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_smart}/index/status-index",
+
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_bambi}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_bambi}/index/status-index",
+
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_workaworka}",
+                "arn:aws:dynamodb:eu-west-2:${hub_account}:table/${accountpool_table_workaworka}/index/status-index"
 
                 
             ]

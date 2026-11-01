@@ -54,7 +54,9 @@ resource "aws_iam_role_policy" "send_spoke_sqs" {
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-work",
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-lev",
             "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-orac",
-            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-smart"
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-smart",
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-bambi",
+            "arn:aws:sqs:eu-west-2:${account_id}:workflow-crossaccount-workaworka"
           ]
         ])
       }
@@ -134,6 +136,10 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_orac_store_arn = var.s3_output_bucket_orac_store_arn
     s3_output_bucket_smart_cache_arn = var.s3_output_bucket_smart_cache_arn
     s3_output_bucket_smart_store_arn = var.s3_output_bucket_smart_store_arn
+    s3_output_bucket_bambi_cache_arn = var.s3_output_bucket_bambi_cache_arn
+    s3_output_bucket_bambi_store_arn = var.s3_output_bucket_bambi_store_arn
+    s3_output_bucket_workaworka_cache_arn = var.s3_output_bucket_workaworka_cache_arn
+    s3_output_bucket_workaworka_store_arn = var.s3_output_bucket_workaworka_store_arn
   })
 }
 
@@ -153,6 +159,8 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
     account_pool_table_stream_lev_arn = var.account_pool_table_stream_lev_arn
     accountpool_table_orac = var.account_pool_table_orac
     accountpool_table_smart = var.account_pool_table_smart
+    accountpool_table_bambi = var.account_pool_table_bambi
+    accountpool_table_workaworka = var.account_pool_table_workaworka
   })
 }
 
@@ -189,7 +197,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka  ]  # pass the actual SQS ARN directly
       }
     ]
   })
