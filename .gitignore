@@ -24,3 +24,4 @@ history.txt
 /anotherExperiment/terraform*
 /anotherExperiment/deploy*
 /anotherExperiment/deps.sh
+/anotherExperiment/polling.auto.tfvars
