@@ -27,3 +27,4 @@ history.txt
 /anotherExperiment/terraform.tfstate.backup
 /anotherExperiment/deploydebug.log
 /anotherExperiment/details.py
+/anotherExperiment/polling.auto.tfvars
