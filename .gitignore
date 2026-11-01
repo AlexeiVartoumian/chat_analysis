@@ -36,3 +36,4 @@ history.txt
 /anotherExperiment/terraform.tfstate
 /anotherExperiment/deployer.py
 /anotherExperiment/deps.sh
+/anotherExperiment/polling.auto.tfvars
