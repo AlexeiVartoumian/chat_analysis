@@ -287,7 +287,7 @@ resource "aws_lambda_function" "orchestrator_smart" {
             output_bucket= var.s3_output_bucket_smart_store_name
             sqs_queue_id = var.sqs_coordinator_smart_sqs_queue_id
             //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
-            account_pool_table_orac= var.account_pool_table_smart_arn
+            account_pool_table_smart= var.account_pool_table_smart_arn
         }
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
@@ -310,7 +310,7 @@ resource "aws_lambda_function" "orchestrator_bambi" {
             output_bucket= var.s3_output_bucket_bambi_store_name
             sqs_queue_id = var.sqs_coordinator_bambi_sqs_queue_id
             //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
-            account_pool_table_orac= var.account_pool_table_bambi_arn
+            account_pool_table_bambi= var.account_pool_table_bambi_arn
         }
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
@@ -332,7 +332,7 @@ resource "aws_lambda_function" "orchestrator_workaworka" {
             output_bucket= var.s3_output_bucket_workaworka_store_name
             sqs_queue_id = var.sqs_coordinator_workaworka_sqs_queue_id
             //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
-            account_pool_table_orac= var.account_pool_table_workaworka_arn
+            account_pool_table_worka_worka= var.account_pool_table_workaworka_arn
         }
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
