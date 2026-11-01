@@ -2,7 +2,7 @@ import sys
 import json
 import boto3
 
-LAMBDA_ARN = "arn:aws:lambda:eu-west-2:390746273208:function:seekworkaworkaposts"
+LAMBDA_ARN = "arn:aws:lambda:eu-west-2:390746273208:function:seekbambiposts"
 
 values = sys.stdin.read()
 
