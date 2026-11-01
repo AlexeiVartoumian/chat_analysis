@@ -180,5 +180,29 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendSmartLifecycle),
 	))
 
+	mux.Handle("POST /sendbambi", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendBambi),
+	))
+
+	mux.Handle("POST /sendbambiJd", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendBambiJD),
+	))
+
+	mux.Handle("POST /sendbambilifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendBambiLifecycle),
+	))
+
+	mux.Handle("POST /sendworkaworka", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendWorkaworka),
+	))
+
+	mux.Handle("POST /sendworkaworkaJd", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendWorkaworkaJD),
+	))
+
+	mux.Handle("POST /sendworkaworkalifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendWorkaworkaLifecycle),
+	))
+
 	return mux
 }

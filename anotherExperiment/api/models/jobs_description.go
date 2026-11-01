@@ -47,6 +47,22 @@ type SeekWorkJob struct {
 	WDInstance    string `json:"wd_instance"`
 }
 
+type SeekBambiJob struct {
+	JobID       string `json:"job_id"`
+	CompanyID   string `json:"company_id"`
+	CompanyName string `json:"company_name"`
+	APIEndpoint string `json:"api_endpoint"`
+	IsRemote    string `json:"isremote"`
+}
+
+type SeekWorkabJob struct {
+	JobID       string `json:"job_id"`
+	CompanyID   string `json:"company_id"`
+	CompanyName string `json:"company_name"`
+	JobURL      string `json:"job_url"`
+	APIEndpoint string `json:"api_endpoint"`
+}
+
 type SeekOracJob struct {
 	Job_id      string `json:"job_id"`
 	APIEndpoint string `json:"api_url"`

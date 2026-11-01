@@ -1734,6 +1734,335 @@ func (s *PostgresStore) SeekSmartLifecycle(firstrun bool) ([]models.SmartLifecyc
 	return output, nil
 }
 
+func (s *PostgresStore) SendBambiweek(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_BAMBIWEEK, error) {
+
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM BAMBI_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_BAMBIWEEK
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_BAMBIWEEK
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE BAMBI_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE BAMBI_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM BAMBI_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_BAMBIWEEK
+
+		var res models.JOB_SEARCH_TERM_BAMBIWEEK
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE BAMBI_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SeekBambiJdChecker(firstrun bool) ([]models.SeekBambiJob, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE JOB_LIFECYCLE_BAMBI SET visited = FALSE WHERE job_state = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	//TODO fix compare againt open only and then aggreaget by company
+	rows, err := s.db.Query(`SELECT JOBS_BAMBI.job_id, JOBS_BAMBI.company_id::text, jobs_bambi.company_name, jobs_bambi.api_endpoint, COALESCE(jobs_bambi.isremote, '') from JOBS_BAMBI JOIN job_lifecycle_bambi l ON l.job_id = jobs_bambi.job_id where l.job_state = TRUE and l.visited = False and not exists (SELECT from JOB_DESCRIPTIONS_BAMBI WHERE jobs_bambi.job_id = job_descriptions_bambi.job_id) limit 350;`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+	defer rows.Close()
+
+	var results []models.SeekBambiJob
+
+	for rows.Next() {
+
+		var res models.SeekBambiJob
+
+		rows.Scan(&res.JobID, &res.APIEndpoint)
+
+		results = append(results, res)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range results {
+		if _, err := s.db.Exec(
+			`UPDATE JOB_LIFECYCLE_BAMBI SET visited = TRUE WHERE job_id = $1`,
+			greenLifecycle.JobID,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return results, nil
+}
+
+func (s *PostgresStore) SeekBambiLifecycle(firstrun bool) ([]models.BambiLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_BAMBI SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.job_board_public_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_bambi c
+		JOIN jobs_bambi j ON j.company_id = c.company_id
+		JOIN job_lifecycle_bambi l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.job_board_public_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek bambi company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.BambiLifecycle
+
+	for rows.Next() {
+		var res models.BambiLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek bambi company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek bambi company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_bambi SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
+}
+
+func (s *PostgresStore) SendWorkaworkaweek(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_WORKABWEEK, error) {
+
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM WORKAB_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_WORKABWEEK
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_WORKABWEEK
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE WORKAB_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE WORKAB_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM WORKAB_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_WORKABWEEK
+
+		var res models.JOB_SEARCH_TERM_WORKABWEEK
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE WORKAB_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SeekWorkaworkaJdChecker(firstrun bool) ([]models.SeekWorkabJob, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE JOB_LIFECYCLE_WORKAB SET visited = FALSE WHERE job_state = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	//TODO fix compare againt open only and then aggreaget by company
+	rows, err := s.db.Query(`SELECT jobs_workab.job_id, jobs_workab.company_id, jobs_workab.company_name, jobs_workab.job_url, jobs_workab.api_endpoint from JOBS_WORKAB JOIN job_lifecycle_workab l ON l.job_id = jobs_workab.job_id where l.job_state = TRUE and l.visited = False and not exists (SELECT from JOB_DESCRIPTIONS_WORKAB WHERE jobs_workab.job_id = job_descriptions_workab.job_id) limit 350;`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "yep yep but no")
+	}
+
+	defer rows.Close()
+
+	var results []models.SeekWorkabJob
+
+	for rows.Next() {
+
+		var res models.SeekWorkabJob
+
+		rows.Scan(&res.JobID, &res.APIEndpoint)
+
+		results = append(results, res)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range results {
+		if _, err := s.db.Exec(
+			`UPDATE JOB_LIFECYCLE_WORKAB SET visited = TRUE WHERE job_id = $1`,
+			greenLifecycle.JobID,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_workab visited")
+		}
+	}
+
+	return results, nil
+}
+
+func (s *PostgresStore) SeekWorkaworkaLifecycle(firstrun bool) ([]models.WorkaworkaLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_WORKAB SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.job_board_public_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_workab c
+		JOIN jobs_workab j ON j.company_id = c.company_id
+		JOIN job_lifecycle_workab l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.job_board_public_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek bambi company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.WorkaworkaLifecycle
+
+	for rows.Next() {
+		var res models.WorkaworkaLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek bambi company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek bambi company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_workab SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
+}
+
 func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[string]interface{}, []ColumnMeta, error) {
 
 	db, err := ConnectDb(1)

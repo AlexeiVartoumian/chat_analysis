@@ -30,6 +30,16 @@ type JOB_SEARCH_TERM_WORKWEEK struct {
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
 }
 
+type JOB_SEARCH_TERM_BAMBIWEEK struct {
+	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
+}
+
+type JOB_SEARCH_TERM_WORKABWEEK struct {
+	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
+}
+
 type JOB_SEARCH_TERM_LEV struct {
 	Job_id  int    `json:"job_id,omitempty" db:"job_id"`
 	Api_url string `json:"api_url,omitempty" db:"company_apply_url"`
