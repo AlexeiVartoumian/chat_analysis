@@ -59,6 +59,21 @@ type COMPANY_SMART struct {
 	Company_apply_url string `json:"company_apply_url,omitempty" db:"company_apply_url"`
 }
 
+type COMPANY_BAMBI struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	CompanyId   int    `json:"company_id,omitempty" db:"company_id"`
+	CompanyName string `json:"company_name,omitempty" db:"company_name"` //to repopulate downstream
+	ApiEndpoint string `json:"api_endpoint,omitempty" db:"job_board_public_url"`
+}
+
+type COMPANY_Workab struct {
+	//Job_id      int       `json:"id,omitempty" db:"job_id"`
+	CompanyId         string `json:"company_id,omitempty" db:"company_id"`
+	CompanyName       string `json:"company_name,omitempty" db:"company_name"` //to repopulate downstream
+	CompanyUrl        string `json:"company_url,omitempty" db:"company_url"`
+	JobBoardPublicUrl string `json:"job_board_public_url,omitempty" db:"job_board_public_url"`
+}
+
 type COMPANY_LEV struct {
 	//Job_id      int       `json:"id,omitempty" db:"job_id"`
 	CompanyName      string `json:"companyName,omitempty" db:"name"`
@@ -79,6 +94,13 @@ type CompanyGreenDepartment struct {
 	Department_name string `json:"DepartmentName,omitempty" db:"department_name"`
 	ParentTeamId    *int64 `json:"parentTeamId,omitempty" db:"parent_id"`
 	CompanyId       int    `json:"organizationId,omitempty" db:"company_id"`
+}
+
+type CompanyBambiDepartment struct {
+	DepartmentId    int    `json:"department,omitempty" db:"department_id"`
+	Department_name string `json:"department_name,omitempty" db:"department_name"`
+	ParentTeamId    *int64 `json:"parentTeamId,omitempty" db:"parent_id"`
+	CompanyId       int    `json:"company_id,omitempty" db:"company_id"`
 }
 
 type DeptNodeAsh struct {

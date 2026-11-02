@@ -57,6 +57,20 @@ type SearchWorkflowSmart struct {
 	Net_new_found    int       `json:"net_new_jobs,omitempty" db:"net_new_jobs"`
 }
 
+type SearchWorkflowBambi struct {
+	Workflow_id      string    `json:"workflow_id,omitempty" db:"workflow_id"`
+	Run_at           time.Time `json:"run_at,omitempty" db:"run_at"`
+	Total_jobs_found int       `json:"total_jobs_found,omitempty" db:"total_jobs_found"`
+	Net_new_found    int       `json:"net_new_jobs,omitempty" db:"net_new_jobs"`
+}
+
+type SearchWorkflowWorkab struct {
+	Workflow_id      string    `json:"workflow_id,omitempty" db:"workflow_id"`
+	Run_at           time.Time `json:"run_at,omitempty" db:"run_at"`
+	Total_jobs_found int       `json:"total_jobs_found,omitempty" db:"total_jobs_found"`
+	Net_new_found    int       `json:"net_new_jobs,omitempty" db:"net_new_jobs"`
+}
+
 type JOB_SEARCH_TERM struct {
 	Job_id      int    `json:"id,omitempty" db:"job_id"`
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
@@ -81,6 +95,18 @@ type JOB_SEARCH_TERM_GREEN struct {
 	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
 }
 type JOB_SEARCH_TERM_WORK struct {
+	Job_id      string `json:"id,omitempty" db:"job_id"`
+	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
+}
+
+type JOB_SEARCH_TERM_BAMBI struct {
+	Job_id      string `json:"id,omitempty" db:"job_id"`
+	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
+	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`
+}
+
+type JOB_SEARCH_TERM_WORKAB struct {
 	Job_id      string `json:"id,omitempty" db:"job_id"`
 	Workflow_id string `json:"workflow_id,omitempty" db:"workflow_id"`
 	Is_new_job  bool   `json:"is_new_job,omitempty" db:"is_new_job"`

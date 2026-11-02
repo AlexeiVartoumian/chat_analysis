@@ -18,6 +18,19 @@ type JobDescription_Work struct {
 	JobId          string `json:"job_id,omitempty" db:"job_id"`
 	JobDescription string `json:"jobDescription,omitempty" db:"jobDescription"`
 }
+
+type JobDescription_Bambi struct {
+	JobId          string `json:"job_id,omitempty" db:"job_id"`
+	JobDescription string `json:"description,omitempty" db:"description"`
+}
+
+type JobDescription_Workab struct {
+	JobId        string `json:"job_id,omitempty" db:"job_id"`
+	Description  string `json:"description,omitempty" db:"description"`
+	Requirements string `json:"requirements,omitempty" db:"requirements"`
+	Benefits     string `json:"benefits,omitempty" db:"benefits"`
+}
+
 type JobDescription_Orac struct {
 	JobId               string `json:"job_id,omitempty" db:"job_id"`
 	ShortJobDescription string `json:"shortjobDescription,omitempty" db:"shortjobdescription"`

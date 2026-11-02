@@ -94,6 +94,37 @@ type JobWork struct {
 	JobPostingEndDateAsText *string      `json:"jobPostingEndDateAsText,omitempty" db:"jobPostingEndDateAsText"`
 	HiringOrganization      *string      `json:"hiringOrganization,omitempty" db:"hiringOrganization"`
 }
+type Job_Bambi struct {
+	JobID             string `json:"job_id,omitempty" db:"job_id"` // composite <posting-id>-<companyId>
+	CompanyID         string `json:"company_id,omitempty" db:"company_id"`
+	CompanyName       string `json:"company_name,omitempty" db:"company_name"`
+	APIEndpoint       string `json:"api_endpoint,omitempty" db:"api_endpoint"`
+	IsRemote          string `json:"isremote,omitempty" db:"isremote"`
+	Title             string `json:"title,omitempty" db:"title"`
+	DepartmentID      string `json:"departmentid,omitempty" db:"departmentid"`
+	JobURL            string `json:"job_url,omitempty" db:"job_url"`
+	Location          string `json:"location,omitempty" db:"location"`
+	Compensation      string `json:"compensation,omitempty" db:"compensation"`
+	DatePosted        string `json:"dateposted,omitempty" db:"dateposted"`
+	PostedOn          string `json:"postedon,omitempty" db:"postedon"`
+	Description       string `json:"description,omitempty" db:"-"`
+	EmploymentStatus  string `json:"employment_status,omitempty" db:"-"`
+	MinimumExperience string `json:"minimum_experience,omitempty" db:"-"`
+}
+
+type Job_Workab struct {
+	JobID        string     `json:"job_id,omitempty" db:"job_id"`
+	Title        string     `json:"title,omitempty" db:"title"`
+	CompanyID    string     `json:"company_id,omitempty" db:"company_id"`
+	CompanyName  string     `json:"company_name,omitempty" db:"company_name"`
+	JobURL       string     `json:"job_url,omitempty" db:"job_url"`
+	APIEndpoint  string     `json:"api_endpoint,omitempty" db:"api_endpoint"`
+	Location     string     `json:"location,omitempty" db:"location"`
+	Department   *string    `json:"department,omitempty" db:"department"`
+	Compensation string     `json:"compensation,omitempty" db:"compensation"`
+	Workplace    string     `json:"workplace,omitempty" db:"workplace"`
+	Published    *time.Time `json:"published,omitempty" db:"published"`
+}
 
 type JobLev struct {
 	JobID        string           `json:"job_id" db:"job_id"`

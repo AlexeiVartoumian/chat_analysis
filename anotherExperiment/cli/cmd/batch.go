@@ -104,6 +104,15 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_BAMBI" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+	if tablename == "FILE_KEYS_WORKAB" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -239,6 +248,18 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_BAMBI" && len(records) > 0 {
+
+		Company_Bambi(records, tablename)
+		return nil
+	}
+
+	if tablename == "COMPANY_WORKAB" && len(records) > 0 {
+
+		Company_Workab(records, tablename)
+		return nil
+	}
+
 	if tablename == "JOBS_WORK_PARTIAL" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
 		return nil
@@ -252,6 +273,27 @@ func CsvFile(filepath string, tablename string) error {
 		}
 		return nil
 	}
+
+	if tablename == "JOBS_BAMBI_PARTIAL" && len(records) > 0 {
+		Job_and_search_loader_bambi(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOBS_BAMBI" && len(records) > 0 {
+		LoadFullJobsBambi(records)
+		return nil
+	}
+
+	if tablename == "JOBS_WORKAB_PARTIAL" && len(records) > 0 {
+		Job_and_search_loader_workab(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOBS_WORKAB" && len(records) > 0 {
+		LoadFullJobsWorkab(records)
+		return nil
+	}
+
 	if tablename == "JOBS_LEV" && len(records) > 0 {
 		Job_and_search_loader_lev(records, tablename, filepath)
 		return nil
@@ -730,6 +772,12 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTIONS_ORAC":
 		return Jobs_DescriptionOracLoader(record)
 
+	case "JOB_DESCRIPTIONS_BAMBI":
+		return Jobs_DescriptionBambiLoader(record)
+
+	case "JOB_DESCRIPTIONS_WORKAB":
+		return Jobs_DescriptionWorkabLoader(record)
+
 	// case "JOB_DESCRIPTIONS_SMART":
 	// 	return Jobs_DescriptionSmartLoader(record)
 
@@ -820,6 +868,35 @@ func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription
 	return Job_Description, nil
 }
 
+func Jobs_DescriptionBambiLoader(record map[string]string) (models.JobDescription_Bambi, error) {
+
+	job_id := record["job_id"]
+
+	Job_Description := models.JobDescription_Bambi{
+		JobId:          job_id,
+		JobDescription: record["description"],
+	}
+	return Job_Description, nil
+}
+
+func Jobs_DescriptionWorkabLoader(record map[string]string) (models.JobDescription_Workab, error) {
+
+	job_id := record["job_id"]
+	if job_id == "" {
+		return models.JobDescription_Workab{}, fmt.Errorf("missing job_id in %v", record)
+	}
+	if record["description"] == "" && record["requirements"] == "" && record["benefits"] == "" {
+		return models.JobDescription_Workab{}, fmt.Errorf("no description/requirements/benefits for job %s", job_id)
+	}
+
+	Job_Description := models.JobDescription_Workab{
+		JobId:        job_id,
+		Description:  record["description"],
+		Requirements: record["requirements"],
+		Benefits:     record["benefits"],
+	}
+	return Job_Description, nil
+}
 func Jobs_DescriptionLevLoader(record map[string]string) (models.JobDescription_Lev, error) {
 	reqs := strings.TrimSpace(record["requirements"])
 
@@ -1525,6 +1602,71 @@ func JobLoaderPartial(record map[string]string, companyid int) (models.JobWork, 
 	}, nil
 }
 
+func JobLoaderBambiPartial(record map[string]string, companyid int) (models.Job_Bambi, error) {
+	if record["job_id"] == "" || record["title"] == "" {
+		return models.Job_Bambi{}, fmt.Errorf("partial record missing job_id/title: %v", record)
+	}
+	if record["job_url"] == "" {
+		return models.Job_Bambi{}, fmt.Errorf("partial record missing job_url: %v", record)
+	}
+
+	companyID := record["company_id"]
+	if companyID == "" {
+		companyID = strconv.Itoa(companyid)
+	}
+
+	return models.Job_Bambi{
+		JobID:        record["job_id"],
+		Title:        record["title"],
+		CompanyID:    companyID,
+		DepartmentID: record["departmentid"],
+		CompanyName:  record["company_name"],
+		JobURL:       record["job_url"],
+		APIEndpoint:  record["api_endpoint"],
+		Location:     record["location"],
+		IsRemote:     record["isremote"],
+	}, nil
+}
+
+func nullIfEmpty(s string) any {
+	if s == "" {
+		return nil
+	}
+	return s
+}
+
+func nullInt(s string) (any, error) {
+	if s == "" {
+		return nil, nil
+	}
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return n, nil
+}
+
+func InsertJobBambiPartial(db *sql.DB, job models.Job_Bambi) error {
+	companyID, err := strconv.ParseInt(job.CompanyID, 10, 64)
+	if err != nil {
+		return fmt.Errorf("invalid company_id %q for job %s: %w", job.CompanyID, job.JobID, err)
+	}
+
+	deptID, err := nullInt(job.DepartmentID)
+	if err != nil {
+		return fmt.Errorf("invalid departmentid %q for job %s: %w", job.DepartmentID, job.JobID, err)
+	}
+
+	_, err = db.Exec(`
+		INSERT INTO jobs_bambi
+			(job_id, title, company_id, departmentid, company_name, job_url, api_endpoint, location, isremote)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		ON CONFLICT (job_id) DO NOTHING;`,
+		job.JobID, job.Title, companyID, deptID, job.CompanyName, job.JobURL,
+		nullIfEmpty(job.APIEndpoint), nullIfEmpty(job.Location), nullIfEmpty(job.IsRemote))
+	return err
+}
+
 func JobLoaderLev(record map[string]string, companyid int) (models.JobLev, error) {
 
 	createdAt := record["createdAt"]
@@ -2203,6 +2345,63 @@ func Jobs_LifecycleSmartLoader(records []map[string]string, tablename string, fi
 
 }
 
+func Jobs_LifecycleBambiLoader(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn gone wrong")
+	}
+	defer db.Close()
+
+	_, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	if strings.HasPrefix(filepath, "processedJobs") {
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleBambimodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			_, err = db.Exec(`
+				INSERT INTO JOB_LIFECYCLE_BAMBI
+					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (job_id) DO UPDATE
+				SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+
+		}
+	} else if strings.HasPrefix(filepath, "deadlinks") {
+		//DEADLINKS
+		for index, record := range records {
+
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_BAMBI SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+			if err != nil {
+				fmt.Println("deadlink update failed at index", index, record["job_id"], err)
+			}
+		}
+	} else if strings.HasPrefix(filepath, "output") {
+		//OUTPUT - nothing to do for lifecycle yet
+		fmt.Println("output file, skipping lifecycle:", filepath)
+	}
+
+	return nil
+
+}
+
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -2388,6 +2587,25 @@ func Jobs_LifecycleSmartmodel(record map[string]string, timestamp time.Time) (mo
 
 	nextScan := timestamp.AddDate(0, 0, 7)
 	Job_lifeCycle := models.JobLifeCycleWork{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleBambimodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleBambi, error) {
+
+	if record["job_id"] == "" {
+		return models.JobLifeCycleBambi{}, fmt.Errorf("missing job_id in %v", record)
+	}
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleBambi{
 		JobId:            record["job_id"],
 		Job_state:        parseBoolOrDefault("", true),
 		FirstSeenAt:      timestamp,
@@ -2614,6 +2832,10 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_ORAC SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	case "JOBS_SMART":
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_SMART SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_BAMBI":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_BAMBI SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
+	case "JOBS_WORKAB":
+		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_WORKAB SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	default:
 		_, err = db.Exec(`UPDATE SEARCH_WORKFLOW_DEED SET total_jobs_found = $1, net_new_jobs = $2 WHERE workflow_id = $3`, totalJobs, netNew, workflowid)
 	}
@@ -2727,6 +2949,34 @@ func Company_SmartLoader(record map[string]string) (models.COMPANY_SMART, error)
 	}, nil
 }
 
+func Company_BambiLoader(record map[string]string) (models.COMPANY_BAMBI, error) {
+	name := record["company_name"]
+	endpoint := record["api_endpoint"]
+	if name == "" || endpoint == "" {
+		return models.COMPANY_BAMBI{}, fmt.Errorf("missing company_name or api_endpoint in %v", record)
+	}
+
+	id, err := strconv.Atoi(record["company_id"])
+	if err != nil {
+		return models.COMPANY_BAMBI{}, fmt.Errorf("invalid company_id in %v: %w", record, err)
+	}
+
+	return models.COMPANY_BAMBI{
+		CompanyId:   id,
+		CompanyName: name,
+		ApiEndpoint: endpoint,
+	}, nil
+}
+func Company_WorkabLoader(record map[string]string) (models.COMPANY_Workab, error) {
+
+	return models.COMPANY_Workab{
+		CompanyId:         record["company_id"],
+		CompanyName:       record["company_name"],
+		CompanyUrl:        record["company_url"],
+		JobBoardPublicUrl: record["job_board_public_url"],
+	}, nil
+}
+
 // func Company_LevLoader(record map[string]string) (models.COMPANY_LEV, error) {
 // 	for k, v := range record {
 // 		fmt.Printf("key=%q value=%q\n", k, v)
@@ -2812,6 +3062,70 @@ func Company_Smart(records []map[string]string, tablename string) {
 		if err != nil {
 			fmt.Println("failed to insert company", value.CompanyName, ErrorHandler(err, "company insert failed"))
 		}
+	}
+}
+func Company_Workab(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error:", err)
+		return
+	}
+	defer db.Close()
+
+	for i, record := range records {
+		value, err := Company_WorkabLoader(record)
+		if err != nil {
+			fmt.Println(i, err)
+			continue // skip bad rows until we find a good one
+		}
+
+		query := fmt.Sprintf(`
+			INSERT INTO %s (company_id, company_name, company_url , job_board_public_url)
+			VALUES ($1, $2, $3)
+			ON CONFLICT DO NOTHING;`, tablename)
+
+		res, err := db.Exec(query, value.CompanyId, value.CompanyName, value.CompanyUrl, value.JobBoardPublicUrl)
+		if err != nil {
+			fmt.Println("failed to insert company", value.CompanyName, ErrorHandler(err, "company insert failed"))
+			return
+		}
+
+		if n, _ := res.RowsAffected(); n == 0 {
+			fmt.Println("company already exists:", value.CompanyName)
+		}
+		return // done after the first valid record, inserted or already there
+	}
+}
+func Company_Bambi(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error:", err)
+		return
+	}
+	defer db.Close()
+
+	for i, record := range records {
+		value, err := Company_BambiLoader(record)
+		if err != nil {
+			fmt.Println(i, err)
+			continue // skip bad rows until we find a good one
+		}
+
+		query := fmt.Sprintf(`
+			INSERT INTO %s (company_id, company_name, job_board_public_url)
+			VALUES ($1, $2, $3)
+			ON CONFLICT DO NOTHING;`, tablename)
+
+		res, err := db.Exec(query, value.CompanyId, value.CompanyName, value.ApiEndpoint)
+		if err != nil {
+			fmt.Println("failed to insert company", value.CompanyName, ErrorHandler(err, "company insert failed"))
+			return
+		}
+
+		if n, _ := res.RowsAffected(); n == 0 {
+			fmt.Println("company already exists:", value.CompanyName)
+		}
+		return // done after the first valid record, inserted or already there
 	}
 }
 func Company_Lev(records []map[string]string) {
@@ -2925,6 +3239,23 @@ func GetCompanySmartID(db *sql.DB, smart_companyname string) (int64, error) {
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, fmt.Errorf("no company found for smart_companyname=%q", smart_companyname)
+		}
+		return 0, fmt.Errorf("failed to query company_id: %w", err)
+	}
+
+	return companyID, nil
+}
+
+func GetCompanyBambiID(db *sql.DB, company_id int) (int, error) {
+	var companyID int
+	err := db.QueryRow(
+		"SELECT company_id FROM company_bambi WHERE company_id = $1",
+		company_id,
+	).Scan(&companyID)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, fmt.Errorf("no compsany found for slug=%q", company_id)
 		}
 		return 0, fmt.Errorf("failed to query company_id: %w", err)
 	}
@@ -3134,6 +3465,385 @@ func UpdateJobWork(db *sql.DB, j models.JobWork) (bool, error) {
 	}
 	n, err := res.RowsAffected()
 	return n > 0, err
+}
+func Job_and_search_loader_bambi(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	if strings.HasPrefix(filepath, "department") {
+
+		for index, record := range records {
+			Company_id, err := strconv.Atoi(record["company_id"])
+			if err != nil {
+				fmt.Println("record at index department not saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			Department_id, err := strconv.Atoi(record["department_id"])
+			if err != nil {
+				fmt.Println("record at index department not saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+
+			Department := models.CompanyBambiDepartment{
+				CompanyId:       Company_id,
+				Department_name: record["department_name"],
+				DepartmentId:    Department_id,
+			}
+			_, err = AddNewRow(Department, "DEPARTMENT_BAMBI")
+			if err != nil {
+				fmt.Println("department insert failed", index, ErrorHandler(err, "yep"))
+			}
+		}
+		return nil
+	}
+
+	uuid, ts, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	InsertTime := timestamp
+	DuplicateCount := 0
+	FailedCount := 0
+	SearchWorkflow := models.SearchWorkflowBambi{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_BAMBI")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	for index, record := range records {
+		Company_id, err := strconv.Atoi(record["company_id"])
+		if err != nil {
+			fmt.Println("record at index: bad company_id", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
+			continue
+		}
+		company_id, err := GetCompanyBambiID(db, Company_id)
+		if err != nil {
+			fmt.Println(err, "error could not find companyId", index)
+			FailedCount++
+			continue
+		}
+
+		value, err := JobLoaderBambiPartial(record, company_id)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
+			continue
+		}
+
+		skipped, err := AddNewRow(value, "JOBS_BAMBI")
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			FailedCount++
+			continue
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_BAMBI{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_BAMBI")
+		if err != nil {
+			fmt.Println("search term insert failed", value.JobID, ErrorHandler(err, "yep"))
+		}
+	}
+	Saved := len(records) - FailedCount
+	UpdateSearchWorkflowCounts(uuid, Saved, Saved-DuplicateCount, "JOBS_BAMBI")
+
+	return nil
+}
+func UpdateJobBambi(db *sql.DB, j models.Job_Bambi) (bool, error) {
+	res, err := db.Exec(`
+    INSERT INTO jobs_bambi (
+        job_id, title, company_id, departmentid, company_name, job_url,
+        api_endpoint, location, isremote, compensation, dateposted, postedon
+    ) VALUES (
+        $1, $2, $3::bigint, NULLIF($4, '')::bigint, $5, $6,
+        NULLIF($7, ''), NULLIF($8, ''), NULLIF($9, ''), NULLIF($10, ''),
+        NULLIF($11, '')::timestamptz, NULLIF($12, '')
+    )
+    ON CONFLICT (job_id) DO UPDATE SET
+        title        = EXCLUDED.title,
+        job_url      = EXCLUDED.job_url,
+        departmentid = COALESCE(EXCLUDED.departmentid, jobs_bambi.departmentid),
+        api_endpoint = COALESCE(EXCLUDED.api_endpoint, jobs_bambi.api_endpoint),
+        location     = COALESCE(EXCLUDED.location, jobs_bambi.location),
+        isremote     = COALESCE(EXCLUDED.isremote, jobs_bambi.isremote),
+        compensation = EXCLUDED.compensation,
+        dateposted   = EXCLUDED.dateposted,
+        postedon     = EXCLUDED.postedon`,
+		j.JobID, j.Title, j.CompanyID, j.DepartmentID, j.CompanyName, j.JobURL,
+		j.APIEndpoint, j.Location, j.IsRemote, j.Compensation, j.DatePosted, j.PostedOn,
+	)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+func JobLoaderBambiFull(record map[string]string, companyid int) (models.Job_Bambi, error) {
+	if record["job_id"] == "" || record["title"] == "" {
+		return models.Job_Bambi{}, fmt.Errorf("full record missing job_id/title: %v", record)
+	}
+	if record["job_url"] == "" {
+		return models.Job_Bambi{}, fmt.Errorf("full record missing job_url: %v", record)
+	}
+
+	return models.Job_Bambi{
+		JobID:             record["job_id"],
+		Title:             record["title"],
+		CompanyID:         strconv.Itoa(companyid),
+		DepartmentID:      record["departmentid"],
+		CompanyName:       record["company_name"],
+		JobURL:            record["job_url"],
+		APIEndpoint:       record["api_endpoint"],
+		Location:          record["location"],
+		IsRemote:          record["isremote"],
+		Compensation:      record["compensation"],
+		DatePosted:        record["dateposted"],
+		PostedOn:          record["postedon"],
+		Description:       record["description"],
+		EmploymentStatus:  record["employment_status"],
+		MinimumExperience: record["minimum_experience"],
+	}, nil
+}
+
+func LoadFullJobsBambi(records []map[string]string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	for index, record := range records {
+		Company_id, err := strconv.Atoi(record["company_id"])
+		if err != nil {
+			fmt.Println("record at index: bad company_id", index, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		companyID, err := GetCompanyBambiID(db, Company_id)
+		if err != nil {
+			fmt.Println("could not find companyId", index, err)
+			continue
+		}
+
+		value, err := JobLoaderBambiFull(record, companyID) // record -> model
+		if err != nil {
+			fmt.Println("record not updated at index", index, err)
+			continue
+		}
+
+		updated, err := UpdateJobBambi(db, value) // model -> upsert
+		if err != nil {
+			return fmt.Errorf("update job %s: %w", value.JobID, err)
+		}
+		if !updated {
+			fmt.Println("job not updated", value.JobID)
+		}
+	}
+	return nil
+}
+
+func JobLoaderWorkabPartial(record map[string]string) (models.Job_Workab, error) {
+	if record["job_id"] == "" || record["title"] == "" {
+		return models.Job_Workab{}, fmt.Errorf("partial record missing job_id/title: %v", record)
+	}
+	if record["job_url"] == "" {
+		return models.Job_Workab{}, fmt.Errorf("partial record missing job_url: %v", record)
+	}
+	if record["company_id"] == "" || record["company_name"] == "" {
+		return models.Job_Workab{}, fmt.Errorf("partial record missing company_id/company_name: %v", record)
+	}
+
+	var published *time.Time
+	if p := record["published"]; p != "" {
+		t, err := time.Parse(time.RFC3339, p)
+		if err != nil {
+			return models.Job_Workab{}, fmt.Errorf("bad published %q for job %s: %w", p, record["job_id"], err)
+		}
+		published = &t
+	}
+
+	var department *string
+	if d := record["department"]; d != "" {
+		if !json.Valid([]byte(d)) {
+			return models.Job_Workab{}, fmt.Errorf("bad department json %q for job %s", d, record["job_id"])
+		}
+		department = &d
+	}
+
+	return models.Job_Workab{
+		JobID:       record["job_id"],
+		Title:       record["title"],
+		CompanyID:   record["company_id"],
+		CompanyName: record["company_name"],
+		JobURL:      record["job_url"],
+		APIEndpoint: record["api_endpoint"],
+		Location:    record["location"],
+		Department:  department,
+		Workplace:   record["workplace"],
+		Published:   published,
+		// Compensation, Description, Requirements, Benefits stay empty
+	}, nil
+}
+
+func JobLoaderWorkabFull(record map[string]string) (models.Job_Workab, error) {
+	value, err := JobLoaderWorkabPartial(record) // same checks + published/department parsing
+	if err != nil {
+		return models.Job_Workab{}, err
+	}
+
+	value.Compensation = record["compensation"]
+
+	return value, nil
+}
+
+func UpdateJobWorkab(db *sql.DB, j models.Job_Workab) (bool, error) {
+	res, err := db.Exec(`
+    INSERT INTO jobs_workab (
+        job_id, title, company_id, company_name, job_url, api_endpoint,
+        location, department, compensation, workplace, published
+    ) VALUES (
+        $1, $2, $3, $4, $5, NULLIF($6, ''),
+        NULLIF($7, ''), $8::jsonb, NULLIF($9, ''), NULLIF($10, ''), $11
+    )
+    ON CONFLICT (job_id) DO UPDATE SET
+        title        = EXCLUDED.title,
+        job_url      = EXCLUDED.job_url,
+        api_endpoint = COALESCE(EXCLUDED.api_endpoint, jobs_workab.api_endpoint),
+        location     = COALESCE(EXCLUDED.location, jobs_workab.location),
+        department   = COALESCE(EXCLUDED.department, jobs_workab.department),
+        workplace    = COALESCE(EXCLUDED.workplace, jobs_workab.workplace),
+        published    = COALESCE(EXCLUDED.published, jobs_workab.published),
+        compensation = EXCLUDED.compensation`,
+		j.JobID, j.Title, j.CompanyID, j.CompanyName, j.JobURL, j.APIEndpoint,
+		j.Location, j.Department, j.Compensation, j.Workplace, j.Published,
+	)
+	if err != nil {
+		return false, err
+	}
+	n, err := res.RowsAffected()
+	return n > 0, err
+}
+
+func LoadFullJobsWorkab(records []map[string]string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	for index, record := range records {
+
+		value, err := JobLoaderWorkabFull(record) // record -> model
+		if err != nil {
+			fmt.Println("record not updated at index", index, err)
+			continue
+		}
+
+		updated, err := UpdateJobWorkab(db, value) // model -> upsert
+		if err != nil {
+			fmt.Println("update failed for job", value.JobID, ErrorHandler(err, "you brought this on yourself"))
+			continue
+		}
+		if !updated {
+			fmt.Println("job not updated", value.JobID)
+		}
+	}
+	return nil
+}
+func Job_and_search_loader_workab(records []map[string]string, tablename string, filepath string) error {
+
+	db, err := ConnectDb() //awful
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, ts, err := parseFilename(filepath)
+
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	InsertTime := timestamp
+	DuplicateCount := 0
+	FailedCount := 0
+	SearchWorkflow := models.SearchWorkflowWorkab{
+		Workflow_id:      uuid,
+		Run_at:           InsertTime,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_WORKAB")
+	if err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	for index, record := range records {
+
+		value, err := JobLoaderWorkabPartial(record)
+		if err != nil {
+			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
+			continue
+		}
+
+		skipped, err := AddNewRow(value, "JOBS_WORKAB")
+
+		if err != nil {
+			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			FailedCount++
+			continue
+		}
+		DuplicateCount += skipped
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_WORKAB{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  skipped == 0,
+		}
+		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORKAB")
+		if err != nil {
+			fmt.Println("search term insert failed", value.JobID, ErrorHandler(err, "yep"))
+		}
+	}
+	Saved := len(records) - FailedCount
+	UpdateSearchWorkflowCounts(uuid, Saved, Saved-DuplicateCount, "JOBS_WORKAB")
+
+	return nil
 }
 
 func Job_and_search_loader_lev(records []map[string]string, tablename string, filepath string) error {
