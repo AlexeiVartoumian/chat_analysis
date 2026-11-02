@@ -11,8 +11,11 @@ while IFS= read -r file; do
         ./start insert $file JOB_DESCRIPTIONS_WORKAB
         ./start insert $file JOB_LIFECYCLE_WORKAB
     
-    elif [ "$type" = "PROCESSEDJOBS" ]; then
+    elif [ "$type" = "COMPANIES" ]; then
         ./start insert $file COMPANY_WORKAB
+        
+    elif [ "$type" = "PROCESSEDJOBS" ]; then
+        #./start insert $file COMPANY_WORKAB
         ./start insert $file JOBS_WORKAB_PARTIAL
         ./start insert $file JOB_LIFECYCLE_WORKAB
     
