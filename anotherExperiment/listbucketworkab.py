@@ -105,7 +105,7 @@ def extract_unique(key: str) -> str:
         raise ValueError(f"no UUID found in filename: {key}")
     return match.group(0)
 
-with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
+with open("keys_workab.json" , "w" , encoding="utf-8" ) as f:
     output = defaultdict(list)
    
     ##need this since this guarantee the order
