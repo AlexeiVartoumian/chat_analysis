@@ -221,6 +221,16 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "JOB_LIFECYCLE_BAMBI" && len(records) > 0 {
+		Jobs_LifecycleBambiLoader(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_WORKAB" && len(records) > 0 {
+		Jobs_LifecycleWorkabLoader(records, tablename, filepath)
+		return nil
+	}
+
 	if tablename == "JOB_LIFECYCLE_UPDATE" && len(records) > 0 {
 		Jobs_LifeCycleLiveRolesUpdater(records, filepath)
 		return nil
@@ -2402,6 +2412,62 @@ func Jobs_LifecycleBambiLoader(records []map[string]string, tablename string, fi
 
 }
 
+func Jobs_LifecycleWorkabLoader(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn gone wrong")
+	}
+	defer db.Close()
+
+	_, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	if strings.HasPrefix(filepath, "processedJobs") {
+		//TODO HANDLE DUPALICATES TO UPDATE LAST SEEN AND ALSO JOBSTATE
+		for index, record := range records {
+
+			value, err := Jobs_LifecycleWorkabmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			_, err = db.Exec(`
+				INSERT INTO JOB_LIFECYCLE_WORKAB
+					(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+				VALUES ($1, $2, $3, $4, $5)
+				ON CONFLICT (job_id) DO UPDATE
+				SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+
+		}
+	} else if strings.HasPrefix(filepath, "deadlinks") {
+		//DEADLINKS
+		for index, record := range records {
+
+			_, err = db.Exec("UPDATE JOB_LIFECYCLE_WORKAB SET first_seen_closed_at = $1, job_state = $2 WHERE job_id = $3", timestamp, false, record["job_id"])
+			if err != nil {
+				fmt.Println("deadlink update failed at index", index, record["job_id"], err)
+			}
+		}
+	} else if strings.HasPrefix(filepath, "output") {
+		//OUTPUT - nothing to do for lifecycle yet
+		fmt.Println("output file, skipping lifecycle:", filepath)
+	}
+
+	return nil
+
+}
 func Jobs_LifecycleDeedLoader(records []map[string]string, tablename string, filepath string) {
 
 	if strings.HasPrefix(filepath, "processedJobsInd") {
@@ -2606,6 +2672,25 @@ func Jobs_LifecycleBambimodel(record map[string]string, timestamp time.Time) (mo
 
 	nextScan := timestamp.AddDate(0, 0, 7)
 	Job_lifeCycle := models.JobLifeCycleBambi{
+		JobId:            record["job_id"],
+		Job_state:        parseBoolOrDefault("", true),
+		FirstSeenAt:      timestamp,
+		LastSeenListedAt: timestamp,
+		NextScanAt:       &nextScan,
+	}
+
+	return Job_lifeCycle, nil
+
+}
+
+func Jobs_LifecycleWorkabmodel(record map[string]string, timestamp time.Time) (models.JobLifeCycleWorkab, error) {
+
+	if record["job_id"] == "" {
+		return models.JobLifeCycleWorkab{}, fmt.Errorf("missing job_id in %v", record)
+	}
+
+	nextScan := timestamp.AddDate(0, 0, 7)
+	Job_lifeCycle := models.JobLifeCycleWorkab{
 		JobId:            record["job_id"],
 		Job_state:        parseBoolOrDefault("", true),
 		FirstSeenAt:      timestamp,
