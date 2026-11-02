@@ -3165,8 +3165,8 @@ func Company_Workab(records []map[string]string, tablename string) {
 		}
 
 		query := fmt.Sprintf(`
-			INSERT INTO %s (company_id, company_name, company_url , job_board_public_url)
-			VALUES ($1, $2, $3)
+			INSERT INTO %s (company_id, company_name, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4)
 			ON CONFLICT DO NOTHING;`, tablename)
 
 		res, err := db.Exec(query, value.CompanyId, value.CompanyName, value.CompanyUrl, value.JobBoardPublicUrl)
