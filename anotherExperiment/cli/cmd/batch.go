@@ -1670,17 +1670,12 @@ func InsertJobBambiPartial(db *sql.DB, job models.Job_Bambi) error {
 		return fmt.Errorf("invalid company_id %q for job %s: %w", job.CompanyID, job.JobID, err)
 	}
 
-	deptID, err := nullInt(job.DepartmentID)
-	if err != nil {
-		return fmt.Errorf("invalid departmentid %q for job %s: %w", job.DepartmentID, job.JobID, err)
-	}
-
 	_, err = db.Exec(`
 		INSERT INTO jobs_bambi
 			(job_id, title, company_id, departmentid, company_name, job_url, api_endpoint, location, isremote)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 		ON CONFLICT (job_id) DO NOTHING;`,
-		job.JobID, job.Title, companyID, deptID, job.CompanyName, job.JobURL,
+		job.JobID, job.Title, companyID, job.DepartmentID, job.CompanyName, job.JobURL,
 		nullIfEmpty(job.APIEndpoint), nullIfEmpty(job.Location), nullIfEmpty(job.IsRemote))
 	return err
 }
@@ -3720,28 +3715,23 @@ func UpdateJobBambi(db *sql.DB, j models.Job_Bambi) (bool, error) {
 	n, err := res.RowsAffected()
 	return n > 0, err
 }
+
 func JobLoaderBambiFull(record map[string]string, companyid int) (models.Job_Bambi, error) {
-	if record["job_id"] == "" || record["title"] == "" {
-		return models.Job_Bambi{}, fmt.Errorf("full record missing job_id/title: %v", record)
-	}
-	if record["job_url"] == "" {
-		return models.Job_Bambi{}, fmt.Errorf("full record missing job_url: %v", record)
+	value, err := JobLoaderBambiPartial(record, companyid)
+	if err != nil {
+		return models.Job_Bambi{}, err
 	}
 
-	return models.Job_Bambi{
-		JobID:        record["job_id"],
-		Title:        record["title"],
-		CompanyID:    strconv.Itoa(companyid),
-		DepartmentID: record["departmentid"],
-		CompanyName:  record["company_name"],
-		JobURL:       record["job_url"],
-		APIEndpoint:  record["api_endpoint"],
-		Location:     record["location"],
-		IsRemote:     record["isremote"],
-		Compensation: record["compensation"],
-		DatePosted:   record["dateposted"],
-		PostedOn:     record["postedon"],
-	}, nil
+	datePosted, err := nullableTime(record["dateposted"])
+	if err != nil {
+		return models.Job_Bambi{}, fmt.Errorf("bad dateposted for job %s: %w", record["job_id"], err)
+	}
+
+	value.Compensation = record["compensation"]
+	value.DatePosted = datePosted
+	value.PostedOn = record["postedon"]
+
+	return value, nil
 }
 
 func LoadFullJobsBambi(records []map[string]string) error {
