@@ -181,6 +181,8 @@ resource "aws_lambda_function" "go_bambiboot" {
     role =  var.iam_role_arn_spoke
     handler = "bootstrap"
     runtime = "provided.al2023"
+        architectures = ["arm64"]
+
     timeout     = 900
     environment {
         variables = {
@@ -205,6 +207,8 @@ resource "aws_lambda_function" "go_workaworkaboot" {
     role =  var.iam_role_arn_spoke
     handler = "bootstrap"
     runtime = "provided.al2023"
+    architectures = ["arm64"]
+
     timeout     = 900
     environment {
         variables = {
