@@ -881,10 +881,15 @@ func Jobs_DescriptionWorkLoader(record map[string]string) (models.JobDescription
 func Jobs_DescriptionBambiLoader(record map[string]string) (models.JobDescription_Bambi, error) {
 
 	job_id := record["job_id"]
+	if job_id == "" {
+		return models.JobDescription_Bambi{}, fmt.Errorf("missing job_id in %v", record)
+	}
 
 	Job_Description := models.JobDescription_Bambi{
-		JobId:          job_id,
-		JobDescription: record["description"],
+		JobId:             job_id,
+		Description:       record["description"],
+		EmploymentStatus:  record["employment_status"],
+		MinimumExperience: record["minimum_experience"],
 	}
 	return Job_Description, nil
 }
@@ -1611,7 +1616,6 @@ func JobLoaderPartial(record map[string]string, companyid int) (models.JobWork, 
 		// everything else stays NULL / zero
 	}, nil
 }
-
 func JobLoaderBambiPartial(record map[string]string, companyid int) (models.Job_Bambi, error) {
 	if record["job_id"] == "" || record["title"] == "" {
 		return models.Job_Bambi{}, fmt.Errorf("partial record missing job_id/title: %v", record)
@@ -1625,11 +1629,16 @@ func JobLoaderBambiPartial(record map[string]string, companyid int) (models.Job_
 		companyID = strconv.Itoa(companyid)
 	}
 
+	deptID, err := nullableInt64(record["departmentid"])
+	if err != nil {
+		return models.Job_Bambi{}, fmt.Errorf("bad departmentid for job %s: %w", record["job_id"], err)
+	}
+
 	return models.Job_Bambi{
 		JobID:        record["job_id"],
 		Title:        record["title"],
 		CompanyID:    companyID,
-		DepartmentID: record["departmentid"],
+		DepartmentID: deptID,
 		CompanyName:  record["company_name"],
 		JobURL:       record["job_url"],
 		APIEndpoint:  record["api_endpoint"],
@@ -1637,7 +1646,6 @@ func JobLoaderBambiPartial(record map[string]string, companyid int) (models.Job_
 		IsRemote:     record["isremote"],
 	}, nil
 }
-
 func nullIfEmpty(s string) any {
 	if s == "" {
 		return nil
@@ -2360,6 +2368,7 @@ func Jobs_LifecycleBambiLoader(records []map[string]string, tablename string, fi
 	if err != nil {
 		return ErrorHandler(err, "db conn gone wrong")
 	}
+
 	defer db.Close()
 
 	_, ts, err := parseFilename(filepath)
@@ -3550,6 +3559,29 @@ func UpdateJobWork(db *sql.DB, j models.JobWork) (bool, error) {
 	}
 	n, err := res.RowsAffected()
 	return n > 0, err
+}
+
+func nullableInt64(s string) (*int64, error) {
+	if s == "" {
+		return nil, nil
+	}
+	n, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return &n, nil
+}
+
+func nullableTime(s string) (*time.Time, error) {
+	if s == "" {
+		return nil, nil
+	}
+	for _, layout := range []string{time.RFC3339, "2006-01-02 15:04:05", "2006-01-02"} {
+		if t, err := time.Parse(layout, s); err == nil {
+			return &t, nil
+		}
+	}
+	return nil, fmt.Errorf("unrecognised date %q", s)
 }
 func Job_and_search_loader_bambi(records []map[string]string, tablename string, filepath string) error {
 

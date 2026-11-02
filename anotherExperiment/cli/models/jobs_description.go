@@ -20,8 +20,10 @@ type JobDescription_Work struct {
 }
 
 type JobDescription_Bambi struct {
-	JobId          string `json:"job_id,omitempty" db:"job_id"`
-	JobDescription string `json:"description,omitempty" db:"description"`
+	JobId             string `json:"job_id,omitempty" db:"job_id"`
+	Description       string `json:"description,omitempty" db:"description"`
+	EmploymentStatus  string `json:"employment_status,omitempty" db:"employment_status"`
+	MinimumExperience string `json:"minimum_experience,omitempty" db:"minimum_experience"`
 }
 
 type JobDescription_Workab struct {
