@@ -1169,7 +1169,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS DEPARTMENT_BAMBI (
                 department_id        BIGINT       PRIMARY KEY,
-                department_name      TEXT         NOT NULL,
+                department_name      TEXT         ,
                 parent_id            BIGINT       NULL,
                 company_id           BIGINT       NOT NULL,
 

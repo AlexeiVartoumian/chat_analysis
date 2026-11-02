@@ -10,11 +10,13 @@ while IFS= read -r file; do
         ./start insert $file JOB_DESCRIPTIONS_BAMBI
         #./start insert $file JOB_LIFECYCLE_WORK
     
-    elif [ "$type" = "PROCESSEDJOBS" ]; then
+    elif [[ "$type" == PROCESSEDJOBS* ]]; then
         ./start insert $file COMPANY_BAMBI
         ./start insert $file JOBS_BAMBI_PARTIAL
         ./start insert $file JOB_LIFECYCLE_BAMBI
     
+    elif [ "$type" = "DEPARTMENTS" ]; then
+        ./start insert $file JOBS_BAMBI_PARTIAL
     elif [ "$type" = "DEADLINKS" ]; then
         ./start insert $file JOB_LIFECYCLE_BAMBI
     fi
