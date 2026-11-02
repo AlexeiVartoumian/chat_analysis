@@ -149,17 +149,18 @@ with open("keys_bambi.json" , "w" , encoding="utf-8" ) as f:
         timeline_key = datetime.strftime(timeline_key ,date_format)
 
         new_keys.append(document) 
-        if  document.startswith("processed"):
+       
+        if  document.startswith("processed"): 
+        
             
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique] = document
+            output[timeline_key][0][unique][0] = document
 
-        if  document.startswith("department"):
-                    
-                    #output[timeline_key][0][records[unique][0]] = document
-                    forgive(unique ,output[timeline_key][0])
-                    output[timeline_key][0][unique][1] = document
+        if  document.startswith("department"):           
+            #output[timeline_key][0][records[unique][0]] = document
+            forgive(unique ,output[timeline_key][0])
+            output[timeline_key][0][unique][1] = document
 
         if document.startswith("deadlinks"):
                     
