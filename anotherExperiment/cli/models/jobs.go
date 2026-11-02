@@ -95,21 +95,18 @@ type JobWork struct {
 	HiringOrganization      *string      `json:"hiringOrganization,omitempty" db:"hiringOrganization"`
 }
 type Job_Bambi struct {
-	JobID             string `json:"job_id,omitempty" db:"job_id"` // composite <posting-id>-<companyId>
-	CompanyID         string `json:"company_id,omitempty" db:"company_id"`
-	CompanyName       string `json:"company_name,omitempty" db:"company_name"`
-	APIEndpoint       string `json:"api_endpoint,omitempty" db:"api_endpoint"`
-	IsRemote          string `json:"isremote,omitempty" db:"isremote"`
-	Title             string `json:"title,omitempty" db:"title"`
-	DepartmentID      string `json:"departmentid,omitempty" db:"departmentid"`
-	JobURL            string `json:"job_url,omitempty" db:"job_url"`
-	Location          string `json:"location,omitempty" db:"location"`
-	Compensation      string `json:"compensation,omitempty" db:"compensation"`
-	DatePosted        string `json:"dateposted,omitempty" db:"dateposted"`
-	PostedOn          string `json:"postedon,omitempty" db:"postedon"`
-	Description       string `json:"description,omitempty" db:"-"`
-	EmploymentStatus  string `json:"employment_status,omitempty" db:"-"`
-	MinimumExperience string `json:"minimum_experience,omitempty" db:"-"`
+	JobID        string `json:"job_id,omitempty" db:"job_id"` // composite <posting-id>-<companyId>
+	CompanyID    string `json:"company_id,omitempty" db:"company_id"`
+	CompanyName  string `json:"company_name,omitempty" db:"company_name"`
+	APIEndpoint  string `json:"api_endpoint,omitempty" db:"api_endpoint"`
+	IsRemote     string `json:"isremote,omitempty" db:"isremote"`
+	Title        string `json:"title,omitempty" db:"title"`
+	DepartmentID string `json:"departmentid,omitempty" db:"departmentid"`
+	JobURL       string `json:"job_url,omitempty" db:"job_url"`
+	Location     string `json:"location,omitempty" db:"location"`
+	Compensation string `json:"compensation,omitempty" db:"compensation"`
+	DatePosted   string `json:"dateposted,omitempty" db:"dateposted"`
+	PostedOn     string `json:"postedon,omitempty" db:"postedon"`
 }
 
 type Job_Workab struct {

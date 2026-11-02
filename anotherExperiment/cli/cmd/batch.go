@@ -3697,21 +3697,18 @@ func JobLoaderBambiFull(record map[string]string, companyid int) (models.Job_Bam
 	}
 
 	return models.Job_Bambi{
-		JobID:             record["job_id"],
-		Title:             record["title"],
-		CompanyID:         strconv.Itoa(companyid),
-		DepartmentID:      record["departmentid"],
-		CompanyName:       record["company_name"],
-		JobURL:            record["job_url"],
-		APIEndpoint:       record["api_endpoint"],
-		Location:          record["location"],
-		IsRemote:          record["isremote"],
-		Compensation:      record["compensation"],
-		DatePosted:        record["dateposted"],
-		PostedOn:          record["postedon"],
-		Description:       record["description"],
-		EmploymentStatus:  record["employment_status"],
-		MinimumExperience: record["minimum_experience"],
+		JobID:        record["job_id"],
+		Title:        record["title"],
+		CompanyID:    strconv.Itoa(companyid),
+		DepartmentID: record["departmentid"],
+		CompanyName:  record["company_name"],
+		JobURL:       record["job_url"],
+		APIEndpoint:  record["api_endpoint"],
+		Location:     record["location"],
+		IsRemote:     record["isremote"],
+		Compensation: record["compensation"],
+		DatePosted:   record["dateposted"],
+		PostedOn:     record["postedon"],
 	}, nil
 }
 
