@@ -3578,6 +3578,28 @@ func nullableTime(s string) (*time.Time, error) {
 	}
 	return nil, fmt.Errorf("unrecognised date %q", s)
 }
+
+func UpsertDepartmentBambi(db *sql.DB, departmentID int, companyID int, name string, parentID *int64) error {
+	_, err := db.Exec(`
+		INSERT INTO department_bambi (department_id, company_id, department_name, parent_id)
+		VALUES ($1, $2, NULLIF($3, ''), $4)
+		ON CONFLICT (department_id) DO UPDATE SET
+			company_id      = EXCLUDED.company_id,
+			department_name = COALESCE(EXCLUDED.department_name, department_bambi.department_name),
+			parent_id       = COALESCE(EXCLUDED.parent_id, department_bambi.parent_id);`,
+		departmentID, companyID, name, parentID)
+	return err
+}
+
+func EnsureDepartmentBambi(db *sql.DB, departmentID int64, companyID int) error {
+	_, err := db.Exec(`
+		INSERT INTO department_bambi (department_id, company_id)
+		VALUES ($1, $2)
+		ON CONFLICT (department_id) DO NOTHING;`,
+		departmentID, companyID)
+	return err
+}
+
 func Job_and_search_loader_bambi(records []map[string]string, tablename string, filepath string) error {
 
 	db, err := ConnectDb() //awful
@@ -3599,15 +3621,15 @@ func Job_and_search_loader_bambi(records []map[string]string, tablename string, 
 				fmt.Println("record at index department not saved", index, ErrorHandler(err, "you brought this on yourself"))
 				continue
 			}
-
-			Department := models.CompanyBambiDepartment{
-				CompanyId:       Company_id,
-				Department_name: record["department_name"],
-				DepartmentId:    Department_id,
-			}
-			_, err = AddNewRow(Department, "DEPARTMENT_BAMBI")
+			Parent_id, err := nullableInt64(record["parent_id"])
 			if err != nil {
-				fmt.Println("department insert failed", index, ErrorHandler(err, "yep"))
+				fmt.Println("bad parent_id, storing NULL at index", index, err)
+				Parent_id = nil
+			}
+
+			err = UpsertDepartmentBambi(db, Department_id, Company_id, record["department_name"], Parent_id)
+			if err != nil {
+				fmt.Println("department upsert failed", index, ErrorHandler(err, "yep"))
 			}
 		}
 		return nil
@@ -3660,6 +3682,16 @@ func Job_and_search_loader_bambi(records []map[string]string, tablename string, 
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
 			FailedCount++
 			continue
+		}
+
+		// department id + company id only, so the job FK is satisfied
+		if value.DepartmentID != nil {
+			err = EnsureDepartmentBambi(db, *value.DepartmentID, Company_id)
+			if err != nil {
+				fmt.Println("department ensure failed", value.JobID, ErrorHandler(err, "yep"))
+				FailedCount++
+				continue
+			}
 		}
 
 		skipped, err := AddNewRow(value, "JOBS_BAMBI")
