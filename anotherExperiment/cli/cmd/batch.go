@@ -1044,6 +1044,33 @@ func Jobs_MetadataLoaderFill(records []map[string]string) {
 					continue
 				}
 			}
+			if strings.Contains(value.CompanyApplyUrl, "workable") {
+				if _, err := db.Exec(
+					`INSERT INTO WORKAB_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
+					value.JobId, value.CompanyApplyUrl,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
+			if strings.Contains(value.CompanyApplyUrl, "bamboo") {
+				if _, err := db.Exec(
+					`INSERT INTO BAMBI_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
+					value.JobId, value.CompanyApplyUrl,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
+			if strings.Contains(value.CompanyApplyUrl, "jobs.smartrecruiters") {
+				if _, err := db.Exec(
+					`INSERT INTO SMART_LINK (job_id_link ,job_url) VALUES ($1, $2) ON CONFLICT (job_id_link) DO NOTHING`,
+					value.JobId, value.CompanyApplyUrl,
+				); err != nil {
+					fmt.Println("Failed to insert redirect_deed for job_id", value.JobId, ErrorHandler(err, "yep"))
+					continue
+				}
+			}
 		}
 	}
 }
