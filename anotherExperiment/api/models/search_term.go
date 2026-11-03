@@ -53,6 +53,7 @@ type JOB_SEARCH_TERM_ORAC struct {
 type JOB_SEARCH_TERM_SMART struct {
 	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type File_key struct {
