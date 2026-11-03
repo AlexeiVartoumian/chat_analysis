@@ -64,6 +64,9 @@ elif first.get("job_id") and first.get("url"):
     # new links: skip the queue, hand straight to the Lambda
     invoke_lambda(items)
 
+elif first.get("url") and first.get("company"): 
+    invoke_lambda(items)
+    
 elif first.get("job_id") and first.get("api_endpoint"):
     # detail: batch of job_id + api_endpoint rows, via S3 + SQS
     to_sqs({
