@@ -357,6 +357,7 @@ resource "aws_lambda_function" "seek_smart_posts" {
         }
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
+    memory_size = 356
 }
 
 resource "aws_lambda_function" "seek_bambi_posts" {
