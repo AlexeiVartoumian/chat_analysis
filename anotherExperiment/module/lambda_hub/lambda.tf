@@ -351,7 +351,7 @@ resource "aws_lambda_function" "seek_smart_posts" {
     environment {
         variables = {
             RoleArn = var.aws_iam_role_main_arn
-            output_bucket= var.s3_output_bucket_smart_store_name
+            s3_output_bucket_name= var.s3_output_bucket_smart_store_name
             //sqs_queue_id = var.sqs_coordinator_smart_sqs_queue_id
             //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
         }
