@@ -467,11 +467,25 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_ASH (workflow_id) ON DELETE CASCADE
             );                    
         """)
-        
+    
         cur.execute("""
             CREATE TABLE IF NOT EXISTS FILE_KEYS_ASH (
                 file_name            VARCHAR(256) PRIMARY KEY
             );
+        """)
+
+        cur.execute("""
+            CREATE TABLE ASH_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           -- lowercase slug, e.g. 'red-gate'
+                example_id   text,                       -- original casing
+                careers_url  text,                       -- sent downstream as company_url
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
         """)
         #SELECT team_name , department_name , location_name , company_url , COMPANY_ASH.company_id from COMPANY_ASH , JOBS_ASH where JOBS_ASH.company_id = COMPANY_ASH.company_id;
         # cur.execute("""
