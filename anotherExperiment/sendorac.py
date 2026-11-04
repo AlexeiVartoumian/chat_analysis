@@ -71,6 +71,14 @@ elif first.get("job_id") and first.get("api_url"):
         "file_name": to_s3("detail"),
     }
 
+elif first.get("url") and first.get("company"): 
+    message = {
+        "workflow": "normal",
+        "workflow_id": workflow_id,
+        "company_apply_url": first["url"],
+        "company": first["company"],
+    }
+
 elif first.get("job_id") and first.get("url"):
     # normal: one new link, small enough for the message itself
     message = {
