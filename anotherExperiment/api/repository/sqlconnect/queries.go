@@ -1687,7 +1687,6 @@ func (s *PostgresStore) SendSmartCompanyQuery(first_run bool, number_accounts in
 
 		var res models.JOB_SEARCH_TERM_SMART
 
-		var jobId int
 		err := row.Scan(&res.CompanyName, &res.Workflow_id)
 		if err == sql.ErrNoRows {
 			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
@@ -1699,7 +1698,7 @@ func (s *PostgresStore) SendSmartCompanyQuery(first_run bool, number_accounts in
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE SMART_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, jobId); err != nil {
+				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
