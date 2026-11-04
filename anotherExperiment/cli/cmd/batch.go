@@ -625,7 +625,7 @@ func Update_jobs_ash(records []map[string]string) {
 	}
 
 }
-func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) {
+func Job_and_search_loader_green(records []map[string]string, tablename string, filepath string) error {
 
 	db, err := ConnectDb() //awful
 	if err != nil {
@@ -644,7 +644,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 		timestamp, err := parseTimestamp(meta_data[1])
 		if err != nil {
 			fmt.Println("bad timestamp parse")
-			return
+			return err
 		}
 		for _, record := range records {
 
@@ -663,7 +663,7 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 				db.Exec("UPDATE REDIRECT_DEED SET visited = TRUE WHERE job_id = $1", record["job_id"])
 			}
 		}
-		return
+		return nil
 	} else if strings.HasPrefix(filepath, "processedJobsGreen") {
 		meta_data = strings.Split(strings.Split(strings.Split(filepath, "processedJobsGreen-")[1], ".csv")[0], "_")
 	}
@@ -688,9 +688,10 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 	_, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_GREEN")
 	if err != nil {
 		fmt.Println("workflow insert failed:", err)
-		return
+		return err
 	}
-
+	FailedCount := 0
+	LinkFailedCount := 0
 	for index, record := range records {
 		value, err := JobLoaderGreen(record)
 		if err != nil {
@@ -708,7 +709,8 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 
 		if err != nil {
 			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
-			break
+			FailedCount++
+			continue
 		}
 		DuplicateCount += skipped
 		if value.OriginLinkID != nil {
@@ -732,9 +734,22 @@ func Job_and_search_loader_green(records []map[string]string, tablename string, 
 			Is_new_job:  skipped == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_GREEN")
+		if err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%d: %v", workflowid, value.JobID, err)
+		}
 
 	}
-	UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(workflowid, len(records), len(records)-DuplicateCount, tablename)
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", workflowid, FailedCount, LinkFailedCount)
+	}
+
+	if err := RecountSearchWorkflow(db, "search_workflow_green", "job_search_term_green", workflowid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+
+	return nil
 }
 
 func ModelLoader(tablename string, record map[string]string) (interface{}, error) {
@@ -3721,6 +3736,8 @@ func Job_and_search_loader_bambi(records []map[string]string, tablename string, 
 		return err
 	}
 
+	LinkFailedCount := 0
+
 	for index, record := range records {
 		Company_id, err := strconv.Atoi(record["company_id"])
 		if err != nil {
@@ -3768,11 +3785,17 @@ func Job_and_search_loader_bambi(records []map[string]string, tablename string, 
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_BAMBI")
 		if err != nil {
-			fmt.Println("search term insert failed", value.JobID, ErrorHandler(err, "yep"))
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
 		}
 	}
-	Saved := len(records) - FailedCount
-	UpdateSearchWorkflowCounts(uuid, Saved, Saved-DuplicateCount, "JOBS_BAMBI")
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
+
+	if err := RecountSearchWorkflow(db, "search_workflow_bambi", "job_search_term_bambi", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 
 	return nil
 }
@@ -3994,6 +4017,7 @@ func Job_and_search_loader_workab(records []map[string]string, tablename string,
 	InsertTime := timestamp
 	DuplicateCount := 0
 	FailedCount := 0
+	LinkFailedCount := 0
 	SearchWorkflow := models.SearchWorkflowWorkab{
 		Workflow_id:      uuid,
 		Run_at:           InsertTime,
@@ -4031,12 +4055,20 @@ func Job_and_search_loader_workab(records []map[string]string, tablename string,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORKAB")
 		if err != nil {
+			LinkFailedCount++
 			fmt.Println("search term insert failed", value.JobID, ErrorHandler(err, "yep"))
+
 		}
 	}
-	Saved := len(records) - FailedCount
-	UpdateSearchWorkflowCounts(uuid, Saved, Saved-DuplicateCount, "JOBS_WORKAB")
+	//Saved := len(records) - FailedCount
+	//UpdateSearchWorkflowCounts(uuid, Saved, Saved-DuplicateCount, "JOBS_WORKAB")
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
 
+	if err := RecountSearchWorkflow(db, "search_workflow_workab", "job_search_term_workab", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 	return nil
 }
 
@@ -4069,6 +4101,8 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 	}
 	InsertTime := timestamp
 	DuplicateCount := 0
+	FailedCount := 0
+	LinkFailedCount := 0
 	SearchWorkflow := models.SearchWorkflowLev{
 		Workflow_id:      uuid,
 		Run_at:           InsertTime,
@@ -4086,17 +4120,20 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 		company_id, err := GetCompanyLevID(db, record["companyName"])
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
+			FailedCount++
 			return err
 		}
 		err = insertJobTeamLev(db, record, company_id)
 
 		if err != nil {
 			fmt.Println("failed to insert Actual values from job category:", err)
+			FailedCount++
 			continue
 		}
 		value, err := JobLoaderLev(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
 			continue
 		}
 
@@ -4114,9 +4151,19 @@ func Job_and_search_loader_lev(records []map[string]string, tablename string, fi
 			Is_new_job:  skipped == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_LEV")
+		if err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
 	}
-	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
 
+	if err := RecountSearchWorkflow(db, "search_workflow_lev", "job_search_term_lev", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 	return nil
 }
 
@@ -4160,6 +4207,8 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
+	FailedCount := 0
+	LinkFailedCount := 0
 
 	for index, record := range records {
 
@@ -4183,6 +4232,7 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 		value, err := JobLoaderOrac(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
 			continue
 		}
 
@@ -4190,6 +4240,7 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 
 		if err != nil {
 			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
+			FailedCount++
 			break
 		}
 		DuplicateCount += skipped
@@ -4200,9 +4251,19 @@ func Job_and_search_loader_orac(records []map[string]string, tablename string, f
 			Is_new_job:  skipped == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_ORAC")
+		if err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
 	}
-	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
 
+	if err := RecountSearchWorkflow(db, "search_workflow_orac", "job_search_term_orac", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 	return nil
 }
 
