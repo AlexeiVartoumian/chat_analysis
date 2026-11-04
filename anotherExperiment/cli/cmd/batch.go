@@ -4307,6 +4307,8 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
+	FailedCount := 0
+	LinkFailedCount := 0
 
 	for index, record := range records {
 
@@ -4314,6 +4316,7 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 
 		if err != nil {
 			fmt.Println(err, "error could not find companyId")
+
 			return err
 		}
 
@@ -4331,6 +4334,7 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 		value, err := JobLoaderSmart(record, company_id)
 		if err != nil {
 			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			FailedCount++
 			continue
 		}
 
@@ -4338,7 +4342,8 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 
 		if err != nil {
 			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
-			break
+			FailedCount++
+			continue
 		}
 		DuplicateCount += skipped
 
@@ -4348,9 +4353,19 @@ func Job_and_search_loader_SMART(records []map[string]string, tablename string, 
 			Is_new_job:  skipped == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_SMART")
+		if err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
 	}
-	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	//UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, tablename)
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
 
+	if err := RecountSearchWorkflow(db, "search_workflow_smart", "job_search_term_smart", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 	return nil
 }
 
