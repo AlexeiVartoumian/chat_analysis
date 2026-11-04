@@ -39,6 +39,14 @@ output_store_standard_timelines = set()
 for page in pages :
     for obj in page.get('Contents' , []):
         key = obj['Key']
+
+        basename = os.path.basename(key)
+
+        #filter out processing files for api endpoints i.e these are just dumps 
+        if not key.endswith(".csv"):
+            continue
+        if basename.startswith("processedJobs-jd"):
+            continue
        
         if key.endswith(".csv"):
             timeline = "-".join( str(obj["LastModified"]).split(" ")).replace(":" , "-")

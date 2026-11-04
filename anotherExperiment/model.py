@@ -748,6 +748,11 @@ def create_tables(conn) -> None:
             """)
 
         cur.execute("""
+            CREATE INDEX job_search_term_work_workflow_idx
+                ON job_search_term_work (workflow_id);
+        """)
+    
+        cur.execute("""
                     CREATE TABLE IF NOT EXISTS WORK_LINK(
                         job_id_link          BIGINT          PRIMARY KEY,
                         job_url              VARCHAR(1024)   NOT NULL,
