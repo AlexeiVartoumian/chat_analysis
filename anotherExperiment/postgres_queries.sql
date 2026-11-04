@@ -339,3 +339,19 @@ JOIN JOB_LIFECYCLE ON JOB_LIFECYCLE.job_id = jst.job_id
    AND JOB_LIFECYCLE.first_seen_at = JOB_LIFECYCLE.last_seen_listed_at;
 
 where jst.workflow_id = best_run.workflow_id and is_new_job =TRUE;
+
+
+WITH runs AS (
+  SELECT w.workflow_id, w.run_at, w.total_jobs_found, w.net_new_jobs,
+         split_part(j.job_id, '-', 2)          AS company,
+         COUNT(j.job_id)                        AS linked,
+         COUNT(*) FILTER (WHERE j.is_new_job)   AS flagged_new
+  FROM search_workflow_bambi w
+  LEFT JOIN job_search_term_bambi j USING (workflow_id)
+  GROUP BY 1, 2, 3, 4, 5
+)
+SELECT r.*,
+       EXISTS (SELECT 1 FROM runs p
+               WHERE p.company = r.company AND p.run_at < r.run_at) AS company_seen_before
+FROM runs r
+ORDER BY r.run_at DESC;
