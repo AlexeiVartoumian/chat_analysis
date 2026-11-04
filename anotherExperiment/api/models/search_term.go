@@ -48,6 +48,7 @@ type JOB_SEARCH_TERM_LEV struct {
 type JOB_SEARCH_TERM_ORAC struct {
 	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type JOB_SEARCH_TERM_SMART struct {

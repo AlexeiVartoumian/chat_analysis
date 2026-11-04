@@ -1397,8 +1397,11 @@ func (s *PostgresStore) SendLevQuery(first_run bool, number_accounts int) ([]mod
 
 }
 
-func (s *PostgresStore) SendOracQuery(first_run bool, number_accounts int) ([]models.JOB_SEARCH_TERM_ORAC, error) {
+func (s *PostgresStore) SendOracQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_ORAC, error) {
 
+	if companyname != "" {
+		return s.SendOracCompanyQuery(first_run, number_accounts, companyname)
+	}
 	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
 	if first_run == true {
 		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM ORAC_LINK
@@ -1467,6 +1470,75 @@ func (s *PostgresStore) SendOracQuery(first_run bool, number_accounts int) ([]mo
 
 	}
 
+}
+
+func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_ORAC, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , api_url from SMART_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_ORAC
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_ORAC
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , api_url from SMART_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_ORAC
+
+		var res models.JOB_SEARCH_TERM_ORAC
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+
+		results = append(results, res)
+
+		return results, nil
+
+	}
 }
 
 func (s *PostgresStore) SeekOracLifecycle(firstrun bool) ([]models.OracLifecycle, error) {
