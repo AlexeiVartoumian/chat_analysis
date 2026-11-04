@@ -1492,7 +1492,7 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 			rows.Scan(&res.CompanyName, &res.Workflow_id)
 
 			if _, err := s.db.Exec(
-				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE ORAC_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
 			}
 
@@ -1504,12 +1504,12 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 		if number_accounts != -1 { // backoff file will send -1 since they already updated table
 
 			if _, err := s.db.Exec(
-				`UPDATE SMART_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				`UPDATE ORAC_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
 			}
 		}
 
-		query := "select company , api_url from SMART_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+		query := "select company , api_url from ORAC_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
 
 		row := s.db.QueryRow(query)
 
@@ -1528,7 +1528,7 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE ORAC_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
