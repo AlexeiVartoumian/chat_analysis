@@ -1476,7 +1476,7 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 
 	if first_run == true {
 
-		rows, err := s.db.Query(`select company , api_url from SMART_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+		rows, err := s.db.Query(`select company , careers_url from SMART_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
 
 		if err != nil {
 			return nil, utils.ErrorHandler(err, "yep yep but no")
@@ -1509,7 +1509,7 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 			}
 		}
 
-		query := "select company , api_url from ORAC_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+		query := "select company , careers_url from ORAC_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
 
 		row := s.db.QueryRow(query)
 
