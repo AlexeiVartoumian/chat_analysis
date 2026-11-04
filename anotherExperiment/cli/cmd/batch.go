@@ -2963,6 +2963,23 @@ func UpdateSearchWorkflowCounts(workflowid string, totalJobs int, netNew int, ta
 	return nil
 }
 
+func RecountSearchWorkflow(db *sql.DB, workflowTable, linkTable, workflowID string) error {
+	query := fmt.Sprintf(`
+		UPDATE %s w
+		SET total_jobs_found = s.total,
+		    net_new_jobs     = s.new
+		FROM (
+			SELECT COUNT(*)                           AS total,
+			       COUNT(*) FILTER (WHERE is_new_job) AS new
+			FROM %s
+			WHERE workflow_id = $1
+		) s
+		WHERE w.workflow_id = $1`, workflowTable, linkTable)
+
+	_, err := db.Exec(query, workflowID)
+	return err
+}
+
 func Team_loader_ash(records []map[string]string, filepath string) error {
 
 	meta_data := strings.Split(strings.Split(strings.Split(filepath, "departmentsAsh-")[1], ".csv")[0], "_")
@@ -3448,30 +3465,28 @@ func insertJobTeamSmart(db *sql.DB, departmentID string, department string, comp
 
 func Job_and_search_loader_work(records []map[string]string, tablename string, filepath string) error {
 
-	db, err := ConnectDb() //awful
+	db, err := ConnectDb()
 	if err != nil {
-		ErrorHandler(err, "db conn error")
+		return ErrorHandler(err, "db conn error") // was missing the return
 	}
 	defer db.Close()
 
-	uuid, time, err := parseFilename(filepath)
-
+	uuid, ts, err := parseFilename(filepath) // renamed from `time`, which shadows the time package
 	if err != nil {
 		fmt.Println("error:", err)
 		return err
 	}
 
-	timestamp, err := parseTimestamp(time)
+	timestamp, err := parseTimestamp(ts)
 	if err != nil {
 		fmt.Println("bad timestamp parse")
 		return err
 	}
 
-	InsertTime := timestamp
-	DuplicateCount := 0
+	// creates the row with zeros; a duplicate is fine (same file again, or another file from the same run)
 	SearchWorkflow := models.SearchWorkflowWork{
 		Workflow_id:      uuid,
-		Run_at:           InsertTime,
+		Run_at:           timestamp,
 		Total_jobs_found: 0,
 		Net_new_found:    0,
 	}
@@ -3481,42 +3496,58 @@ func Job_and_search_loader_work(records []map[string]string, tablename string, f
 		return err
 	}
 
+	FailedCount := 0
+	LinkFailedCount := 0
+
 	for index, record := range records {
 
 		company_id, err := GetCompanyWorkID(db, record["companyName"], record["wd_instance"])
 		if err != nil {
-			fmt.Println(err, "error could not find companyId")
-			return err
+			fmt.Println("could not find companyId at index", index, err)
+			FailedCount++
+			continue // was `return err`, which abandoned the rest of the file
 		}
-		err = insertJobCategory(db, record, company_id)
 
+		err = insertJobCategory(db, record, company_id)
 		if err != nil {
-			fmt.Println("failed to insert Actual values from job category:", err)
+			fmt.Println("failed to insert job category at index", index, err)
+			FailedCount++
 			continue
 		}
-		//value, err := JobLoaderWork(record, company_id)
+
 		value, err := JobLoaderPartial(record, company_id)
 		if err != nil {
-			fmt.Println("record at index: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
 			continue
 		}
 
-		skipped, err := AddNewRow(value, "JOBS_WORK")
-
+		jobExisted, err := AddNewRow(value, "JOBS_WORK")
 		if err != nil {
-			fmt.Println("Error occured ", ErrorHandler(err, "yep"))
-			break
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue // was `break`
 		}
-		DuplicateCount += skipped
 
 		JobSearchWorkflow := models.JOB_SEARCH_TERM_WORK{
 			Job_id:      value.JobID,
 			Workflow_id: uuid,
-			Is_new_job:  skipped == 0,
+			Is_new_job:  jobExisted == 0,
 		}
 		_, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_WORK")
+		if err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
 	}
-	UpdateSearchWorkflowCounts(uuid, len(records), len(records)-DuplicateCount, "JOBS_WORK")
+
+	if FailedCount > 0 || LinkFailedCount > 0 {
+		log.Printf("workflow %s: %d records failed, %d link inserts failed", uuid, FailedCount, LinkFailedCount)
+	}
+
+	if err := RecountSearchWorkflow(db, "search_workflow_work", "job_search_term_work", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
 
 	return nil
 }
