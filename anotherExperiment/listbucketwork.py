@@ -153,7 +153,7 @@ with open("keys_work.json" , "w" , encoding="utf-8" ) as f:
             
             #output[timeline_key][0][records[unique][0]] = document
             forgive(unique ,output[timeline_key][0])
-            output[timeline_key][0][unique] = document
+            output[timeline_key][0][unique][0] = document
 
         if document.startswith("deadlinks"):
                     
