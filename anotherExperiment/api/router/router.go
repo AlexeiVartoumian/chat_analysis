@@ -124,6 +124,11 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SeekGreenLeadLink),
 	))
 
+	//athena
+	mux.Handle("POST /seekGreen", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SeekGreen),
+	))
+
 	mux.Handle("POST /seekGreenJd", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SeekGreenJd),
 	))
