@@ -686,6 +686,21 @@ def create_tables(conn) -> None:
                 );
             """)
 
+          
+        cur.execute("""
+              CREATE TABLE WORK_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           -- lower(tenant/site), e.g. 'ogmgroup/fpm'
+                example_id   text,                       -- original casing, e.g. 'ogmgroup/FPM'
+                careers_url  text,                       -- sent downstream as job_board_public_url
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+            """)
+
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS JOB_CATEGORY_WORK(
                     jobCategoryId       TEXT        NOT NULL,
@@ -811,6 +826,21 @@ def create_tables(conn) -> None:
                     UNIQUE (company_name);
                 );
                     """)
+
+        cur.execute("""
+            CREATE TABLE LEV_COMPANIES_ATHENA (
+                        company      text PRIMARY KEY,           
+                        example_id   text,                       
+                        careers_url  text,                       
+                        api_url      text,                       
+                        urls         integer,
+                        first_seen   timestamp,
+                        last_seen    timestamp,
+                        visited      boolean NOT NULL DEFAULT false,
+                        mid_run      boolean NOT NULL DEFAULT false
+            );
+            """)
+
         cur.execute("""
                 CREATE TABLE IF NOT EXISTS COMPANY_LEV_ABOUT (
                     company_id              SERIAL          PRIMARY KEY,
@@ -1231,6 +1261,20 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
+           CREATE TABLE BAMBI_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           
+                example_id   text,
+                careers_url  text,                       
+                api_url      text,                       
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS DEPARTMENT_BAMBI (
                 department_id        BIGINT       PRIMARY KEY,
                 department_name      TEXT         ,
@@ -1355,6 +1399,19 @@ def create_tables(conn) -> None:
             );
         """)
 
+        cur.execute("""
+                CREATE TABLE WORKAB_COMPANIES_ATHENA (
+                        company      text PRIMARY KEY,           
+                        example_id   text,                      
+                        careers_url  text,                      
+                        api_url      text,
+                        urls         integer,
+                        first_seen   timestamp,
+                        last_seen    timestamp,
+                        visited      boolean NOT NULL DEFAULT false,
+                        mid_run      boolean NOT NULL DEFAULT false
+                        );
+                """)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOBS_WORKAB (
                 job_id                  TEXT            PRIMARY KEY, 
