@@ -44,6 +44,8 @@ module "lambda_hub"{
     sqs_coordinator_bambi_sqs_queue_id = module.sqs_hub.coordinator_bambi_sqs_queue_id
     sqs_cordinator_workaworka_arn = module.sqs_hub.coordinator_workaworka_sqs_queue_arn
     sqs_coordinator_workaworka_sqs_queue_id = module.sqs_hub.coordinator_workaworka_sqs_queue_id
+    sqs_cordinator_green_arn = module.sqs_hub.coordinator_green_sqs_queue_arn
+    sqs_coordinator_green_sqs_queue_id = module.sqs_hub.coordinator_green_sqs_queue_id
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name
@@ -55,6 +57,7 @@ module "lambda_hub"{
     s3_output_bucket_smart_store_name = module.s3.s3_bucket_output_smart_store_name
     s3_output_bucket_bambi_store_name = module.s3.s3_bucket_output_bambi_store_name
     s3_output_bucket_workaworka_store_name = module.s3.s3_bucket_output_workaworka_store_name
+    s3_output_bucket_green_cache_name = module.s3.s3_bucket_output_green_cache_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
     account_pool_table_orac_arn = module.dynamodb_hub.accountpoolorac_table_arn
@@ -103,6 +106,8 @@ module "iam_hub_attachments" {
 
     sqs_coordinator_arn_workaworka = module.sqs_hub.coordinator_workaworka_sqs_queue_arn
     
+    sqs_coordinator_arn_green = module.sqs_hub.coordinator_green_sqs_queue_arn
+
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     #account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn

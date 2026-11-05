@@ -26,6 +26,14 @@ variable "sqs_cordinator_workaworka_arn" {
     type = string
 }
 
+variable "sqs_cordinator_green_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_green_sqs_queue_id" {
+    type = string 
+}
+
 
 variable "account_pool_table"{
     type = string
@@ -107,6 +115,9 @@ variable "s3_output_bucket_workaworka_store_name" {
     type = string
 }
 
+variable "s3_output_bucket_green_cache_name" {
+    type = string
+}
 
 
 variable "eventbridge_rule_arn"{
