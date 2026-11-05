@@ -2149,6 +2149,98 @@ func (h *Handler) SeekGreen(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (h *Handler) SeekAsh(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobAshCompany []models.JOB_SEARCH_TERM_ASH
+			var err error
+
+			JobAshCompany, err = h.Store.SendAshCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobAshCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendash.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendash.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
+		}
+	} else {
+		JobAshCompany, err := h.Store.SendAshCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobAshCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobAshCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/sendash.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendash.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
 func (h *Handler) SendWorkLifecycle(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 

@@ -1210,6 +1210,75 @@ func (s *PostgresStore) SendGreenCompanyQuery(first_run bool, number_accounts in
 	}
 }
 
+func (s *PostgresStore) SendAshCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_ASH, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from ASH_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_ASH
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_ASH
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE ASH_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE ASH_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from ASH_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_ASH
+
+		var res models.JOB_SEARCH_TERM_ASH
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE ASH_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+
+		results = append(results, res)
+
+		return results, nil
+
+	}
+}
+
 func (s *PostgresStore) SeekAshJdChecker() ([]models.JobRedirect_LinkAsh, error) {
 
 	rows, err := s.db.Query(`SELECT job_id , job_url FROM JOBS_ASH where not exists (SELECT * FROM JOB_DESCRIPTIONS_ASH WHERE JOBS_ASH.job_id = JOB_DESCRIPTIONS_ASH.job_id) limit 75;`)

@@ -63,6 +63,12 @@ type JOB_SEARCH_TERM_GREEN struct {
 	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
+type JOB_SEARCH_TERM_ASH struct {
+	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`
