@@ -102,6 +102,10 @@ variable sqs_coordinator_arn_green {
     type = string 
 }
 
+variable sqs_coordinator_arn_ash {
+    type = string
+}
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }

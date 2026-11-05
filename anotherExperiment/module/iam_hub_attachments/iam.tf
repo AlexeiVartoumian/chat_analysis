@@ -197,7 +197,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green ]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green , var.sqs_coordinator_arn_ash]  # pass the actual SQS ARN directly
       }
     ]
   })

@@ -92,6 +92,12 @@ data "archive_file" "seek_green_posts" {
     output_path = "${path.root}/module/sources/seek_green_posts/seek_green_posts.zip"
 }
 
+data "archive_file" "seek_ash_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_ash_posts/seek_ash_posts.py"
+    output_path = "${path.root}/module/sources/seek_ash_posts/seek_ash_posts.zip"
+}
+
 
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
@@ -430,6 +436,27 @@ resource "aws_lambda_function" "seek_green_posts" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+resource "aws_lambda_function" "seek_ash_posts" {
+    filename = data.archive_file.seek_ash_posts.output_path
+    source_code_hash = data.archive_file.seek_ash_posts.output_base64sha256
+    function_name = "seek_ash_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_ash_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_ash_cache_name
+            sqs_queue_id = var.sqs_coordinator_ash_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -575,4 +602,22 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_green" {
   batch_size       = 10
   enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.seek_green_posts]
+}
+
+#here seek ash posts behaves like coordinator 
+resource "aws_lambda_permission" "allow_sqs_request_ash" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_ash_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_ash_arn
+}
+#here seek ash posts behaves like coordinator 
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_ash" {
+  event_source_arn = var.sqs_cordinator_ash_arn
+  function_name    = aws_lambda_function.seek_ash_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_ash_posts]
 }

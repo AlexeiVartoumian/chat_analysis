@@ -34,6 +34,14 @@ variable "sqs_coordinator_green_sqs_queue_id" {
     type = string 
 }
 
+variable "sqs_cordinator_ash_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_ash_sqs_queue_id" {
+    type = string 
+}
+
 
 variable "account_pool_table"{
     type = string
@@ -116,6 +124,10 @@ variable "s3_output_bucket_workaworka_store_name" {
 }
 
 variable "s3_output_bucket_green_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_ash_cache_name" {
     type = string
 }
 
