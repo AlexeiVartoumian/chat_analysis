@@ -1735,7 +1735,7 @@ func (h *Handler) SendWorkweek(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts)
+			Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1756,7 +1756,7 @@ func (h *Handler) SendWorkweek(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendWorkweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1809,7 +1809,7 @@ func (h *Handler) SendLev(w http.ResponseWriter, r *http.Request) {
 
 	if firstRunStr == "true" {
 
-		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -1831,7 +1831,7 @@ func (h *Handler) SendLev(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		//todo convert at send time to integer
-		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendLevQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -2849,7 +2849,7 @@ func (h *Handler) SendBambi(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			Urls, err := h.Store.SendBambiweek(req.FirstRun, req.NumberAccounts)
+			Urls, err := h.Store.SendBambiweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -2870,7 +2870,7 @@ func (h *Handler) SendBambi(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		Urls, err := h.Store.SendBambiweek(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendBambiweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -3094,7 +3094,7 @@ func (h *Handler) SendWorkaworka(w http.ResponseWriter, r *http.Request) {
 	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
-			Urls, err := h.Store.SendWorkaworkaweek(req.FirstRun, req.NumberAccounts)
+			Urls, err := h.Store.SendWorkaworkaweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 			if err != nil {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -3115,7 +3115,7 @@ func (h *Handler) SendWorkaworka(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("blasted the spot", len(payload))
 		}
 	} else {
-		Urls, err := h.Store.SendWorkaworkaweek(req.FirstRun, req.NumberAccounts)
+		Urls, err := h.Store.SendWorkaworkaweek(req.FirstRun, req.NumberAccounts, req.InstanceID)
 
 		if err != nil {
 			http.Error(w, "Internal server error", http.StatusInternalServerError)

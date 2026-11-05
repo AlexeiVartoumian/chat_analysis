@@ -28,21 +28,26 @@ type JOB_SEARCH_TERM_DEED struct {
 type JOB_SEARCH_TERM_WORKWEEK struct {
 	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type JOB_SEARCH_TERM_BAMBIWEEK struct {
 	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type JOB_SEARCH_TERM_WORKABWEEK struct {
 	Job_id      string `json:"job_id,omitempty" db:"job_id_link"`
 	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type JOB_SEARCH_TERM_LEV struct {
-	Job_id  int    `json:"job_id,omitempty" db:"job_id"`
-	Api_url string `json:"api_url,omitempty" db:"company_apply_url"`
+	Job_id      int    `json:"job_id,omitempty" db:"job_id"`
+	Api_url     string `json:"api_url,omitempty" db:"company_apply_url"`
+	Workflow_id string `json:"url,omitempty" db:"job_url"`
+	CompanyName string `json:"company,omitempty" db:"company"`
 }
 
 type JOB_SEARCH_TERM_ORAC struct {
