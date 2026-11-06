@@ -1197,7 +1197,7 @@ func (s *PostgresStore) SendGreenCompanyQuery(first_run bool, number_accounts in
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE GREEN_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE GREEN_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -1266,7 +1266,7 @@ func (s *PostgresStore) SendAshCompanyQuery(first_run bool, number_accounts int,
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE ASH_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE ASH_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -1522,7 +1522,7 @@ func (s *PostgresStore) SendWorkCompanyQuery(first_run bool, number_accounts int
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE WORK_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE WORK_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -1667,7 +1667,7 @@ func (s *PostgresStore) SendLevCompanyQuery(first_run bool, number_accounts int,
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE LEV_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE LEV_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -1809,7 +1809,7 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE ORAC_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE ORAC_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -2051,7 +2051,7 @@ func (s *PostgresStore) SendSmartCompanyQuery(first_run bool, number_accounts in
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE SMART_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -2287,7 +2287,7 @@ func (s *PostgresStore) SendBambiCompanyQuery(first_run bool, number_accounts in
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE BAMBI_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE BAMBI_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
@@ -2524,7 +2524,7 @@ func (s *PostgresStore) SendWorkabCompanyQuery(first_run bool, number_accounts i
 		} else {
 
 			if _, err := s.db.Exec(
-				`UPDATE WORKAB_COMPANIES_ATHENA SET mid_run = FALSE WHERE company = $1`, res.CompanyName); err != nil {
+				`UPDATE WORKAB_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
 			}
 
