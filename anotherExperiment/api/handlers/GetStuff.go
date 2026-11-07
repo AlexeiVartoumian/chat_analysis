@@ -3315,3 +3315,296 @@ func (h *Handler) SendWorkaworkaLifecycle(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *Handler) SendRip(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendRipQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendrip.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendRipQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendrip.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendRecruit(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendRecruitQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendrecruit.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendRecruitQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendrecruit.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+
+	json.NewEncoder(w).Encode(response)
+
+}
+
+func (h *Handler) SendBrez(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendBrezQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendbrez.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendBrezQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendbrez.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendTailor(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendTailorQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendtailor.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendTailorQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendtailor.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+	json.NewEncoder(w).Encode(response)
+}

@@ -2703,3 +2703,559 @@ func (s *PostgresStore) QueryToJson(query string, args ...interface{}) ([]map[st
 	}
 	return results, colMeta, rows.Err()
 }
+
+func (s *PostgresStore) SendRipQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_RIP, error) {
+
+	if companyname != "" {
+		return s.SendRipCompanyQuery(first_run, number_accounts, companyname)
+	}
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM RIP_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_RIP
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_RIP
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM RIP_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_RIP
+
+		var res models.JOB_SEARCH_TERM_RIP
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendRipCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_RIP, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from RIP_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_RIP
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_RIP
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from RIP_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_RIP
+
+		var res models.JOB_SEARCH_TERM_RIP
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE RIP_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+
+		results = append(results, res)
+
+		return results, nil
+
+	}
+}
+
+func (s *PostgresStore) SendRecruitQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_RECRUIT, error) {
+
+	if companyname != "" {
+		return s.SendRecruitCompanyQuery(first_run, number_accounts, companyname)
+	}
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM RECRUIT_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_RECRUIT
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_RECRUIT
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM RECRUIT_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_RECRUIT
+
+		var res models.JOB_SEARCH_TERM_RECRUIT
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendRecruitCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_RECRUIT, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from RECRUIT_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_RECRUIT
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_RECRUIT
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from RECRUIT_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_RECRUIT
+
+		var res models.JOB_SEARCH_TERM_RECRUIT
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE RECRUIT_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendBrezQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_BREZ, error) {
+
+	if companyname != "" {
+		return s.SendBrezCompanyQuery(first_run, number_accounts, companyname)
+	}
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM BREZ_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_BREZ
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_BREZ
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM BREZ_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_BREZ
+
+		var res models.JOB_SEARCH_TERM_BREZ
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendBrezCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_BREZ, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from BREZ_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_BREZ
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_BREZ
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from BREZ_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_BREZ
+
+		var res models.JOB_SEARCH_TERM_BREZ
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE BREZ_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendTailorQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_TAILOR, error) {
+
+	if companyname != "" {
+		return s.SendTailorCompanyQuery(first_run, number_accounts, companyname)
+	}
+	//rows, err := s.db.Query(`SELECT JOBS.job_id , company_apply_url from JOBS  JOIN JOB_METADATA on JOBS.job_id = JOB_METADATA.job_id JOIN JOB_LIFECYCLE on JOBS.job_id = JOB_LIFECYCLE.job_id WHERE JOB_LIFECYCLE.job_state LIKE 'LISTED' and company_apply_url LIKE '%workday%' limit 10;`)
+	if first_run == true {
+		rows, err := s.db.Query(`SELECT job_id_link, job_url FROM TAILOR_LINK
+		 WHERE visited = FALSE AND mid_run = FALSE LIMIT 1`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_TAILOR
+
+		for rows.Next() {
+			var jobID int
+			var res models.JOB_SEARCH_TERM_TAILOR
+
+			rows.Scan(&jobID, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobID); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			res.Job_id = strconv.Itoa(jobID)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_LINK SET visited = TRUE, mid_run = FALSE WHERE job_id_link = $1`, number_accounts); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "SELECT job_id_link , job_url FROM TAILOR_LINK where visited  = FALSE and mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_TAILOR
+
+		var res models.JOB_SEARCH_TERM_TAILOR
+
+		var jobId int
+		err := row.Scan(&jobId, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_LINK SET mid_run = TRUE WHERE job_id_link = $1`, jobId); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+
+		}
+		res.Job_id = strconv.Itoa(jobId)
+		results = append(results, res)
+
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SendTailorCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_TAILOR, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from TAILOR_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_TAILOR
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_TAILOR
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from TAILOR_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_TAILOR
+
+		var res models.JOB_SEARCH_TERM_TAILOR
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE TAILOR_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
