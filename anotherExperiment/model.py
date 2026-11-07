@@ -1513,6 +1513,7 @@ def create_tables(conn) -> None:
         cur.execute("""
             CREATE TABLE IF NOT EXISTS COMPANY_BREZ (
                 company_id              BIGINT          PRIMARY KEY,
+                slug                     TEXT, 
                 company_name            VARCHAR(128)    NOT NULL,
                 last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 company_url             TEXT,
