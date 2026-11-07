@@ -36,4 +36,4 @@ else:
 
 sqs = boto3.client("sqs", region_name="eu-west-2")
 response = sqs.send_message(QueueUrl=QUEUE_URL, MessageBody=json.dumps(message))
-print(f"Sent message {response['MessageId']}")
+print(f"Sent message:  - Green {response['MessageId']}")
