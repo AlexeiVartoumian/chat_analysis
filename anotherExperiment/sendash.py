@@ -25,8 +25,10 @@ if first.get("url") and first.get("company"):
     message = {
         "workflow": "normal",
         "workflow_id": workflow_id,
-        "company_apply_url": first["url"],
-        "company": first["company"],
+        "items": [{
+            "company_apply_url": first["url"],
+            "company": first["company"],
+        }],
     }
 
 else:
