@@ -1489,6 +1489,504 @@ def create_tables(conn) -> None:
             );                    
         """)
 
+        #********************************************************************
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_BREZ (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS BREZ_LINK(
+                job_id_link          BIGINT          PRIMARY KEY,
+                job_url              VARCHAR(1024)   NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_link_
+                    FOREIGN KEY (job_id_link)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE 
+        );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_BREZ (
+                company_id              BIGINT          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+            );
+        """)
+
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_BREZ (
+                company_id              SERIAL          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+             
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE BREZ_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           
+                example_id   text,
+                careers_url  text,                       
+                api_url      text,                       
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_BREZ (
+                job_id                  TEXT            PRIMARY KEY, 
+                title                   TEXT            NOT NULL,
+                company_id              BIGINT          NOT NULL,
+                department              TEXT,          
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                location                JSONB,                  
+                salary                  TEXT,
+                published_date          TIMESTAMPTZ,
+                postedOn                TEXT,
+                
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_BREZ (company_id)
+                    ON DELETE CASCADE
+            """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_BREZ (
+                    job_id            TEXT        PRIMARY KEY,
+                    description_html  TEXT,
+                    CONSTRAINT fk_description_job
+                        FOREIGN KEY (job_id)
+                        REFERENCES JOBS_BREZ(job_id)
+                        ON DELETE CASCADE
+                );
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_BREZ (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_BREZ (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_BREZ (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_BREZ(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_BREZ(job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_BREZ (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
+        #******************************************
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_RECRUIT (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS RECRUIT_LINK(
+                job_id_link          BIGINT          PRIMARY KEY,
+                job_url              VARCHAR(1024)   NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_link_
+                    FOREIGN KEY (job_id_link)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE 
+            );
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_RECRUIT (
+                company_id              SERIAL          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE RECRUIT_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           
+                example_id   text,
+                careers_url  text,                       
+                api_url      text,                       
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_RECRUIT (
+                job_id                  INT            PRIMARY KEY,
+                position                INT, 
+                title                   TEXT            NOT NULL,
+                company_id              BIGINT          NOT NULL,
+                department              TEXT,
+                country                 TEXT,
+                city                    TEXT,          
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                experience_code         TEXT,
+                employment_type_code    TEXT,
+                tags                    JSONB,
+                category_code           TEXT,             
+                api_endpoint            TEXT,
+                status                  TEXT,
+                primary_location        TEXT,
+                location                JSONB, 
+                remote                  BOOL,                 
+                salary                  JSONB,  --IF nothing dont add
+                published_date          TIMESTAMPTZ,
+                updated_at              TIMESTAMPTZ,    
+                postedOn                TEXT,
+                
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_RECRUIT (company_id)
+                    ON DELETE CASCADE
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_RECRUIT (
+                job_id            INT       PRIMARY KEY,
+                description       TEXT,
+                requirements      TEXT, 
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_RECRUIT(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_RECRUIT (
+                job_id               INT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_RECRUIT (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_RECRUIT (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_RECRUIT(
+                    job_id              INT         NOT NULL,
+                    workflow_id         UUID        NOT NULL,
+                    is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                    PRIMARY KEY (job_id, workflow_id),
+                    CONSTRAINT fk_jst_job
+                        FOREIGN KEY (job_id) REFERENCES JOBS_RECRUIT(job_id) ON DELETE CASCADE,
+                    CONSTRAINT fk_jst_workflow
+                        FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_RECRUIT (workflow_id) ON DELETE CASCADE
+                );                    
+            """)
+        #******************************
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_RIP (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS RECRUIT_RIP(
+                job_id_link          BIGINT          PRIMARY KEY,
+                job_url              VARCHAR(1024)   NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_link_
+                    FOREIGN KEY (job_id_link)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE 
+            );
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_RIP (
+                company_id              SERIAL          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                company_about           TEXT            NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE RIP_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,           
+                example_id   text,
+                careers_url  text,                       
+                api_url      text,                       
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_RIP (
+                department_id        SERIAL       PRIMARY KEY,
+                department_name      TEXT,
+                department_tree      JSONB,
+                company_id           INT       NOT NULL,
+                
+                PRIMARY KEY (company_id, department_id),
+
+                CONSTRAINT fk_department_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_RIP (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_RIP (
+                job_id                  TEXT            PRIMARY KEY,
+                title                   TEXT            NOT NULL,
+                company_id              INT             NOT NULL,
+                department              TEXT,      
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,   
+                api_endpoint            TEXT,
+                employmentType          TEXT,
+                location                JSONB,  
+                salary                  JSONB,  --IF nothing dont add
+                published_date          TIMESTAMPTZ,
+
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_RIP (company_id)
+                    ON DELETE CASCADE
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_RIP (
+                job_id            TEXT        PRIMARY KEY,
+                description_html  TEXT,
+                company           TEXT,
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_RIP(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_RIP (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_RIP (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_RIP (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_RIP(
+            job_id              TEXT         NOT NULL,
+            workflow_id         UUID        NOT NULL,
+            is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+            PRIMARY KEY (job_id, workflow_id),
+            CONSTRAINT fk_jst_job
+                FOREIGN KEY (job_id) REFERENCES JOBS_RIP(job_id) ON DELETE CASCADE,
+            CONSTRAINT fk_jst_workflow
+                FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_RIP (workflow_id) ON DELETE CASCADE
+        );                    
+        """)
+
+        #***********************
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS FILE_KEYS_TAILOR (
+                file_name            VARCHAR(256) PRIMARY KEY
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS RECRUIT_TAILOR(
+                job_id_link          BIGINT          PRIMARY KEY,
+                job_url              VARCHAR(1024)   NOT NULL,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                mid_run              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_link_
+                    FOREIGN KEY (job_id_link)
+                    REFERENCES JOBS (job_id)
+                    ON DELETE CASCADE 
+            );
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_TAILOR (
+                company_id              SERIAL          PRIMARY KEY,
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE TAILOR_COMPANIES_TAILOR (
+                company      text PRIMARY KEY,           
+                example_id   text,
+                careers_url  text,                       
+                api_url      text,                       
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_TAILOR (
+                job_id                  TEXT            PRIMARY KEY,
+                title                   TEXT            NOT NULL,
+                company_id              INT          NOT NULL,   
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,   
+                api_endpoint            TEXT,
+                employmentType          TEXT,
+                location                JSONB, 
+                published_date          TIMESTAMPTZ,
+
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_TAILOR (company_id)
+                    ON DELETE CASCADE
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_TAILOR (
+                job_id            TEXT        PRIMARY KEY,
+                content_html  TEXT,
+                
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_TAILOR(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_TAILOR (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_TAILOR (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_TAILOR (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_TAILOR(
+            job_id              TEXT         NOT NULL,
+            workflow_id         UUID        NOT NULL,
+            is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+            PRIMARY KEY (job_id, workflow_id),
+            CONSTRAINT fk_jst_job
+                FOREIGN KEY (job_id) REFERENCES JOBS_TAILOR(job_id) ON DELETE CASCADE,
+            CONSTRAINT fk_jst_workflow
+                FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_TAILOR (workflow_id) ON DELETE CASCADE
+        );                    
+        """)
+        
+
+
+
+
         
         cur.execute("""
             CREATE TABLE redirect_link (
