@@ -33,7 +33,7 @@ import uuid
 import boto3
 
 QUEUE_URL = "https://sqs.eu-west-2.amazonaws.com/390746273208/workflow-cordinator-tailor"
-SOURCE_BUCKET = "output-store-orac-store-390746273208"
+SOURCE_BUCKET = "output-store-tailor-store-390746273208"
 
 
 values = sys.stdin.read()
