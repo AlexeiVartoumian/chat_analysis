@@ -136,3 +136,51 @@ variable "s3_bucket_name_output_workaworka_store" {
     description = "name of bucket"
     default = "output-store-workaworka-store"
 }
+
+variable "s3_bucket_name_output_brez_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-brez-cache"
+}
+
+variable "s3_bucket_name_output_brez_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-brez-store"
+}
+
+variable "s3_bucket_name_output_recruit_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-recruit-cache"
+}
+
+variable "s3_bucket_name_output_recruit_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-recruit-store"
+}
+
+variable "s3_bucket_name_output_rip_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-rip-cache"
+}
+
+variable "s3_bucket_name_output_rip_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-rip-store"
+}
+
+variable "s3_bucket_name_output_tailor_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-tailor-cache"
+}
+
+variable "s3_bucket_name_output_tailor_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-tailor-store"
+}

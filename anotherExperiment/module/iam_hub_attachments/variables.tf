@@ -106,6 +106,22 @@ variable sqs_coordinator_arn_ash {
     type = string
 }
 
+variable sqs_coordinator_arn_brez {
+    type = string
+}
+
+variable sqs_coordinator_arn_recruit {
+    type = string
+}
+
+variable sqs_coordinator_arn_tailor {
+    type = string
+}
+
+variable sqs_coordinator_arn_rip {
+    type = string
+}
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }
@@ -204,5 +220,41 @@ variable s3_output_bucket_workaworka_cache_arn {
 
  
  variable s3_output_bucket_workaworka_store_arn{
+    type = string
+ }
+
+ variable s3_output_bucket_brez_cache_arn {
+    type = string
+ }
+
+ 
+ variable s3_output_bucket_brez_store_arn{
+    type = string
+ }
+
+  variable s3_output_bucket_recruit_cache_arn {
+    type = string
+ }
+
+ 
+ variable s3_output_bucket_recruit_store_arn{
+    type = string
+ }
+
+variable s3_output_bucket_tailor_cache_arn {
+    type = string
+}
+
+ 
+ variable s3_output_bucket_tailor_store_arn{
+    type = string
+ }
+
+ variable s3_output_bucket_rip_cache_arn {
+    type = string
+}
+
+ 
+ variable s3_output_bucket_rip_store_arn{
     type = string
  }

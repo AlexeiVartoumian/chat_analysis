@@ -133,6 +133,53 @@ resource "aws_sqs_queue" "sqs_hub_requests_ash" {
   }
 }
 
+resource "aws_sqs_queue" "sqs_hub_requests_brez" {
+  name                      = "workflow-cordinator-brez"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+resource "aws_sqs_queue" "sqs_hub_requests_recruit" {
+  name                      = "workflow-cordinator-recruit"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+
+resource "aws_sqs_queue" "sqs_hub_requests_tailor" {
+  name                      = "workflow-cordinator-tailor"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+resource "aws_sqs_queue" "sqs_hub_requests_rip" {
+  name                      = "workflow-cordinator-rip"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+
+
 
 resource "aws_sqs_queue_policy" "sqs_hub_requests"{
     queue_url = aws_sqs_queue.sqs_hub_requests.id
@@ -221,5 +268,37 @@ resource "aws_sqs_queue_policy" "sqs_hub_requests_ash"{
     policy = templatefile("${path.module}/sqs_access.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id
         sqs_queuename  = aws_sqs_queue.sqs_hub_requests_ash.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_brez"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_brez.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_brez.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_recruit"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_recruit.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_recruit.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_tailor"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_tailor.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_tailor.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_rip"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_rip.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_rip.name
     })
 }

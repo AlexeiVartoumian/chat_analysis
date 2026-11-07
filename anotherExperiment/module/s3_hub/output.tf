@@ -329,3 +329,119 @@ output "s3_bucket_output_workaworka_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_workaworka_store.bucket
 }
+
+output "s3_bucket_output_brez_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_cache.arn
+}
+output "s3_bucket_output_brez_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_cache.id
+}
+
+output "s3_bucket_output_brez_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_cache.bucket
+}
+
+
+output "s3_bucket_output_brez_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_store.arn
+}
+output "s3_bucket_output_brez_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_store.id
+}
+
+output "s3_bucket_output_brez_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_brez_store.bucket
+}
+
+output "s3_bucket_output_recruit_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_cache.arn
+}
+output "s3_bucket_output_recruit_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_cache.id
+}
+
+output "s3_bucket_output_recruit_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_cache.bucket
+}
+
+
+output "s3_bucket_output_recruit_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_store.arn
+}
+output "s3_bucket_output_recruit_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_store.id
+}
+
+output "s3_bucket_output_recruit_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_recruit_store.bucket
+}
+
+output "s3_bucket_output_tailor_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_cache.arn
+}
+output "s3_bucket_output_tailor_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_cache.id
+}
+
+output "s3_bucket_output_tailor_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_cache.bucket
+}
+
+
+output "s3_bucket_output_tailor_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_store.arn
+}
+output "s3_bucket_output_tailor_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_store.id
+}
+
+output "s3_bucket_output_tailor_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_tailor_store.bucket
+}
+
+output "s3_bucket_output_rip_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_cache.arn
+}
+output "s3_bucket_output_rip_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_cache.id
+}
+
+output "s3_bucket_output_rip_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_cache.bucket
+}
+
+
+output "s3_bucket_output_rip_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_store.arn
+}
+output "s3_bucket_output_rip_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_store.id
+}
+
+output "s3_bucket_output_rip_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_rip_store.bucket
+}

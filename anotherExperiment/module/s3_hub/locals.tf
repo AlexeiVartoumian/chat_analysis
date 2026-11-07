@@ -33,4 +33,16 @@ locals{
 
     s3_bucket_name_output_workaworka_cache = var.s3_bucket_name_output_workaworka_cache
     s3_bucket_name_output_workaworka_store = var.s3_bucket_name_output_workaworka_store
+
+    s3_bucket_name_output_brez_cache = var.s3_bucket_name_output_brez_cache
+    s3_bucket_name_output_brez_store = var.s3_bucket_name_output_brez_store
+
+    s3_bucket_name_output_recruit_cache = var.s3_bucket_name_output_recruit_cache
+    s3_bucket_name_output_recruit_store = var.s3_bucket_name_output_recruit_store
+
+    s3_bucket_name_output_rip_cache = var.s3_bucket_name_output_rip_cache
+    s3_bucket_name_output_rip_store = var.s3_bucket_name_output_rip_store
+
+    s3_bucket_name_output_tailor_cache = var.s3_bucket_name_output_tailor_cache
+    s3_bucket_name_output_tailor_store = var.s3_bucket_name_output_tailor_store
 }

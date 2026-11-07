@@ -54,7 +54,23 @@
                 "${s3_output_bucket_workaworka_cache_arn}",
                 "${s3_output_bucket_workaworka_cache_arn}/*",
                 "${s3_output_bucket_workaworka_store_arn}",
-                "${s3_output_bucket_workaworka_store_arn}/*"  
+                "${s3_output_bucket_workaworka_store_arn}/*",
+                "${s3_output_bucket_brez_cache_arn}",
+                "${s3_output_bucket_brez_cache_arn}/*",
+                "${s3_output_bucket_brez_store_arn}",
+                "${s3_output_bucket_brez_store_arn}/*",
+                "${s3_output_bucket_recruit_cache_arn}",
+                "${s3_output_bucket_recruit_cache_arn}/*",
+                "${s3_output_bucket_recruit_store_arn}",
+                "${s3_output_bucket_recruit_store_arn}/*",
+                "${s3_output_bucket_tailor_cache_arn}",
+                "${s3_output_bucket_tailor_cache_arn}/*",
+                "${s3_output_bucket_tailor_store_arn}",
+                "${s3_output_bucket_tailor_store_arn}/*",
+                "${s3_output_bucket_rip_cache_arn}",
+                "${s3_output_bucket_rip_cache_arn}/*",
+                "${s3_output_bucket_rip_store_arn}",
+                "${s3_output_bucket_rip_store_arn}/*"    
             ]
         }
     ]

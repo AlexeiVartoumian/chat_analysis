@@ -98,6 +98,29 @@ data "archive_file" "seek_ash_posts" {
     output_path = "${path.root}/module/sources/seek_ash_posts/seek_ash_posts.zip"
 }
 
+data "archive_file" "seek_brez_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_brez_posts/seek_brez_posts.py"
+    output_path = "${path.root}/module/sources/seek_brez_posts/seek_brez_posts.zip"
+}
+
+data "archive_file" "seek_recruit_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_recruit_posts/seek_recruit_posts.py"
+    output_path = "${path.root}/module/sources/seek_recruit_posts/seek_recruit_posts.zip"
+}
+
+data "archive_file" "seek_tailor_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_tailor_posts/seek_tailor_posts.py"
+    output_path = "${path.root}/module/sources/seek_tailor_posts/seek_tailor_posts.zip"
+}
+
+data "archive_file" "seek_rip_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_rip_posts/seek_rip_posts.py"
+    output_path = "${path.root}/module/sources/seek_rip_posts/seek_rip_posts.zip"
+}
 
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
@@ -456,6 +479,89 @@ resource "aws_lambda_function" "seek_ash_posts" {
     }
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
+resource "aws_lambda_function" "seek_brez_posts" {
+    filename = data.archive_file.seek_brez_posts.output_path
+    source_code_hash = data.archive_file.seek_brez_posts.output_base64sha256
+    function_name = "seek_brez_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_brez_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_brez_cache_name
+            sqs_queue_id = var.sqs_coordinator_brez_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+resource "aws_lambda_function" "seek_recruit_posts" {
+    filename = data.archive_file.seek_recruit_posts.output_path
+    source_code_hash = data.archive_file.seek_recruit_posts.output_base64sha256
+    function_name = "seek_recruit_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_recruit_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_recruit_cache_name
+            sqs_queue_id = var.sqs_coordinator_recruit_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
+resource "aws_lambda_function" "seek_tailor_posts" {
+    filename = data.archive_file.seek_tailor_posts.output_path
+    source_code_hash = data.archive_file.seek_tailor_posts.output_base64sha256
+    function_name = "seek_tailor_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_tailor_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_tailor_cache_name
+            sqs_queue_id = var.sqs_coordinator_tailor_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
+
+resource "aws_lambda_function" "seek_rip_posts" {
+    filename = data.archive_file.seek_rip_posts.output_path
+    source_code_hash = data.archive_file.seek_rip_posts.output_base64sha256
+    function_name = "seek_rip_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_rip_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_rip_cache_name
+            sqs_queue_id = var.sqs_coordinator_rip_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
 
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"
@@ -620,4 +726,72 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_ash" {
   batch_size       = 10
   enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.seek_ash_posts]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_brez" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_brez_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_brez_arn
+}
+#here seek brez posts behaves like coordinator 
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_brez" {
+  event_source_arn = var.sqs_cordinator_brez_arn
+  function_name    = aws_lambda_function.seek_brez_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_brez_posts]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_recruit" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_recruit_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_recruit_arn
+}
+#here seek recruit posts behaves like coordinator 
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_recruit" {
+  event_source_arn = var.sqs_cordinator_recruit_arn
+  function_name    = aws_lambda_function.seek_recruit_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_recruit_posts]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_tailor" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_tailor_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_tailor_arn
+}
+#here seek tailor posts behaves like coordinator 
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_tailor" {
+  event_source_arn = var.sqs_cordinator_tailor_arn
+  function_name    = aws_lambda_function.seek_tailor_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_tailor_posts]
+}
+
+resource "aws_lambda_permission" "allow_sqs_request_rip" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_rip_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_rip_arn
+}
+#here seek rip posts behaves like coordinator 
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_rip" {
+  event_source_arn = var.sqs_cordinator_rip_arn
+  function_name    = aws_lambda_function.seek_rip_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_rip_posts]
 }

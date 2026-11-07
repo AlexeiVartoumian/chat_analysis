@@ -20,7 +20,11 @@
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_bambi}",
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_workaworka}",
                 "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_green}",
-                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_ash}"
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_ash}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_brez}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_recruit}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_tailor}",
+                "arn:aws:sqs:eu-west-2:${aws_account}:${sqs_workflow_coordinator_rip}"
             ]
         }
     ]

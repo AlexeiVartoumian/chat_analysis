@@ -42,6 +42,37 @@ variable "sqs_coordinator_ash_sqs_queue_id" {
     type = string 
 }
 
+variable "sqs_cordinator_brez_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_brez_sqs_queue_id" {
+    type = string 
+}
+
+variable "sqs_cordinator_recruit_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_recruit_sqs_queue_id" {
+    type = string 
+}
+
+variable "sqs_cordinator_tailor_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_tailor_sqs_queue_id" {
+    type = string 
+}
+variable "sqs_cordinator_rip_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_rip_sqs_queue_id" {
+    type = string 
+}
+
 
 variable "account_pool_table"{
     type = string
@@ -131,6 +162,20 @@ variable "s3_output_bucket_ash_cache_name" {
     type = string
 }
 
+variable "s3_output_bucket_brez_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_recruit_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_tailor_cache_name" {
+    type = string
+}
+variable "s3_output_bucket_rip_cache_name" {
+    type = string
+}
 
 variable "eventbridge_rule_arn"{
     type = string

@@ -118,3 +118,36 @@ resource "aws_s3_bucket" "output_store_workaworka_cache" {
 resource "aws_s3_bucket" "output_store_workaworka_store" {
     bucket = "${local.s3_bucket_name_output_workaworka_store }-${data.aws_caller_identity.current.account_id}"
 }
+
+
+resource "aws_s3_bucket" "output_store_brez_cache" {
+    bucket = "${local.s3_bucket_name_output_brez_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_brez_store" {
+    bucket = "${local.s3_bucket_name_output_brez_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_recruit_cache" {
+    bucket = "${local.s3_bucket_name_output_recruit_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_recruit_store" {
+    bucket = "${local.s3_bucket_name_output_recruit_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_rip_cache" {
+    bucket = "${local.s3_bucket_name_output_rip_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_rip_store" {
+    bucket = "${local.s3_bucket_name_output_rip_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_tailor_cache" {
+    bucket = "${local.s3_bucket_name_output_tailor_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_tailor_store" {
+    bucket = "${local.s3_bucket_name_output_tailor_store }-${data.aws_caller_identity.current.account_id}"
+}

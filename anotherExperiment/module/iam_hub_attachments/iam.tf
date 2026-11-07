@@ -113,10 +113,14 @@ resource "aws_iam_role_policy" "time-to-go" {
 # }
 
 
+resource "aws_iam_role_policy_attachment" "bucket_permissions" {
+  role       = var.bucket_reader_role_name
+  policy_arn = aws_iam_policy.bucket_permissions.arn
+}
 
-
-resource "aws_iam_role_policy" "bucket_permissions" {
-  role = var.bucket_reader_role_name
+resource "aws_iam_policy" "bucket_permissions" {
+  #role = var.bucket_reader_role_name
+  name = "the_bucket_dealer-bucket-permissions"
   policy = templatefile("${path.module}/bucket_permissions.tpl" , {
     s3_source_bucket_arn = var.s3_source_bucket_arn
     s3_file_bucket_arn = var.s3_file_bucket_arn
@@ -140,11 +144,23 @@ resource "aws_iam_role_policy" "bucket_permissions" {
     s3_output_bucket_bambi_store_arn = var.s3_output_bucket_bambi_store_arn
     s3_output_bucket_workaworka_cache_arn = var.s3_output_bucket_workaworka_cache_arn
     s3_output_bucket_workaworka_store_arn = var.s3_output_bucket_workaworka_store_arn
+    s3_output_bucket_brez_cache_arn = var.s3_output_bucket_brez_cache_arn
+    s3_output_bucket_brez_store_arn = var.s3_output_bucket_brez_store_arn
+    s3_output_bucket_recruit_cache_arn = var.s3_output_bucket_recruit_cache_arn
+    s3_output_bucket_recruit_store_arn = var.s3_output_bucket_recruit_store_arn
+    s3_output_bucket_tailor_cache_arn = var.s3_output_bucket_tailor_cache_arn
+    s3_output_bucket_tailor_store_arn = var.s3_output_bucket_tailor_store_arn
+    s3_output_bucket_rip_cache_arn = var.s3_output_bucket_rip_cache_arn
+    s3_output_bucket_rip_store_arn = var.s3_output_bucket_rip_store_arn
   })
 }
-
-resource "aws_iam_role_policy" "dynamodb_permissions" {
-  role = var.bucket_reader_role_name
+resource "aws_iam_role_policy_attachment" "db_permissions" {
+  role       = var.bucket_reader_role_name
+  policy_arn = aws_iam_policy.dynamodb_permissions.arn
+}
+resource "aws_iam_policy" "dynamodb_permissions" {
+  #role = var.bucket_reader_role_name
+  name = "the_bucket_dealer-db-permissions"
   policy = templatefile("${path.module}/dynamodb.tpl" , {
     hub_account = var.hub_account
     filepool_table = var.file_pool_table
@@ -181,10 +197,13 @@ resource "aws_iam_role_policy" "dynamodb_permissions" {
 #     sqs_workflow_coordinator = var.bucket_reader_main_arn
 #   })
 # }
-
-resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
-  role = var.bucket_reader_role_name
-
+resource "aws_iam_role_policy_attachment" "sqs_permissions" {
+  role       = var.bucket_reader_role_name
+  policy_arn = aws_iam_policy.sqs_coordinator_permissions.arn
+}
+resource "aws_iam_policy" "sqs_coordinator_permissions" {
+  #role = var.bucket_reader_role_name
+  name = "the_bucket_dealer-sqs-permissions"
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -197,7 +216,7 @@ resource "aws_iam_role_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green , var.sqs_coordinator_arn_ash]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green , var.sqs_coordinator_arn_ash, var.sqs_coordinator_arn_brez , var.sqs_coordinator_arn_recruit, var.sqs_coordinator_arn_tailor, var.sqs_coordinator_arn_rip]  # pass the actual SQS ARN directly
       }
     ]
   })

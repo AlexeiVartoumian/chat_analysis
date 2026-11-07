@@ -48,6 +48,14 @@ module "lambda_hub"{
     sqs_coordinator_green_sqs_queue_id = module.sqs_hub.coordinator_green_sqs_queue_id
     sqs_cordinator_ash_arn = module.sqs_hub.coordinator_ash_sqs_queue_arn
     sqs_coordinator_ash_sqs_queue_id = module.sqs_hub.coordinator_ash_sqs_queue_id
+    sqs_cordinator_brez_arn = module.sqs_hub.coordinator_brez_sqs_queue_arn
+    sqs_coordinator_brez_sqs_queue_id = module.sqs_hub.coordinator_brez_sqs_queue_id
+    sqs_cordinator_recruit_arn = module.sqs_hub.coordinator_recruit_sqs_queue_arn
+    sqs_coordinator_recruit_sqs_queue_id = module.sqs_hub.coordinator_recruit_sqs_queue_id
+    sqs_cordinator_tailor_arn = module.sqs_hub.coordinator_tailor_sqs_queue_arn
+    sqs_coordinator_tailor_sqs_queue_id = module.sqs_hub.coordinator_tailor_sqs_queue_id
+    sqs_cordinator_rip_arn = module.sqs_hub.coordinator_rip_sqs_queue_arn
+    sqs_coordinator_rip_sqs_queue_id = module.sqs_hub.coordinator_rip_sqs_queue_id
     aws_iam_role_main_arn = module.iam_hub.aws_iam_role_main_arn
     account_pool_table =  module.dynamodb_hub.accountpool_table_name
     file_pool_table =  module.dynamodb_hub.filepool_table_name
@@ -61,6 +69,10 @@ module "lambda_hub"{
     s3_output_bucket_workaworka_store_name = module.s3.s3_bucket_output_workaworka_store_name
     s3_output_bucket_green_cache_name = module.s3.s3_bucket_output_green_cache_name
     s3_output_bucket_ash_cache_name = module.s3.s3_bucket_output_ash_cache_name
+    s3_output_bucket_brez_cache_name = module.s3.s3_bucket_output_brez_cache_name
+    s3_output_bucket_recruit_cache_name = module.s3.s3_bucket_output_recruit_cache_name
+    s3_output_bucket_tailor_cache_name = module.s3.s3_bucket_output_tailor_cache_name
+    s3_output_bucket_rip_cache_name = module.s3.s3_bucket_output_rip_cache_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     account_pool_table_work_arn = module.dynamodb_hub.accountpoolwork_table_arn
     account_pool_table_orac_arn = module.dynamodb_hub.accountpoolorac_table_arn
@@ -113,6 +125,14 @@ module "iam_hub_attachments" {
 
     sqs_coordinator_arn_ash = module.sqs_hub.coordinator_ash_sqs_queue_arn
 
+    sqs_coordinator_arn_brez = module.sqs_hub.coordinator_brez_sqs_queue_arn
+
+    sqs_coordinator_arn_recruit = module.sqs_hub.coordinator_recruit_sqs_queue_arn
+
+    sqs_coordinator_arn_tailor = module.sqs_hub.coordinator_tailor_sqs_queue_arn
+
+    sqs_coordinator_arn_rip = module.sqs_hub.coordinator_rip_sqs_queue_arn
+
     account_pool_table_deed = module.dynamodb_hub.accountpooldeed_table_name
     account_pool_table_work = module.dynamodb_hub.accountpoolwork_table_name
     #account_pool_table_stream_arn = module.dynamodb_hub.accountpoolwork_stream_arn
@@ -154,9 +174,20 @@ module "iam_hub_attachments" {
     s3_output_bucket_bambi_cache_arn = module.s3.s3_bucket_output_bambi_cache_arn
     s3_output_bucket_bambi_store_arn = module.s3.s3_bucket_output_bambi_store_arn
 
-    
     s3_output_bucket_workaworka_cache_arn = module.s3.s3_bucket_output_workaworka_cache_arn
     s3_output_bucket_workaworka_store_arn = module.s3.s3_bucket_output_workaworka_store_arn
+
+    s3_output_bucket_brez_cache_arn = module.s3.s3_bucket_output_brez_cache_arn
+    s3_output_bucket_brez_store_arn = module.s3.s3_bucket_output_brez_store_arn
+
+    s3_output_bucket_recruit_cache_arn = module.s3.s3_bucket_output_recruit_cache_arn
+    s3_output_bucket_recruit_store_arn = module.s3.s3_bucket_output_recruit_store_arn
+
+    s3_output_bucket_tailor_cache_arn = module.s3.s3_bucket_output_tailor_cache_arn
+    s3_output_bucket_tailor_store_arn = module.s3.s3_bucket_output_tailor_store_arn
+
+    s3_output_bucket_rip_cache_arn = module.s3.s3_bucket_output_rip_cache_arn
+    s3_output_bucket_rip_store_arn = module.s3.s3_bucket_output_rip_store_arn
 
     providers = {
         aws = aws.hub
