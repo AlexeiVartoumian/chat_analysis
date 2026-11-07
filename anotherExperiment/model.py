@@ -1629,6 +1629,7 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS COMPANY_RECRUIT (
                 company_id              SERIAL          PRIMARY KEY,
                 company_name            VARCHAR(128)    NOT NULL,
+                slug                    TEXT,
                 last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 company_url             TEXT,
                 job_board_public_url    TEXT,
