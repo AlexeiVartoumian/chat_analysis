@@ -1523,18 +1523,6 @@ def create_tables(conn) -> None:
 
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS COMPANY_BREZ (
-                company_id              SERIAL          PRIMARY KEY,
-                company_name            VARCHAR(128)    NOT NULL,
-                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
-                company_url             TEXT,
-                job_board_public_url    TEXT,
-                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
-             
-            );
-        """)
-
-        cur.execute("""
             CREATE TABLE BREZ_COMPANIES_ATHENA (
                 company      text PRIMARY KEY,           
                 example_id   text,
@@ -1566,6 +1554,7 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_BREZ (company_id)
                     ON DELETE CASCADE
+                    )
             """)
 
         cur.execute("""
@@ -1642,7 +1631,7 @@ def create_tables(conn) -> None:
                 last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 company_url             TEXT,
                 job_board_public_url    TEXT,
-                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
             );
         """)
 
@@ -1688,7 +1677,7 @@ def create_tables(conn) -> None:
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_RECRUIT (company_id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE)
             """)
 
         cur.execute("""
@@ -1748,7 +1737,7 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS RECRUIT_RIP(
+            CREATE TABLE IF NOT EXISTS RIP_LINK(
                 job_id_link          BIGINT          PRIMARY KEY,
                 job_url              VARCHAR(1024)   NOT NULL,
                 visited              BOOLEAN         NOT NULL DEFAULT FALSE,
@@ -1764,11 +1753,11 @@ def create_tables(conn) -> None:
             CREATE TABLE IF NOT EXISTS COMPANY_RIP (
                 company_id              SERIAL          PRIMARY KEY,
                 company_name            VARCHAR(128)    NOT NULL,
-                company_about           TEXT            NOT NULL,
+                company_about           TEXT            ,
                 last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 company_url             TEXT,
                 job_board_public_url    TEXT,
-                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                visited                 BOOLEAN         NOT NULL DEFAULT FALSE
             );
         """)
 
@@ -1788,12 +1777,12 @@ def create_tables(conn) -> None:
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS DEPARTMENT_RIP (
-                department_id        SERIAL       PRIMARY KEY,
-                department_name      TEXT,
-                department_tree      JSONB,
-                company_id           INT       NOT NULL,
-                
-                PRIMARY KEY (company_id, department_id),
+                department_id    SERIAL   PRIMARY KEY,
+                company_id       INT      NOT NULL,
+                department_name  TEXT     NOT NULL,
+                department_tree  JSONB,
+
+                UNIQUE (company_id, department_name),
 
                 CONSTRAINT fk_department_company
                     FOREIGN KEY (company_id)
@@ -1807,11 +1796,11 @@ def create_tables(conn) -> None:
                 job_id                  TEXT            PRIMARY KEY,
                 title                   TEXT            NOT NULL,
                 company_id              INT             NOT NULL,
+                department_id           INT,
                 department              TEXT,      
                 company_name            VARCHAR(128)    NOT NULL,    
-                job_url                 TEXT            NOT NULL,   
-                api_endpoint            TEXT,
-                employmentType          TEXT,
+                job_url                 TEXT            NOT NULL,
+                employment_type          TEXT,
                 location                JSONB,  
                 salary                  JSONB,  --IF nothing dont add
                 published_date          TIMESTAMPTZ,
@@ -1819,14 +1808,18 @@ def create_tables(conn) -> None:
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_RIP (company_id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE,
+                CONSTRAINT fk_dept
+                    FOREIGN KEY (department_id)
+                    REFERENCES DEPARTMENT_RIP (department_id)
+                    ON DELETE SET NULL
+                    )
             """)
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_RIP (
                 job_id            TEXT        PRIMARY KEY,
                 description_html  TEXT,
-                company           TEXT,
                 CONSTRAINT fk_description_job
                     FOREIGN KEY (job_id)
                     REFERENCES JOBS_RIP(job_id)
@@ -1860,9 +1853,9 @@ def create_tables(conn) -> None:
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_RIP(
-            job_id              TEXT         NOT NULL,
-            workflow_id         UUID        NOT NULL,
-            is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
             PRIMARY KEY (job_id, workflow_id),
             CONSTRAINT fk_jst_job
                 FOREIGN KEY (job_id) REFERENCES JOBS_RIP(job_id) ON DELETE CASCADE,
@@ -1880,7 +1873,7 @@ def create_tables(conn) -> None:
         """)
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS RECRUIT_TAILOR(
+            CREATE TABLE IF NOT EXISTS TAILOR_LINK(
                 job_id_link          BIGINT          PRIMARY KEY,
                 job_url              VARCHAR(1024)   NOT NULL,
                 visited              BOOLEAN         NOT NULL DEFAULT FALSE,
@@ -1899,12 +1892,12 @@ def create_tables(conn) -> None:
                 last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
                 company_url             TEXT,
                 job_board_public_url    TEXT,
-                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
             );
         """)
 
         cur.execute("""
-            CREATE TABLE TAILOR_COMPANIES_TAILOR (
+            CREATE TABLE TAILOR_COMPANIES_ATHENA (
                 company      text PRIMARY KEY,           
                 example_id   text,
                 careers_url  text,                       
@@ -1925,14 +1918,14 @@ def create_tables(conn) -> None:
                 company_name            VARCHAR(128)    NOT NULL,    
                 job_url                 TEXT            NOT NULL,   
                 api_endpoint            TEXT,
-                employmentType          TEXT,
+                employment_type          TEXT,
                 location                JSONB, 
                 published_date          TIMESTAMPTZ,
 
                 CONSTRAINT fk_jobs_company
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_TAILOR (company_id)
-                    ON DELETE CASCADE
+                    ON DELETE CASCADE)
             """)
 
         cur.execute("""
