@@ -39,6 +39,29 @@ type OracLifecycle struct {
 	JobIDs     []string `json:"job_ids"`
 }
 
+type RipLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}
+type RecruitLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}
+
+type BrezLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}
+
+type TailorLifecycle struct {
+	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
+	CompanyURL string   `json:"company_apply_url"`
+	JobIDs     []string `json:"job_ids"`
+}
+
 type SmartLifecycle struct {
 	CompanyId  int      `json:"company_id,omitempty" db:"company_id"`
 	CompanyURL string   `json:"company_apply_url"`

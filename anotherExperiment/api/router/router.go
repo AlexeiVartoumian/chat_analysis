@@ -216,14 +216,29 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 	mux.Handle("POST /seekRip", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SendRip),
 	))
+	mux.Handle("POST /sendriplifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendRipLifecycle),
+	))
+
 	mux.Handle("POST /seekRecruit", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SendRecruit),
 	))
+	mux.Handle("POST /sendrecruitlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendRecruitLifecycle),
+	))
+
 	mux.Handle("POST /seekBrez", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SendBrez),
 	))
+	mux.Handle("POST /sendbrezlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendBrezLifecycle),
+	))
+
 	mux.Handle("POST /seekTailor", authMiddleware.Authenticate(models.ScopeAdmin)(
 		http.HandlerFunc(h.SendTailor),
+	))
+	mux.Handle("POST /sendtailorlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendTailorLifecycle),
 	))
 
 	return mux
