@@ -118,6 +118,13 @@ type COMPANY_TAILOR struct {
 	PublicUrl   string `json:"job_board_public_url" db:"job_board_public_url"`
 }
 
+type COMPANY_RECRUIT struct {
+	Slug        string `json:"slug" db:"slug"`
+	CompanyName string `json:"company_name" db:"company_name"`
+	CompanyUrl  string `json:"company_url" db:"company_url"`
+	PublicUrl   string `json:"job_board_public_url" db:"job_board_public_url"`
+}
+
 type DeptNodeAsh struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`

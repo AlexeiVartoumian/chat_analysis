@@ -201,6 +201,30 @@ type JOBS_TAILOR struct {
 	PublishedDate  sql.NullString `json:"published_date" db:"published_date"`  // ISO string
 }
 
+type JOBS_RECRUIT struct {
+	JobID              int64          `json:"job_id" db:"job_id"`
+	Slug               string         `json:"slug"` // resolved to company_id
+	Position           sql.NullInt64  `json:"position" db:"position"`
+	Title              string         `json:"title" db:"title"`
+	CompanyID          int            `db:"company_id"`
+	Department         sql.NullString `json:"department" db:"department"`
+	Country            sql.NullString `json:"country" db:"country"`
+	City               sql.NullString `json:"city" db:"city"`
+	CompanyName        string         `json:"company_name" db:"company_name"`
+	JobUrl             string         `json:"job_url" db:"job_url"`
+	ExperienceCode     sql.NullString `json:"experience_code" db:"experience_code"`
+	EmploymentTypeCode sql.NullString `json:"employment_type_code" db:"employment_type_code"`
+	Tags               sql.NullString `json:"tags" db:"tags"` // JSON text
+	CategoryCode       sql.NullString `json:"category_code" db:"category_code"`
+	Status             sql.NullString `json:"status" db:"status"`
+	PrimaryLocation    sql.NullString `json:"primary_location" db:"primary_location"`
+	Location           sql.NullString `json:"location" db:"location"` // JSON text
+	Remote             sql.NullBool   `json:"remote" db:"remote"`
+	Salary             sql.NullString `json:"salary" db:"salary"`                 // JSON text
+	PublishedDate      sql.NullString `json:"published_date" db:"published_date"` // "2026-10-01 09:00:00 UTC"
+	UpdatedAt          sql.NullString `json:"updated_at" db:"updated_at"`
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

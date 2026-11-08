@@ -1,6 +1,9 @@
 package models
 
-import "encoding/json"
+import (
+	"database/sql"
+	"encoding/json"
+)
 
 type JobDescription struct {
 	JobId          int             `json:"job_id,omitempty" db:"job_id"`
@@ -73,4 +76,10 @@ type JobDescription_Rip struct {
 type JobDescription_Tailor struct {
 	JobId       string `json:"job_id" db:"job_id"`
 	ContentHtml string `json:"content_html" db:"content_html"`
+}
+
+type JobDescription_Recruit struct {
+	JobId        int64          `json:"job_id" db:"job_id"`
+	Description  sql.NullString `json:"description" db:"description"`
+	Requirements sql.NullString `json:"requirements" db:"requirements"`
 }

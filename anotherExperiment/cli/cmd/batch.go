@@ -388,6 +388,31 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_RECRUIT" && len(records) > 0 {
+		Company_Recruit(records, tablename)
+		return nil
+	}
+
+	if tablename == "JOBS_RECRUIT" && len(records) > 0 {
+		Job_and_search_loader_recruit(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_RECRUIT" && len(records) > 0 {
+		Jobs_LifecycleRecruit(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "LIVE_RECRUIT" && len(records) > 0 {
+		Live_Recruit(records, filepath)
+		return nil
+	}
+
+	if tablename == "DEADLINKS_RECRUIT" && len(records) > 0 {
+		DeadLinks_Recruit(records, filepath)
+		return nil
+	}
+
 	for index, record := range records {
 		fmt.Println(record)
 		fmt.Println(" ")
@@ -5128,6 +5153,305 @@ func DeadLinks_Tailor(records []map[string]string, filepath string) {
 		}
 		if _, err := db.Exec(`
 			UPDATE job_lifecycle_tailor
+			SET job_state = FALSE,
+			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
+			WHERE job_id = $1`, id, closedAt); err != nil {
+			fmt.Println("dead update failed", id, ErrorHandler(err, "dead update"))
+		}
+	}
+}
+
+func parseJobIDRecruit(s string) (int64, error) {
+	id, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("job_id %q is not a number", s)
+	}
+	return id, nil
+}
+
+// nsInt: "" or non-number -> NULL
+func nsInt(s string) sql.NullInt64 {
+	n, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
+	return sql.NullInt64{Int64: n, Valid: err == nil}
+}
+
+// nsBool: "True"/"False"/"true"/"1"... -> bool, "" -> NULL
+func nsBool(s string) sql.NullBool {
+	b, err := strconv.ParseBool(strings.TrimSpace(s))
+	return sql.NullBool{Bool: b, Valid: err == nil}
+}
+
+func Company_RecruitLoader(record map[string]string) (models.COMPANY_RECRUIT, error) {
+	v := models.COMPANY_RECRUIT{
+		Slug:        strings.TrimSpace(record["slug"]),
+		CompanyName: strings.TrimSpace(record["company_name"]),
+		CompanyUrl:  record["company_url"],
+		PublicUrl:   record["job_board_public_url"],
+	}
+	if v.Slug == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("company row missing slug or company_name: %v", record)
+	}
+	return v, nil
+}
+
+func JobLoaderRecruit(record map[string]string, companyID int) (models.JOBS_RECRUIT, error) {
+	id, err := parseJobIDRecruit(record["job_id"])
+	if err != nil {
+		return models.JOBS_RECRUIT{}, err
+	}
+	sid := strconv.FormatInt(id, 10)
+	v := models.JOBS_RECRUIT{
+		JobID:              id,
+		Slug:               strings.TrimSpace(record["slug"]),
+		Position:           nsInt(record["position"]),
+		Title:              strings.TrimSpace(record["title"]),
+		CompanyID:          companyID,
+		Department:         ns(record["department"]),
+		Country:            ns(record["country"]),
+		City:               ns(record["city"]),
+		CompanyName:        strings.TrimSpace(record["company_name"]),
+		JobUrl:             strings.TrimSpace(record["job_url"]),
+		ExperienceCode:     ns(record["experience_code"]),
+		EmploymentTypeCode: ns(record["employment_type_code"]),
+		Tags:               nsJSON(record["tags"], "tags", sid),
+		CategoryCode:       ns(record["category_code"]),
+		Status:             ns(record["status"]),
+		PrimaryLocation:    ns(record["primary_location"]),
+		Location:           nsJSON(record["location"], "location", sid),
+		Remote:             nsBool(record["remote"]),
+		Salary:             nsJSON(record["salary"], "salary", sid),
+		PublishedDate:      ns(record["published_date"]),
+		UpdatedAt:          ns(record["updated_at"]),
+	}
+	if v.Title == "" || v.JobUrl == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("job row missing title/job_url/company_name: %v", record)
+	}
+	return v, nil
+}
+
+func Jobs_DescriptionRecruitLoader(record map[string]string) (models.JobDescription_Recruit, error) {
+	id, err := parseJobIDRecruit(record["job_id"])
+	if err != nil {
+		return models.JobDescription_Recruit{}, err
+	}
+	return models.JobDescription_Recruit{
+		JobId:        id,
+		Description:  ns(record["description"]),
+		Requirements: ns(record["requirements"]),
+	}, nil
+}
+func GetCompanyRecruitID(db *sql.DB, slug string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT company_id FROM company_recruit WHERE slug = $1`, slug).Scan(&id)
+	return id, err
+}
+
+// Company: custom upsert, same pattern as Company_Work / Company_Rip.
+func Company_Recruit(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		value, err := Company_RecruitLoader(record)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "company loader"))
+			continue
+		}
+		_, err = db.Exec(`
+			INSERT INTO company_recruit (slug, company_name, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (slug) DO UPDATE SET
+				company_name         = EXCLUDED.company_name,
+				company_url          = EXCLUDED.company_url,
+				job_board_public_url = EXCLUDED.job_board_public_url,
+				last_scanned_at      = NOW()`,
+			value.Slug, value.CompanyName, ns(value.CompanyUrl), ns(value.PublicUrl))
+		if err != nil {
+			fmt.Println("failed to insert company", value.Slug, ErrorHandler(err, "company insert"))
+			continue
+		}
+	}
+}
+
+// Jobs: AddNewRow for jobs, workflow and search-term rows.
+func Job_and_search_loader_recruit(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	SearchWorkflow := models.SearchWorkflowRecruit{
+		Workflow_id:      uuid,
+		Run_at:           timestamp,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	if _, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_RECRUIT"); err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	FailedCount := 0
+	LinkFailedCount := 0
+	DuplicateCount := 0
+	companyIDs := map[string]int{}
+
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyRecruitID(db, slug)
+			if err != nil {
+				fmt.Println("could not find companyId at index", index, slug, err)
+				FailedCount++
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+
+		value, err := JobLoaderRecruit(record, companyID)
+		if err != nil {
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
+			continue
+		}
+
+		jobExisted, err := AddNewRow(value, "JOBS_RECRUIT")
+		if err != nil {
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue
+		}
+		if jobExisted != 0 {
+			DuplicateCount++
+		}
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_RECRUIT{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  jobExisted == 0,
+		}
+		if _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_RECRUIT"); err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%d: %v", uuid, value.JobID, err)
+		}
+	}
+
+	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
+		uuid, len(records), DuplicateCount, FailedCount, LinkFailedCount)
+
+	if err := RecountSearchWorkflow(db, "search_workflow_recruit", "job_search_term_recruit", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+	return nil
+}
+
+// processedJobsRecruit second pass (JOB_LIFECYCLE_RECRUIT). Run after JOBS_RECRUIT.
+func Jobs_LifecycleRecruit(records []map[string]string, tablename string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+
+	created, existed, failed := 0, 0, 0
+	for _, record := range records {
+		id, err := parseJobIDRecruit(record["job_id"])
+		if err != nil {
+			failed++
+			log.Printf("lifecycle: %v", err)
+			continue
+		}
+		lifecycle := models.JobLifeCycleRecruit{
+			JobId:            id,
+			Job_state:        true,
+			FirstSeenAt:      seenAt,
+			LastSeenListedAt: seenAt,
+		}
+		res, err := AddNewRow(lifecycle, tablename)
+		switch {
+		case err != nil:
+			failed++
+			log.Printf("lifecycle insert failed job=%d: %v", id, err)
+		case res != 0:
+			existed++
+		default:
+			created++
+		}
+	}
+	log.Printf("%s: %d created, %d already tracked, %d failed", tablename, created, existed, failed)
+}
+
+// liveRecruit-<workflow_id>_<ts>.csv (lifecycle): job_id
+func Live_Recruit(records []map[string]string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		id, err := parseJobIDRecruit(record["job_id"])
+		if err != nil {
+			fmt.Println("live:", err)
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_recruit
+			SET job_state = TRUE, last_seen_listed_at = $2, first_seen_closed_at = NULL
+			WHERE job_id = $1`, id, seenAt); err != nil {
+			fmt.Println("live update failed", id, ErrorHandler(err, "live update"))
+		}
+	}
+}
+
+// deadlinks-<workflow_id>_<ts>.csv (shared across ATSs): only acts on origin=recruit rows.
+func DeadLinks_Recruit(records []map[string]string, filepath string) {
+	closedAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		if strings.TrimSpace(record["origin"]) != "recruit" {
+			continue
+		}
+		id, err := parseJobIDRecruit(record["job_id"])
+		if err != nil {
+			fmt.Println("dead:", err)
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_recruit
 			SET job_state = FALSE,
 			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
 			WHERE job_id = $1`, id, closedAt); err != nil {
