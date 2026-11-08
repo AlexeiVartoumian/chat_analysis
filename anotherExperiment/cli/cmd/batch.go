@@ -837,6 +837,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 	case "JOB_DESCRIPTIONS_WORKAB":
 		return Jobs_DescriptionWorkabLoader(record)
 
+	case "JOB_DESCRIPTIONS_RIP":
+		return Jobs_DescriptionRipLoader(record)
+
 	// case "JOB_DESCRIPTIONS_SMART":
 	// 	return Jobs_DescriptionSmartLoader(record)
 
