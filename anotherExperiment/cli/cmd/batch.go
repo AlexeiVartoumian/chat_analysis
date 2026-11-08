@@ -5586,8 +5586,6 @@ func Company_Brez(records []map[string]string, tablename string) {
 		}
 	}
 }
-
- AddNewRow for jobs, workflow and search-term rows.
 func Job_and_search_loader_brez(records []map[string]string, tablename string, filepath string) error {
 	db, err := ConnectDb()
 	if err != nil {
