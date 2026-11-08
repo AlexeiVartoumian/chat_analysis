@@ -189,6 +189,18 @@ type JOBS_RIP struct {
 	PublishedDate  sql.NullString `json:"published_date" db:"published_date"` // ISO string
 }
 
+type JOBS_TAILOR struct {
+	JobID          string         `json:"job_id" db:"job_id"`
+	Slug           string         `json:"slug"` // resolved to company_id
+	Title          string         `json:"title" db:"title"`
+	CompanyID      int            `db:"company_id"`
+	CompanyName    string         `json:"company_name" db:"company_name"`
+	JobUrl         string         `json:"job_url" db:"job_url"`
+	EmploymentType sql.NullString `json:"employmentType" db:"employmenttype"` // column was created as employmentType -> folded
+	Location       sql.NullString `json:"location" db:"location"`             // JSON text
+	PublishedDate  sql.NullString `json:"published_date" db:"published_date"` // ISO string
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

@@ -69,3 +69,8 @@ type JobDescription_Rip struct {
 	JobId           string `json:"job_id" db:"job_id"`
 	DescriptionHtml string `json:"description_html" db:"description_html"`
 }
+
+type JobDescription_Tailor struct {
+	JobId       string `json:"job_id" db:"job_id"`
+	ContentHtml string `json:"content_html" db:"content_html"`
+}

@@ -363,6 +363,30 @@ func CsvFile(filepath string, tablename string) error {
 		Job_description_loader_SMART(records, tablename, filepath)
 		return nil
 	}
+	if tablename == "COMPANY_TAILOR" && len(records) > 0 {
+		Company_Tailor(records, tablename)
+		return nil
+	}
+
+	if tablename == "JOBS_TAILOR" && len(records) > 0 {
+		Job_and_search_loader_tailor(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_TAILOR" && len(records) > 0 {
+		Jobs_LifecycleTailor(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "LIVE_TAILOR" && len(records) > 0 {
+		Live_Tailor(records, filepath)
+		return nil
+	}
+
+	if tablename == "DEADLINKS_TAILOR" && len(records) > 0 {
+		DeadLinks_Tailor(records, filepath)
+		return nil
+	}
 
 	for index, record := range records {
 		fmt.Println(record)
@@ -839,6 +863,9 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "JOB_DESCRIPTIONS_RIP":
 		return Jobs_DescriptionRipLoader(record)
+
+	case "JOB_DESCRIPTIONS_TAILOR":
+		return Jobs_DescriptionTailorLoader(record)
 
 	// case "JOB_DESCRIPTIONS_SMART":
 	// 	return Jobs_DescriptionSmartLoader(record)
@@ -4844,6 +4871,263 @@ func DeadLinks_Rip(records []map[string]string, filepath string) {
 		}
 		if _, err := db.Exec(`
 			UPDATE job_lifecycle_rip
+			SET job_state = FALSE,
+			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
+			WHERE job_id = $1`, id, closedAt); err != nil {
+			fmt.Println("dead update failed", id, ErrorHandler(err, "dead update"))
+		}
+	}
+}
+
+func Company_TailorLoader(record map[string]string) (models.COMPANY_TAILOR, error) {
+	v := models.COMPANY_TAILOR{
+		Slug:        strings.TrimSpace(record["slug"]),
+		CompanyName: strings.TrimSpace(record["company_name"]),
+		CompanyUrl:  record["company_url"],
+		PublicUrl:   record["job_board_public_url"],
+	}
+	if v.Slug == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("company row missing slug or company_name: %v", record)
+	}
+	return v, nil
+}
+
+func JobLoaderTailor(record map[string]string, companyID int) (models.JOBS_TAILOR, error) {
+	id := strings.TrimSpace(record["job_id"])
+	v := models.JOBS_TAILOR{
+		JobID:          id,
+		Slug:           strings.TrimSpace(record["slug"]),
+		Title:          strings.TrimSpace(record["title"]),
+		CompanyID:      companyID,
+		CompanyName:    strings.TrimSpace(record["company_name"]),
+		JobUrl:         strings.TrimSpace(record["job_url"]),
+		EmploymentType: ns(record["employmentType"]),
+		Location:       nsJSON(record["location"], "location", id),
+		PublishedDate:  ns(record["published_date"]),
+	}
+	if v.JobID == "" || v.Title == "" || v.JobUrl == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("job row missing job_id/title/job_url/company_name: %v", record)
+	}
+	return v, nil
+}
+
+func Jobs_DescriptionTailorLoader(record map[string]string) (models.JobDescription_Tailor, error) {
+	id := strings.TrimSpace(record["job_id"])
+	if id == "" {
+		return models.JobDescription_Tailor{}, fmt.Errorf("description row missing job_id")
+	}
+	return models.JobDescription_Tailor{
+		JobId:       id,
+		ContentHtml: record["content_html"],
+	}, nil
+}
+func GetCompanyTailorID(db *sql.DB, slug string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT company_id FROM company_tailor WHERE slug = $1`, slug).Scan(&id)
+	return id, err
+}
+
+func Company_Tailor(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		value, err := Company_TailorLoader(record)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "company loader"))
+			continue
+		}
+		_, err = db.Exec(`
+			INSERT INTO company_tailor (slug, company_name, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (slug) DO UPDATE SET
+				company_name         = EXCLUDED.company_name,
+				company_url          = EXCLUDED.company_url,
+				job_board_public_url = EXCLUDED.job_board_public_url,
+				last_scanned_at      = NOW()`,
+			value.Slug, value.CompanyName, ns(value.CompanyUrl), ns(value.PublicUrl))
+		if err != nil {
+			fmt.Println("failed to insert company", value.Slug, ErrorHandler(err, "company insert"))
+			continue
+		}
+	}
+}
+
+// Jobs: AddNewRow for jobs, workflow and search-term rows.
+func Job_and_search_loader_tailor(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	SearchWorkflow := models.SearchWorkflowTailor{
+		Workflow_id:      uuid,
+		Run_at:           timestamp,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	if _, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_TAILOR"); err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	FailedCount := 0
+	LinkFailedCount := 0
+	DuplicateCount := 0
+	companyIDs := map[string]int{}
+
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyTailorID(db, slug)
+			if err != nil {
+				fmt.Println("could not find companyId at index", index, slug, err)
+				FailedCount++
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+
+		value, err := JobLoaderTailor(record, companyID)
+		if err != nil {
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
+			continue
+		}
+
+		jobExisted, err := AddNewRow(value, "JOBS_TAILOR")
+		if err != nil {
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue
+		}
+		if jobExisted != 0 {
+			DuplicateCount++
+		}
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_TAILOR{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  jobExisted == 0,
+		}
+		if _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_TAILOR"); err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
+	}
+
+	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
+		uuid, len(records), DuplicateCount, FailedCount, LinkFailedCount)
+
+	if err := RecountSearchWorkflow(db, "search_workflow_tailor", "job_search_term_tailor", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+	return nil
+}
+
+// processedJobsTailor second pass (JOB_LIFECYCLE_TAILOR). Run after JOBS_TAILOR.
+func Jobs_LifecycleTailor(records []map[string]string, tablename string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+
+	created, existed, failed := 0, 0, 0
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		lifecycle := models.JobLifeCycleTailor{
+			JobId:            id,
+			Job_state:        true,
+			FirstSeenAt:      seenAt,
+			LastSeenListedAt: seenAt,
+		}
+		res, err := AddNewRow(lifecycle, tablename)
+		switch {
+		case err != nil:
+			failed++
+			log.Printf("lifecycle insert failed job=%s: %v", id, err)
+		case res != 0:
+			existed++
+		default:
+			created++
+		}
+	}
+	log.Printf("%s: %d created, %d already tracked, %d failed", tablename, created, existed, failed)
+}
+
+// liveTailor-<workflow_id>_<ts>.csv (lifecycle): job_id
+func Live_Tailor(records []map[string]string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_tailor
+			SET job_state = TRUE, last_seen_listed_at = $2, first_seen_closed_at = NULL
+			WHERE job_id = $1`, id, seenAt); err != nil {
+			fmt.Println("live update failed", id, ErrorHandler(err, "live update"))
+		}
+	}
+}
+
+// deadlinks-<workflow_id>_<ts>.csv (shared across ATSs): only acts on origin=tailor rows.
+func DeadLinks_Tailor(records []map[string]string, filepath string) {
+	closedAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		if strings.TrimSpace(record["origin"]) != "tailor" {
+			continue
+		}
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_tailor
 			SET job_state = FALSE,
 			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
 			WHERE job_id = $1`, id, closedAt); err != nil {
