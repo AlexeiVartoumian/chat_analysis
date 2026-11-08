@@ -68,8 +68,10 @@ elif first.get("url") and first.get("company"):
     message = {
         "workflow": "normal",
         "workflow_id": workflow_id,
-        "company_apply_url": first["url"],
-        "company": first["company"],
+         "items": [{
+                    "company_apply_url": first["url"],
+                    "company": first["company"],
+                }],
     }
 #link
 elif first.get("job_id") and first.get("url"):
@@ -77,7 +79,7 @@ elif first.get("job_id") and first.get("url"):
     message = {
         "workflow": "normal",
         "workflow_id": workflow_id,
-        "company_apply_url": first["url"],
+        "items": [{"company_apply_url": first["url"]}],
         "link_id": first["job_id"],
     }
 
