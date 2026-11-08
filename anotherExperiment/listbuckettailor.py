@@ -31,7 +31,7 @@ with open("keys_tailor.txt" , "r" , encoding="utf-8") as f:
 
     for line in f:
         #print(line)
-        seen_keys.add(line.sttailor("\n"))
+        seen_keys.add(line.strip("\n"))
 
 output_store_standard_timelines = set()
 for page in pages :
