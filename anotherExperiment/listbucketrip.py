@@ -84,7 +84,7 @@ with open("newkeys_rip.txt" , "w" , encoding="utf-8") as f :
 def forgive(key , mydict ):
 
     if key not in mydict:
-        mydict[key] =  [0] *4   
+        mydict[key] =  [0] *5   
     return mydict
 
 def dblforgive(key , mydict ):
