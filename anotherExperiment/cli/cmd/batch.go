@@ -5592,7 +5592,7 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 		return ErrorHandler(err, "db conn error")
 	}
 	defer db.Close()
- 
+
 	uuid, ts, err := parseFilename(filepath)
 	if err != nil {
 		fmt.Println("error:", err)
@@ -5603,7 +5603,7 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 		fmt.Println("bad timestamp parse")
 		return err
 	}
- 
+
 	SearchWorkflow := models.SearchWorkflowBrez{
 		Workflow_id:      uuid,
 		Run_at:           timestamp,
@@ -5614,12 +5614,12 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 		fmt.Println("workflow insert failed:", err)
 		return err
 	}
- 
+
 	FailedCount := 0
 	LinkFailedCount := 0
 	DuplicateCount := 0
 	companyIDs := map[string]int{}
- 
+
 	for index, record := range records {
 		slug := strings.TrimSpace(record["slug"])
 		companyID, ok := companyIDs[slug]
@@ -5632,14 +5632,14 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 			}
 			companyIDs[slug] = companyID
 		}
- 
+
 		value, err := JobLoaderBrez(record, companyID)
 		if err != nil {
 			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
 			FailedCount++
 			continue
 		}
- 
+
 		jobExisted, err := AddNewRow(value, "JOBS_BREZ")
 		if err != nil {
 			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
@@ -5649,7 +5649,7 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 		if jobExisted != 0 {
 			DuplicateCount++
 		}
- 
+
 		JobSearchWorkflow := models.JOB_SEARCH_TERM_BREZ{
 			Job_id:      value.JobID,
 			Workflow_id: uuid,
@@ -5660,24 +5660,23 @@ func Job_and_search_loader_brez(records []map[string]string, tablename string, f
 			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
 		}
 	}
- 
+
 	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
 		uuid, len(records), DuplicateCount, FailedCount, LinkFailedCount)
- 
+
 	if err := RecountSearchWorkflow(db, "search_workflow_brez", "job_search_term_brez", uuid); err != nil {
 		return ErrorHandler(err, "recount failed")
 	}
 	return nil
 }
 
-cessedJobsBrez second pass (JOB_LIFECYCLE_BREZ). Run after JOBS_BREZ.
 func Jobs_LifecycleBrez(records []map[string]string, tablename string, filepath string) {
 	seenAt, err := fileTime(filepath)
 	if err != nil {
 		fmt.Println("bad filename timestamp", filepath, err)
 		return
 	}
- 
+
 	created, existed, failed := 0, 0, 0
 	for _, record := range records {
 		id := strings.TrimSpace(record["job_id"])
@@ -5703,7 +5702,6 @@ func Jobs_LifecycleBrez(records []map[string]string, tablename string, filepath 
 	}
 	log.Printf("%s: %d created, %d already tracked, %d failed", tablename, created, existed, failed)
 }
- 
 
 // liveBrez-<workflow_id>_<ts>.csv (lifecycle): job_id
 func Live_Brez(records []map[string]string, filepath string) {
@@ -5718,7 +5716,7 @@ func Live_Brez(records []map[string]string, filepath string) {
 		return
 	}
 	defer db.Close()
- 
+
 	for _, record := range records {
 		id := strings.TrimSpace(record["job_id"])
 		if id == "" {
@@ -5733,7 +5731,6 @@ func Live_Brez(records []map[string]string, filepath string) {
 	}
 }
 
-
 // deadlinks-<workflow_id>_<ts>.csv (shared across ATSs): only acts on origin=brez rows.
 func DeadLinks_Brez(records []map[string]string, filepath string) {
 	closedAt, err := fileTime(filepath)
@@ -5747,7 +5744,7 @@ func DeadLinks_Brez(records []map[string]string, filepath string) {
 		return
 	}
 	defer db.Close()
- 
+
 	for _, record := range records {
 		if strings.TrimSpace(record["origin"]) != "brez" {
 			continue
