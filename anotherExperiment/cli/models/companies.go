@@ -125,6 +125,13 @@ type COMPANY_RECRUIT struct {
 	PublicUrl   string `json:"job_board_public_url" db:"job_board_public_url"`
 }
 
+type COMPANY_BREZ struct {
+	Slug        string `json:"slug" db:"slug"`
+	CompanyName string `json:"company_name" db:"company_name"`
+	CompanyUrl  string `json:"company_url" db:"company_url"`
+	PublicUrl   string `json:"job_board_public_url" db:"job_board_public_url"`
+}
+
 type DeptNodeAsh struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`

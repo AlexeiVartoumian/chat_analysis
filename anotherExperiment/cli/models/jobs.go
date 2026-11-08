@@ -225,6 +225,19 @@ type JOBS_RECRUIT struct {
 	UpdatedAt          sql.NullString `json:"updated_at" db:"updated_at"`
 }
 
+type JOBS_BREZ struct {
+	JobID         string         `json:"job_id" db:"job_id"`
+	Slug          string         `json:"slug"` // resolved to company_id
+	Title         string         `json:"title" db:"title"`
+	CompanyID     int            `db:"company_id"`
+	Department    sql.NullString `json:"department" db:"department"`
+	CompanyName   string         `json:"company_name" db:"company_name"`
+	JobUrl        string         `json:"job_url" db:"job_url"`
+	Location      sql.NullString `json:"location" db:"location"`             // JSON text
+	Salary        sql.NullString `json:"salary" db:"salary"`                 // plain text, e.g. "£40,000 - £50,000"
+	PublishedDate sql.NullString `json:"published_date" db:"published_date"` // ISO string
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

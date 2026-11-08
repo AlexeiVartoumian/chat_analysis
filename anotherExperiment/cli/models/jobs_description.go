@@ -83,3 +83,8 @@ type JobDescription_Recruit struct {
 	Description  sql.NullString `json:"description" db:"description"`
 	Requirements sql.NullString `json:"requirements" db:"requirements"`
 }
+
+type JobDescription_Brez struct {
+	JobId           string `json:"job_id" db:"job_id"`
+	DescriptionHtml string `json:"description_html" db:"description_html"`
+}

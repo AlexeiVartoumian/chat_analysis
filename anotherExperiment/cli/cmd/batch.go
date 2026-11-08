@@ -118,6 +118,21 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_TAILOR" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
+	if tablename == "FILE_KEYS_RECRUIT" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
+	if tablename == "FILE_KEYS_BREZ" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -410,6 +425,31 @@ func CsvFile(filepath string, tablename string) error {
 
 	if tablename == "DEADLINKS_RECRUIT" && len(records) > 0 {
 		DeadLinks_Recruit(records, filepath)
+		return nil
+	}
+
+	if tablename == "COMPANY_BREZ" && len(records) > 0 {
+		Company_Brez(records, tablename)
+		return nil
+	}
+
+	if tablename == "JOBS_BREZ" && len(records) > 0 {
+		Job_and_search_loader_brez(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_BREZ" && len(records) > 0 {
+		Jobs_LifecycleBrez(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "LIVE_BREZ" && len(records) > 0 {
+		Live_Brez(records, filepath)
+		return nil
+	}
+
+	if tablename == "DEADLINKS_BREZ" && len(records) > 0 {
+		DeadLinks_Brez(records, filepath)
 		return nil
 	}
 
@@ -891,6 +931,12 @@ func ModelLoader(tablename string, record map[string]string) (interface{}, error
 
 	case "JOB_DESCRIPTIONS_TAILOR":
 		return Jobs_DescriptionTailorLoader(record)
+
+	case "JOB_DESCRIPTIONS_RECRUIT":
+		return Jobs_DescriptionRecruitLoader(record)
+
+	case "JOB_DESCRIPTIONS_BREZ":
+		return Jobs_DescriptionBrezLoader(record)
 
 	// case "JOB_DESCRIPTIONS_SMART":
 	// 	return Jobs_DescriptionSmartLoader(record)
@@ -5452,6 +5498,268 @@ func DeadLinks_Recruit(records []map[string]string, filepath string) {
 		}
 		if _, err := db.Exec(`
 			UPDATE job_lifecycle_recruit
+			SET job_state = FALSE,
+			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
+			WHERE job_id = $1`, id, closedAt); err != nil {
+			fmt.Println("dead update failed", id, ErrorHandler(err, "dead update"))
+		}
+	}
+}
+
+func Company_BrezLoader(record map[string]string) (models.COMPANY_BREZ, error) {
+	v := models.COMPANY_BREZ{
+		Slug:        strings.TrimSpace(record["slug"]),
+		CompanyName: strings.TrimSpace(record["company_name"]),
+		CompanyUrl:  record["company_url"],
+		PublicUrl:   record["job_board_public_url"],
+	}
+	if v.Slug == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("company row missing slug or company_name: %v", record)
+	}
+	return v, nil
+}
+
+func JobLoaderBrez(record map[string]string, companyID int) (models.JOBS_BREZ, error) {
+	id := strings.TrimSpace(record["job_id"])
+	v := models.JOBS_BREZ{
+		JobID:         id,
+		Slug:          strings.TrimSpace(record["slug"]),
+		Title:         strings.TrimSpace(record["title"]),
+		CompanyID:     companyID,
+		Department:    ns(record["department"]),
+		CompanyName:   strings.TrimSpace(record["company_name"]),
+		JobUrl:        strings.TrimSpace(record["job_url"]),
+		Location:      nsJSON(record["location"], "location", id),
+		Salary:        ns(record["salary"]),
+		PublishedDate: ns(record["published_date"]),
+	}
+	if v.JobID == "" || v.Title == "" || v.JobUrl == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("job row missing job_id/title/job_url/company_name: %v", record)
+	}
+	return v, nil
+}
+
+func Jobs_DescriptionBrezLoader(record map[string]string) (models.JobDescription_Brez, error) {
+	id := strings.TrimSpace(record["job_id"])
+	if id == "" {
+		return models.JobDescription_Brez{}, fmt.Errorf("description row missing job_id")
+	}
+	return models.JobDescription_Brez{
+		JobId:           id,
+		DescriptionHtml: record["description_html"],
+	}, nil
+}
+
+func GetCompanyBrezID(db *sql.DB, slug string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT company_id FROM company_brez WHERE slug = $1`, slug).Scan(&id)
+	return id, err
+}
+
+// Company: custom upsert, same pattern as Company_Work / Company_Rip.
+func Company_Brez(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		value, err := Company_BrezLoader(record)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "company loader"))
+			continue
+		}
+		_, err = db.Exec(`
+			INSERT INTO company_brez (slug, company_name, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (slug) DO UPDATE SET
+				company_name         = EXCLUDED.company_name,
+				company_url          = EXCLUDED.company_url,
+				job_board_public_url = EXCLUDED.job_board_public_url,
+				last_scanned_at      = NOW()`,
+			value.Slug, value.CompanyName, ns(value.CompanyUrl), ns(value.PublicUrl))
+		if err != nil {
+			fmt.Println("failed to insert company", value.Slug, ErrorHandler(err, "company insert"))
+			continue
+		}
+	}
+}
+
+ AddNewRow for jobs, workflow and search-term rows.
+func Job_and_search_loader_brez(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+ 
+	uuid, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+ 
+	SearchWorkflow := models.SearchWorkflowBrez{
+		Workflow_id:      uuid,
+		Run_at:           timestamp,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	if _, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_BREZ"); err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+ 
+	FailedCount := 0
+	LinkFailedCount := 0
+	DuplicateCount := 0
+	companyIDs := map[string]int{}
+ 
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyBrezID(db, slug)
+			if err != nil {
+				fmt.Println("could not find companyId at index", index, slug, err)
+				FailedCount++
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+ 
+		value, err := JobLoaderBrez(record, companyID)
+		if err != nil {
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
+			continue
+		}
+ 
+		jobExisted, err := AddNewRow(value, "JOBS_BREZ")
+		if err != nil {
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue
+		}
+		if jobExisted != 0 {
+			DuplicateCount++
+		}
+ 
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_BREZ{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  jobExisted == 0,
+		}
+		if _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_BREZ"); err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
+	}
+ 
+	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
+		uuid, len(records), DuplicateCount, FailedCount, LinkFailedCount)
+ 
+	if err := RecountSearchWorkflow(db, "search_workflow_brez", "job_search_term_brez", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+	return nil
+}
+
+cessedJobsBrez second pass (JOB_LIFECYCLE_BREZ). Run after JOBS_BREZ.
+func Jobs_LifecycleBrez(records []map[string]string, tablename string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+ 
+	created, existed, failed := 0, 0, 0
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		lifecycle := models.JobLifeCycleBrez{
+			JobId:            id,
+			Job_state:        true,
+			FirstSeenAt:      seenAt,
+			LastSeenListedAt: seenAt,
+		}
+		res, err := AddNewRow(lifecycle, tablename)
+		switch {
+		case err != nil:
+			failed++
+			log.Printf("lifecycle insert failed job=%s: %v", id, err)
+		case res != 0:
+			existed++
+		default:
+			created++
+		}
+	}
+	log.Printf("%s: %d created, %d already tracked, %d failed", tablename, created, existed, failed)
+}
+ 
+
+// liveBrez-<workflow_id>_<ts>.csv (lifecycle): job_id
+func Live_Brez(records []map[string]string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+ 
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_brez
+			SET job_state = TRUE, last_seen_listed_at = $2, first_seen_closed_at = NULL
+			WHERE job_id = $1`, id, seenAt); err != nil {
+			fmt.Println("live update failed", id, ErrorHandler(err, "live update"))
+		}
+	}
+}
+
+
+// deadlinks-<workflow_id>_<ts>.csv (shared across ATSs): only acts on origin=brez rows.
+func DeadLinks_Brez(records []map[string]string, filepath string) {
+	closedAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+ 
+	for _, record := range records {
+		if strings.TrimSpace(record["origin"]) != "brez" {
+			continue
+		}
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_brez
 			SET job_state = FALSE,
 			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
 			WHERE job_id = $1`, id, closedAt); err != nil {

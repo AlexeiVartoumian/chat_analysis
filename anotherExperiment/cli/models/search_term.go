@@ -173,3 +173,16 @@ type JOB_SEARCH_TERM_RECRUIT struct {
 	Workflow_id string `db:"workflow_id"`
 	Is_new_job  bool   `db:"is_new_job"`
 }
+
+type SearchWorkflowBrez struct {
+	Workflow_id      string    `db:"workflow_id"`
+	Run_at           time.Time `db:"run_at"`
+	Total_jobs_found int       `db:"total_jobs_found"`
+	Net_new_found    int       `db:"net_new_jobs"`
+}
+
+type JOB_SEARCH_TERM_BREZ struct {
+	Job_id      string `db:"job_id"`
+	Workflow_id string `db:"workflow_id"`
+	Is_new_job  bool   `db:"is_new_job"`
+}
