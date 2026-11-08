@@ -174,6 +174,21 @@ type JobSmart struct {
 	ExperienceLevel string  `json:"experienceLevel" db:"experiencelevel"`
 }
 
+type JOBS_RIP struct {
+	JobID          string         `json:"job_id" db:"job_id"`
+	Slug           string         `json:"slug"` // resolved to company_id
+	Title          string         `json:"title" db:"title"`
+	CompanyID      int            `db:"company_id"`
+	DepartmentID   sql.NullInt64  `db:"department_id"`
+	Department     sql.NullString `json:"department" db:"department"`
+	CompanyName    string         `json:"company_name" db:"company_name"`
+	JobUrl         string         `json:"job_url" db:"job_url"`
+	EmploymentType sql.NullString `json:"employment_type" db:"employment_type"`
+	Location       sql.NullString `json:"location" db:"location"`             // JSON text
+	Salary         sql.NullString `json:"salary" db:"salary"`                 // JSON text
+	PublishedDate  sql.NullString `json:"published_date" db:"published_date"` // ISO string
+}
+
 type Everything struct {
 	JOBS
 	Jobs_metadata

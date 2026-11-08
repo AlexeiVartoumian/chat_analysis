@@ -113,6 +113,11 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_RIP" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -270,8 +275,37 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "COMPANY_RIP" && len(records) > 0 {
+		Company_Rip(records, tablename)
+		return nil
+	}
+
 	if tablename == "JOBS_WORK_PARTIAL" && len(records) > 0 {
 		Job_and_search_loader_work(records, tablename, filepath)
+		return nil
+	}
+	if tablename == "DEPARTMENT_RIP" && len(records) > 0 {
+		Department_Rip(records)
+		return nil
+	}
+
+	if tablename == "JOBS_RIP" && len(records) > 0 {
+		Job_and_search_loader_rip(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "JOB_LIFECYCLE_RIP" && len(records) > 0 {
+		Jobs_LifecycleRip(records, tablename, filepath)
+		return nil
+	}
+
+	if tablename == "LIVE_RIP" && len(records) > 0 {
+		Live_Rip(records, filepath)
+		return nil
+	}
+
+	if tablename == "DEADLINKS_RIP" && len(records) > 0 {
+		DeadLinks_Rip(records, filepath)
 		return nil
 	}
 
@@ -4445,4 +4479,372 @@ func Job_description_loader_SMART(records []map[string]string, tablename string,
 	}
 
 	return nil
+}
+
+func ns(s string) sql.NullString {
+	s = strings.TrimSpace(s)
+	return sql.NullString{String: s, Valid: s != ""}
+}
+
+// nsJSON: "" or invalid JSON -> NULL (logged), for jsonb columns.
+func nsJSON(s, field, id string) sql.NullString {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return sql.NullString{}
+	}
+	if !json.Valid([]byte(s)) {
+		log.Printf("%s %s: invalid JSON, storing NULL", id, field)
+		return sql.NullString{}
+	}
+	return sql.NullString{String: s, Valid: true}
+}
+func Company_RipLoader(record map[string]string) (models.COMPANY_RIP, error) {
+	v := models.COMPANY_RIP{
+		Slug:         strings.TrimSpace(record["slug"]),
+		CompanyName:  strings.TrimSpace(record["company_name"]),
+		CompanyAbout: record["company_about"],
+		CompanyUrl:   record["company_url"],
+		PublicUrl:    record["job_board_public_url"],
+	}
+	if v.Slug == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("company row missing slug or company_name: %v", record)
+	}
+	return v, nil
+}
+func Department_RipLoader(record map[string]string, companyID int) (models.DEPARTMENT_RIP, error) {
+	v := models.DEPARTMENT_RIP{
+		Slug:           strings.TrimSpace(record["slug"]),
+		CompanyID:      companyID,
+		DepartmentName: strings.TrimSpace(record["department_name"]),
+		DepartmentTree: record["department_tree"],
+	}
+	if v.DepartmentName == "" {
+		return v, fmt.Errorf("department row missing department_name: %v", record)
+	}
+	return v, nil
+}
+func JobLoaderRip(record map[string]string, companyID int, deptID sql.NullInt64) (models.JOBS_RIP, error) {
+	id := strings.TrimSpace(record["job_id"])
+	v := models.JOBS_RIP{
+		JobID:          id,
+		Slug:           strings.TrimSpace(record["slug"]),
+		Title:          strings.TrimSpace(record["title"]),
+		CompanyID:      companyID,
+		DepartmentID:   deptID,
+		Department:     ns(record["department"]),
+		CompanyName:    strings.TrimSpace(record["company_name"]),
+		JobUrl:         strings.TrimSpace(record["job_url"]),
+		EmploymentType: ns(record["employment_type"]),
+		Location:       nsJSON(record["location"], "location", id),
+		Salary:         nsJSON(record["salary"], "salary", id),
+		PublishedDate:  ns(record["published_date"]),
+	}
+	if v.JobID == "" || v.Title == "" || v.JobUrl == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("job row missing job_id/title/job_url/company_name: %v", record)
+	}
+	return v, nil
+}
+func Jobs_DescriptionRipLoader(record map[string]string) (models.JobDescription_Rip, error) {
+	id := strings.TrimSpace(record["job_id"])
+	if id == "" {
+		return models.JobDescription_Rip{}, fmt.Errorf("description row missing job_id")
+	}
+	return models.JobDescription_Rip{
+		JobId:           id,
+		DescriptionHtml: record["description_html"],
+	}, nil
+}
+func GetCompanyRipID(db *sql.DB, slug string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT company_id FROM company_rip WHERE slug = $1`, slug).Scan(&id)
+	return id, err
+}
+
+// insertDepartmentRip: get-or-create by (company_id, name) -> department_id.
+// Custom because the job needs the id back even when the department already exists.
+func insertDepartmentRip(db *sql.DB, companyID int, name string) (sql.NullInt64, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return sql.NullInt64{}, nil
+	}
+	var id int64
+	err := db.QueryRow(`
+		INSERT INTO department_rip (company_id, department_name)
+		VALUES ($1, $2)
+		ON CONFLICT (company_id, department_name)
+		DO UPDATE SET department_name = EXCLUDED.department_name
+		RETURNING department_id`, companyID, name).Scan(&id)
+	if err != nil {
+		return sql.NullInt64{}, err
+	}
+	return sql.NullInt64{Int64: id, Valid: true}, nil
+}
+func Company_Rip(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		value, err := Company_RipLoader(record)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "company loader"))
+			continue
+		}
+		_, err = db.Exec(`
+			INSERT INTO company_rip (slug, company_name, company_about, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (slug) DO UPDATE SET
+				company_name         = EXCLUDED.company_name,
+				company_about        = COALESCE(EXCLUDED.company_about, company_rip.company_about),
+				company_url          = EXCLUDED.company_url,
+				job_board_public_url = EXCLUDED.job_board_public_url,
+				last_scanned_at      = NOW()`,
+			value.Slug, value.CompanyName, ns(value.CompanyAbout),
+			ns(value.CompanyUrl), ns(value.PublicUrl))
+		if err != nil {
+			fmt.Println("failed to insert company", value.Slug, ErrorHandler(err, "company insert"))
+			continue
+		}
+	}
+}
+
+func Department_Rip(records []map[string]string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	companyIDs := map[string]int{}
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyRipID(db, slug)
+			if err != nil {
+				fmt.Println("could not find company for department at index", index, slug, err)
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+		value, err := Department_RipLoader(record, companyID)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "department loader"))
+			continue
+		}
+		_, err = db.Exec(`
+			INSERT INTO department_rip (company_id, department_name, department_tree)
+			VALUES ($1, $2, $3::jsonb)
+			ON CONFLICT (company_id, department_name) DO UPDATE SET
+				department_tree = COALESCE(EXCLUDED.department_tree, department_rip.department_tree)`,
+			value.CompanyID, value.DepartmentName,
+			nsJSON(value.DepartmentTree, "department_tree", value.DepartmentName))
+		if err != nil {
+			fmt.Println("failed to insert department", value.DepartmentName, ErrorHandler(err, "department insert"))
+		}
+	}
+}
+func Job_and_search_loader_rip(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	uuid, ts, err := parseFilename(filepath)
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	SearchWorkflow := models.SearchWorkflowRip{
+		Workflow_id:      uuid,
+		Run_at:           timestamp,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	if _, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_RIP"); err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	FailedCount := 0
+	LinkFailedCount := 0
+	DuplicateCount := 0
+	companyIDs := map[string]int{} // one board per file usually: avoid a lookup per row
+
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyRipID(db, slug)
+			if err != nil {
+				fmt.Println("could not find companyId at index", index, slug, err)
+				FailedCount++
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+
+		deptID, err := insertDepartmentRip(db, companyID, record["department"])
+		if err != nil {
+			fmt.Println("failed to insert department at index", index, err)
+			FailedCount++
+			continue
+		}
+
+		value, err := JobLoaderRip(record, companyID, deptID)
+		if err != nil {
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
+			continue
+		}
+
+		jobExisted, err := AddNewRow(value, "JOBS_RIP")
+		if err != nil {
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue
+		}
+
+		if jobExisted == 0 {
+			lifecycle := models.JobLifeCycleRip{
+				JobId:            value.JobID,
+				Job_state:        true,
+				FirstSeenAt:      timestamp, // when the scrape ran (from the filename)
+				LastSeenListedAt: timestamp,
+			}
+			if _, err := AddNewRow(lifecycle, "JOB_LIFECYCLE_RIP"); err != nil {
+				log.Printf("lifecycle insert failed job=%s: %v", value.JobID, err)
+			}
+		} else {
+			DuplicateCount++
+		}
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_RIP{
+			Job_id:      value.JobID,
+			Workflow_id: uuid,
+			Is_new_job:  jobExisted == 0,
+		}
+		if _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_RIP"); err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", uuid, value.JobID, err)
+		}
+	}
+
+	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
+		uuid, len(records), DuplicateCount, FailedCount, LinkFailedCount)
+
+	if err := RecountSearchWorkflow(db, "search_workflow_rip", "job_search_term_rip", uuid); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+	return nil
+}
+
+func fileTime(filepath string) (time.Time, error) {
+	_, ts, err := parseFilename(filepath)
+	if err != nil {
+		return time.Time{}, err
+	}
+	return parseTimestamp(ts)
+}
+
+func Live_Rip(records []map[string]string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_rip
+			SET job_state = TRUE, last_seen_listed_at = $2, first_seen_closed_at = NULL
+			WHERE job_id = $1`, id, seenAt); err != nil {
+			fmt.Println("live update failed", id, ErrorHandler(err, "live update"))
+		}
+	}
+}
+
+func Jobs_LifecycleRip(records []map[string]string, tablename string, filepath string) {
+	seenAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+
+	created, existed, failed := 0, 0, 0
+	for _, record := range records {
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		lifecycle := models.JobLifeCycleRip{
+			JobId:            id,
+			Job_state:        true,
+			FirstSeenAt:      seenAt, // when the scrape ran (from the filename)
+			LastSeenListedAt: seenAt,
+		}
+		res, err := AddNewRow(lifecycle, tablename)
+		switch {
+		case err != nil:
+			failed++
+			log.Printf("lifecycle insert failed job=%s: %v", id, err)
+		case res != 0:
+			existed++
+		default:
+			created++
+		}
+	}
+	log.Printf("%s: %d created, %d already tracked, %d failed", tablename, created, existed, failed)
+}
+
+func DeadLinks_Rip(records []map[string]string, filepath string) {
+	closedAt, err := fileTime(filepath)
+	if err != nil {
+		fmt.Println("bad filename timestamp", filepath, err)
+		return
+	}
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		if strings.TrimSpace(record["origin"]) != "rip" {
+			continue
+		}
+		id := strings.TrimSpace(record["job_id"])
+		if id == "" {
+			continue
+		}
+		if _, err := db.Exec(`
+			UPDATE job_lifecycle_rip
+			SET job_state = FALSE,
+			    first_seen_closed_at = COALESCE(first_seen_closed_at, $2)
+			WHERE job_id = $1`, id, closedAt); err != nil {
+			fmt.Println("dead update failed", id, ErrorHandler(err, "dead update"))
+		}
+	}
 }

@@ -103,6 +103,14 @@ type CompanyBambiDepartment struct {
 	CompanyId       int    `json:"company_id,omitempty" db:"company_id"`
 }
 
+type COMPANY_RIP struct {
+	Slug         string `json:"slug" db:"slug"`
+	CompanyName  string `json:"company_name" db:"company_name"`
+	CompanyAbout string `json:"company_about" db:"company_about"` // "" -> NULL
+	CompanyUrl   string `json:"company_url" db:"company_url"`
+	PublicUrl    string `json:"job_board_public_url" db:"job_board_public_url"`
+}
+
 type DeptNodeAsh struct {
 	ID           string  `json:"id"`
 	Name         string  `json:"name"`
@@ -116,4 +124,11 @@ type DeptNode struct {
 	Name     string     `json:"name"`
 	Label    string     `json:"label"`
 	Children []DeptNode `json:"children"`
+}
+
+type DEPARTMENT_RIP struct {
+	Slug           string `json:"slug"` // resolved to company_id
+	CompanyID      int    `db:"company_id"`
+	DepartmentName string `json:"department_name" db:"department_name"`
+	DepartmentTree string `json:"department_tree" db:"department_tree"` // JSON text, "" -> NULL
 }

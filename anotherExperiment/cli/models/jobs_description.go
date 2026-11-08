@@ -64,3 +64,8 @@ type JobDescription_Lev struct {
 	Requirements    json.RawMessage `json:"requirements,omitempty" db:"requirements"`
 	AdditionalPlain string          `json:"additionalPlain,omitempty" db:"additionalPlain"`
 }
+
+type JobDescription_Rip struct {
+	JobId           string `json:"job_id" db:"job_id"`
+	DescriptionHtml string `json:"description_html" db:"description_html"`
+}
