@@ -145,7 +145,7 @@ with open("keys_rip.json" , "w" , encoding="utf-8" ) as f:
             forgive(unique ,output[timeline_key][0])
             output[timeline_key][0][unique][2] = document
 
-        if document.startswith("jobDescriptionsrip"):
+        if document.startswith("jobDescription"):
             forgive(unique ,output[timeline_key][0])
             output[timeline_key][0][unique][3] = document
 
