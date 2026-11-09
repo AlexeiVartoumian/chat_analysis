@@ -22,9 +22,10 @@ for lead in payload:
     )
 
     print(f"Status code: {response['StatusCode']}")
-
+    print(f"Sent message: lev  {response['MessageId']}")
     if 'FunctionError' in response:
         print(f"Function error: {response['FunctionError']}")
         print(response['Payload'].read().decode('utf-8'))
 
     time.sleep(3)
+
