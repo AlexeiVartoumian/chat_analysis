@@ -25,3 +25,4 @@ history.txt
 /anotherExperiment/deploy*
 /anotherExperiment/deps.sh
 /anotherExperiment/polling.auto.tfvars
+/fungus
