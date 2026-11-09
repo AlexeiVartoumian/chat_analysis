@@ -18,8 +18,8 @@ response = lambda_client.invoke(
     Payload=json.dumps(payload).encode('utf-8')
 )
 
-print(f"Status code: {response['StatusCode']}")
-print(f"Sent message: bambi  {response['MessageId']}")
+print(f"Status code: bambi {response['StatusCode']}")
+
 if 'FunctionError' in response:
     print(f"Function error: {response['FunctionError']}")
     print(response['Payload'].read().decode('utf-8'))

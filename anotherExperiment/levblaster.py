@@ -21,8 +21,7 @@ for lead in payload:
         Payload=json.dumps(lead).encode('utf-8')
     )
 
-    print(f"Status code: {response['StatusCode']}")
-    print(f"Sent message: lev  {response['MessageId']}")
+    print(f"Status code: lev {response['StatusCode']}")
     if 'FunctionError' in response:
         print(f"Function error: {response['FunctionError']}")
         print(response['Payload'].read().decode('utf-8'))
