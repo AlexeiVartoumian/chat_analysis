@@ -1822,8 +1822,11 @@ func (s *PostgresStore) SendOracCompanyQuery(first_run bool, number_accounts int
 	}
 }
 
-func (s *PostgresStore) SeekOracLifecycle(firstrun bool) ([]models.OracLifecycle, error) {
+func (s *PostgresStore) SeekOracLifecycle(firstrun bool, cloudprovider string) ([]models.OracLifecycle, error) {
 
+	if cloudprovider != "" {
+		return s.SeekOracLifecycleSender(firstrun, cloudprovider)
+	}
 	if firstrun == true {
 		_, err := s.db.Exec(`
 		UPDATE COMPANY_ORAC SET visited = FALSE`)
@@ -1855,6 +1858,57 @@ func (s *PostgresStore) SeekOracLifecycle(firstrun bool) ([]models.OracLifecycle
 		var res models.OracLifecycle
 
 		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_orac SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_ash visited")
+		}
+	}
+
+	return output, nil
+}
+
+func (s *PostgresStore) SeekOracLifecycleSender(firstrun bool, cloudprovider string) ([]models.OracLifecycle, error) {
+
+	if cloudprovider != "" {
+		return s.SeekOracLifecycleSender(firstrun, cloudprovider)
+	}
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_ORAC SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url
+		FROM company_orac c
+		WHERE c.visited = FALSE
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek orac company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.OracLifecycle
+
+	for rows.Next() {
+		var res models.OracLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL); err != nil {
 			return nil, utils.ErrorHandler(err, "seek work company scan failed")
 		}
 		output = append(output, res)

@@ -2432,9 +2432,9 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			var JobOracCompany []models.OracLifecycle
 			var err error
 			if index == 0 {
-				JobOracCompany, err = h.Store.SeekOracLifecycle(true)
+				JobOracCompany, err = h.Store.SeekOracLifecycle(true, req.InstanceID)
 			} else {
-				JobOracCompany, err = h.Store.SeekOracLifecycle(false)
+				JobOracCompany, err = h.Store.SeekOracLifecycle(false, req.InstanceID)
 			}
 
 			if err != nil {
@@ -2449,9 +2449,12 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
 				return
 			}
-
+			filepath := "/home/ubuntu/sendorac.py"
+			if req.InstanceID != "" {
+				filepath = "/home/ubuntu/sendoracgcp.py"
+			}
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("python3", "/home/ubuntu/sendorac.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd := exec.Command("python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -2463,12 +2466,12 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			}
 			go func() {
 				if err := cmd.Wait(); err != nil {
-					log.Printf("sendorac.py (%s) exited with error: %v", req.InstanceID, err)
+					log.Printf("filepath (%s) (%s) exited with error: %v", filepath, req.InstanceID, err)
 				}
 			}()
 		}
 	} else {
-		JobOracCompany, err := h.Store.SeekOracLifecycle(false)
+		JobOracCompany, err := h.Store.SeekOracLifecycle(false, req.InstanceID)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -2485,8 +2488,12 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		filepath := "/home/ubuntu/sendorac.py"
+		if req.InstanceID != "" {
+			filepath = "/home/ubuntu/sendoracgcp.py"
+		}
 		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", "/home/ubuntu/sendorac.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd := exec.Command("python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
@@ -2498,7 +2505,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 		}
 		go func() {
 			if err := cmd.Wait(); err != nil {
-				log.Printf("sendorac.py (%s) exited with error: %v", req.InstanceID, err)
+				log.Printf("filepath (%s) (%s) exited with error: %v", filepath, req.InstanceID, err)
 			}
 		}()
 	}
