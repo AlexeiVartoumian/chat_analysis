@@ -2471,14 +2471,43 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			}()
 		}
 	} else {
+
 		JobOracCompany, err := h.Store.SeekOracLifecycle(false, req.InstanceID)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 			return
 		}
-		if len(JobOracCompany) == 0 {
+		if len(JobOracCompany) == 0 || req.InstanceID != "" && req.InstanceID == "final" {
 			fmt.Println("Job Done either second last run or last run ")
+			var final []models.OracLifecycle
+
+			var res models.OracLifecycle
+
+			res.CompanyURL = "final"
+			final = append(final, res)
+			payload, err := json.Marshal(JobOracCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendoracgcp.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("filepath (%s) (%s) exited with error: %v", "sendoracgcp", req.InstanceID, err)
+				}
+			}()
 			return
 		}
 		payload, err := json.Marshal(JobOracCompany)

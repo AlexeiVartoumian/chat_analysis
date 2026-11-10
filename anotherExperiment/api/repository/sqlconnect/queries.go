@@ -1880,9 +1880,6 @@ func (s *PostgresStore) SeekOracLifecycle(firstrun bool, cloudprovider string) (
 
 func (s *PostgresStore) SeekOracLifecycleSender(firstrun bool, cloudprovider string) ([]models.OracLifecycle, error) {
 
-	if cloudprovider != "" {
-		return s.SeekOracLifecycleSender(firstrun, cloudprovider)
-	}
 	if firstrun == true {
 		_, err := s.db.Exec(`
 		UPDATE COMPANY_ORAC SET visited = FALSE`)
