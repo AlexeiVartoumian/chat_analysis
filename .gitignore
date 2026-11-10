@@ -28,3 +28,5 @@ history.txt
 /anotherExperiment/deploydebug.log
 /anotherExperiment/details.py
 /anotherExperiment/polling.auto.tfvars
+/goose
+/fungus
