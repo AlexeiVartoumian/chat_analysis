@@ -2454,7 +2454,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				filepath = "/home/ubuntu/sendoracgcp.py"
 			}
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -2493,7 +2493,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("python3", "/home/ubuntu/sendoracgcp.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/sendoracgcp.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -2522,7 +2522,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			filepath = "/home/ubuntu/sendoracgcp.py"
 		}
 		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 		cmd.Stdin = bytes.NewReader(payload)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
