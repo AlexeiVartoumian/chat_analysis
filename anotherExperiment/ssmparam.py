@@ -1,26 +1,35 @@
-import boto3
+import json
 import os
 
-client = boto3.client('ssm' , region_name="eu-west-2" )
+import boto3
 
-resp = client.get_parameters_by_path(Path="/api/store/")
+client = boto3.client("ssm", region_name="eu-west-2")
 
-keys= {}
-for val in resp["Parameters"]:
 
-    Name = val["Name"].split("/")[-1]
-    Value = val["Value"]
-    keys[Name]= Value
+keys = {}
+for page in client.get_paginator("get_parameters_by_path").paginate(
+        Path="/api/store/", WithDecryption=True):
+    for p in page["Parameters"]:
+        keys[p["Name"].split("/")[-1]] = p["Value"]
 
 curPath = os.getcwd()
 
-curPath1 = os.path.join(curPath , ".env")
-with open( curPath1 ,"w" , encoding="utf-8" ) as f :
 
-    for key , val in keys.items() :
+wif_path = os.path.join(curPath, "gcp-wif.json")
+with open(wif_path, "w", encoding="utf-8") as f:
+    f.write(keys["gcp-wif"])
+json.load(open(wif_path))          
+
+
+with open(os.path.join(curPath, ".env"), "w", encoding="utf-8") as f:
+    for key, val in keys.items():
+        if key == "gcp-wif":
+            continue
         f.write(f'{key}="{val}"\n')
+    f.write(f'GOOGLE_APPLICATION_CREDENTIALS="{wif_path}"\n')
 
-curPath2 =os.path.join(curPath , ".env2")
-with open( curPath2 ,"w" , encoding="utf-8" ) as f :
-        f.write(f'POSTGRES_DB={keys["db_database"]}\n')
-        f.write(f'POSTGRES_PASSWORD={keys["db_password"]}\n')
+# 3. .env2
+with open(os.path.join(curPath, ".env2"), "w", encoding="utf-8") as f:
+    f.write(f'POSTGRES_DB={keys["db_database"]}\n')
+    f.write(f'POSTGRES_PASSWORD={keys["db_password"]}\n')
+    f.write(f"GOOGLE_APPLICATION_CREDENTIALS={wif_path}\n")
