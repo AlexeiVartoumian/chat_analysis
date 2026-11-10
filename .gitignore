@@ -28,3 +28,4 @@ history.txt
 /anotherExperiment/polling.auto.tfvars
 /fungus/bootstrap/terraform.tfvars
 /fungus
+/goose
