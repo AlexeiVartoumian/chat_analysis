@@ -20,7 +20,7 @@ sudo apt install python3.14-venv -y
 sudo python3 -m venv /venv
 
 source /venv/bin/activate
-sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3
+sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3 google-cloud-pubsub
 
 # docker run -d \
 #   --name postgres \
