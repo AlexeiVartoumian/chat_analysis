@@ -2444,6 +2444,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			}
 
 			payload, err := json.Marshal(JobOracCompany)
+
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
@@ -2486,7 +2487,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 
 			res.CompanyURL = "final"
 			final = append(final, res)
-			payload, err := json.Marshal(JobOracCompany)
+			payload, err := json.Marshal(final)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
