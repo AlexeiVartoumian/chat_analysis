@@ -2617,6 +2617,35 @@ func (h *Handler) SendOracJd(w http.ResponseWriter, r *http.Request) {
 
 }
 
+type OracFinalized struct {
+	Workflow string `json:"workflow"`
+	Object   string `json:"object"`
+	Files    int    `json:"files"`
+	URL      string `json:"url"`
+}
+
+func (h *Handler) OracFinalized(w http.ResponseWriter, r *http.Request) {
+	var req OracFinalized
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	payload, _ := json.Marshal(req)
+	cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/fetchgcpzip.py")
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	if err := cmd.Start(); err != nil {
+		http.Error(w, "failed to start download", http.StatusInternalServerError)
+		return
+	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("fetchgcpzip (%s) exited with error: %v", req.Object, err)
+		}
+	}()
+	w.WriteHeader(http.StatusOK) // reply now; the download runs in the background
+}
+
 func (h *Handler) SendSmart(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodPost {
