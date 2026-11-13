@@ -10,6 +10,10 @@ while IFS= read -r file; do
     elif [ "$type" = "PROCESSEDJOBSORAC" ]; then
         ./start insert $file JOBS_ORAC
         ./start insert $file JOB_LIFECYCLE_ORAC
+    
+    elif [ "$type" = "PROCESSEDJOBSORACLIFEYCLEGCP" ]; then
+        ./start insert $file JOBS_ORAC
+        ./start insert $file JOB_LIFECYCLE_ORAC 
 
     elif [ "$type" = "JOB_DESCRIPTIONSORAC" ]; then
         ./start insert $file JOB_DESCRIPTIONS_ORAC
