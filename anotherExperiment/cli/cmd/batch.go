@@ -18,6 +18,7 @@ import (
 	"regexp"
 
 	"github.com/gocarina/gocsv"
+	"github.com/lib/pq"
 )
 
 //*
@@ -2385,7 +2386,90 @@ func Jobs_LifecycleOracLoader(records []map[string]string, tablename string, fil
 		fmt.Println("db conn gone wrong", ErrorHandler(err, "you brought this on yourself"))
 	}
 	defer db.Close()
-	if strings.HasPrefix(filepath, "processedJobs") {
+
+	if strings.HasPrefix(filepath, "processedJobsOracLifecycleGcp") {
+
+		_, ts, err := parseFilename(filepath) // not "time": that shadows the time package
+		if err != nil {
+			fmt.Println("workflowid extraction or timestamp extraction wrong", ErrorHandler(err, "you brought this on yourself"))
+		}
+		timestamp, err := parseTimestamp(ts)
+		if err != nil {
+			fmt.Println("bad timestamp parse")
+			return err
+		}
+		if len(records) == 0 {
+			return nil
+		}
+
+		// One company per file: every row has the same company_id (3rd column, JOB_FIELDS order).
+		// If records still includes the CSV header, use records[1][2] and loop over records[1:].
+		companyID := records[0]["company_id"]
+
+		// 1. jobs the DB thinks are still open for this company
+		known := map[string]struct{}{}
+		rows, err := db.Query(`
+		SELECT j.job_id
+		FROM JOBS_ORAC j
+		JOIN JOB_LIFECYCLE_ORAC l ON l.job_id = j.job_id
+		WHERE j.company_id = $1 AND l.job_state = true`, companyID)
+		if err != nil {
+			return ErrorHandler(err, "loading known jobs for company "+companyID)
+		}
+		for rows.Next() {
+			var id string
+			if err := rows.Scan(&id); err != nil {
+				rows.Close()
+				return err
+			}
+			known[id] = struct{}{}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			return err
+		}
+
+		// 2. everything in the CSV is live: upsert it and tick it off
+		for index, record := range records {
+			value, err := Jobs_LifecycleOracmodel(record, timestamp)
+			if err != nil {
+				fmt.Println("record at index of job metadata for lifecycle: has not been saved", index, ErrorHandler(err, "you brought this on yourself"))
+				continue
+			}
+			delete(known, value.JobId) // seen -> not dead
+
+			_, err = db.Exec(`
+			INSERT INTO JOB_LIFECYCLE_ORAC
+				(job_id, job_state, first_seen_at, last_seen_listed_at, next_scan_at)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (job_id) DO UPDATE
+			SET last_seen_listed_at = EXCLUDED.last_seen_listed_at`,
+				// add ", job_state = true" above if a reappearing closed job should reopen
+				value.JobId, value.Job_state, value.FirstSeenAt, value.LastSeenListedAt, value.NextScanAt)
+			if err != nil {
+				fmt.Println("upsert failed for job", value.JobId, err)
+			}
+		}
+
+		// 3. open in the DB but no longer listed: closed
+		dead := make([]string, 0, len(known))
+		for id := range known {
+			dead = append(dead, id)
+		}
+		fmt.Printf("company %s: %d listed, %d closed\n", companyID, len(records), len(dead))
+
+		if len(dead) > 0 {
+			_, err = db.Exec(`
+			UPDATE JOB_LIFECYCLE_ORAC
+			SET first_seen_closed_at = COALESCE(first_seen_closed_at, $1),
+			    job_state = $2
+			WHERE job_id = ANY($3)`,
+				timestamp, false, pq.Array(dead)) // github.com/lib/pq; with pgx pass dead directly
+			if err != nil {
+				fmt.Println("marking closed failed for company", companyID, err)
+			}
+		}
+	} else if strings.HasPrefix(filepath, "processedJobs") {
 		_, time, err := parseFilename(filepath)
 
 		if err != nil {
