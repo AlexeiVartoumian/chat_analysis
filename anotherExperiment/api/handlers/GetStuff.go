@@ -17,6 +17,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -2625,6 +2626,8 @@ type OracFinalized struct {
 	URL      string `json:"url"`
 }
 
+var loadMu sync.Mutex
+
 func (h *Handler) OracFinalized(w http.ResponseWriter, r *http.Request) {
 	var req OracFinalized
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
@@ -2632,16 +2635,25 @@ func (h *Handler) OracFinalized(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	payload, _ := json.Marshal(req)
-	cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/fetchgcpzip.py")
-	cmd.Stdin = bytes.NewReader(payload)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	if err := cmd.Start(); err != nil {
-		http.Error(w, "failed to start download", http.StatusInternalServerError)
-		return
-	}
+
 	go func() {
-		if err := cmd.Wait(); err != nil {
+
+		fetch := exec.Command("/venv/bin/python3", "/home/ubuntu/fetchgcpzip.py")
+		fetch.Stdin = bytes.NewReader(payload)
+		fetch.Stdout, fetch.Stderr = os.Stdout, os.Stderr
+		if err := fetch.Run(); err != nil {
 			log.Printf("fetchgcpzip (%s) exited with error: %v", req.Object, err)
+			return
+		}
+
+		loadMu.Lock()
+		defer loadMu.Unlock()
+		load := exec.Command("/venv/bin/python3", "/home/ubuntu/listbucketoraczip.py")
+		load.Dir = "/home/ubuntu"
+		load.Stdout, load.Stderr = os.Stdout, os.Stderr
+
+		if err := load.Run(); err != nil {
+			log.Printf("load_orac after %s failed: %v", req.Object, err)
 		}
 	}()
 	w.WriteHeader(http.StatusOK) // reply now; the download runs in the background
