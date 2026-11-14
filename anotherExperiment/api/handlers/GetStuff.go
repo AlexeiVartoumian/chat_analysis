@@ -2452,8 +2452,11 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			filepath := "/home/ubuntu/sendorac.py"
-			if req.InstanceID != "" {
+			if req.InstanceID == "gcp" {
 				filepath = "/home/ubuntu/sendoracgcp.py"
+			}
+			if req.InstanceID == "oci" {
+				filepath = "/home/ubuntu/sendoracoci.py"
 			}
 			numberof := strconv.Itoa(req.NumberAccounts)
 			cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
@@ -2495,7 +2498,15 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("/venv/bin/python3", "/home/ubuntu/sendoracgcp.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			if req.InstanceID == "gcp" {
+
+			}
+			filepath := "/home/ubuntu/sendoracgcp.py"
+
+			if req.InstanceID == "oci" {
+				filepath = "/home/ubuntu/sendoracoci.py"
+			}
+			cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
 			cmd.Stdin = bytes.NewReader(payload)
 			cmd.Stdout = os.Stdout
 			cmd.Stderr = os.Stderr
@@ -2520,8 +2531,11 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 		}
 
 		filepath := "/home/ubuntu/sendorac.py"
-		if req.InstanceID != "" {
+		if req.InstanceID == "gcp" {
 			filepath = "/home/ubuntu/sendoracgcp.py"
+		}
+		if req.InstanceID == "oci" {
+			filepath = "/home/ubuntu/sendoracoci.py"
 		}
 		numberof := strconv.Itoa(req.NumberAccounts)
 		cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
