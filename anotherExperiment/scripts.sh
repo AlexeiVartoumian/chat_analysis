@@ -21,6 +21,7 @@ sudo python3 -m venv /venv
 
 source /venv/bin/activate
 sudo /venv/bin/pip install psycopg2-binary pgvector python-dotenv numpy boto3 google-cloud-pubsub oci
+sudo /venv/bin/pip install --upgrade "boto3>=1.40" azure-identity azure-servicebus
 
 # docker run -d \
 #   --name postgres \
