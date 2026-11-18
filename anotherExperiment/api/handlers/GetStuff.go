@@ -2412,6 +2412,26 @@ func (h *Handler) SendOrac(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func oracScript(instanceID string) string {
+	switch instanceID {
+	case "gcp":
+		return "/home/ubuntu/sendoracgcp.py"
+	case "oci", "orac":
+		return "/home/ubuntu/sendoracoci.py"
+	case "azure":
+		return "/home/ubuntu/sendoracazure.py"
+	default:
+		return "/home/ubuntu/sendorac.py"
+	}
+}
+
+func oracFinalScript(instanceID string) string {
+	if p := oracScript(instanceID); p != "/home/ubuntu/sendorac.py" {
+		return p
+	}
+	return "/home/ubuntu/sendoracgcp.py"
+}
+
 func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
 
@@ -2423,11 +2443,7 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	firstRunStr := "false"
 	if req.FirstRun {
-		firstRunStr = "true"
-	} //wtf
-	if firstRunStr == "true" {
 		for index := range req.NumberAccounts {
 			fmt.Println(index)
 			var JobOracCompany []models.OracLifecycle
@@ -2437,7 +2453,6 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			} else {
 				JobOracCompany, err = h.Store.SeekOracLifecycle(false, req.InstanceID)
 			}
-
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
@@ -2445,117 +2460,73 @@ func (h *Handler) SendOracLifecycle(w http.ResponseWriter, r *http.Request) {
 			}
 
 			payload, err := json.Marshal(JobOracCompany)
-
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
 				return
 			}
-			filepath := "/home/ubuntu/sendorac.py"
-			if req.InstanceID == "gcp" {
-				filepath = "/home/ubuntu/sendoracgcp.py"
-			}
-			if req.InstanceID == "oci" {
-				filepath = "/home/ubuntu/sendoracoci.py"
-			}
-			numberof := strconv.Itoa(req.NumberAccounts)
-			cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-			cmd.Stdin = bytes.NewReader(payload)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			if err := cmd.Start(); err != nil {
-				log.Println(err)
+			if err := runSendScript(oracScript(req.InstanceID), payload, req); err != nil {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
-			go func() {
-				if err := cmd.Wait(); err != nil {
-					log.Printf("filepath (%s) (%s) exited with error: %v", filepath, req.InstanceID, err)
-				}
-			}()
 		}
 	} else {
-
 		JobOracCompany, err := h.Store.SeekOracLifecycle(false, req.InstanceID)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
 			return
 		}
-		if len(JobOracCompany) == 0 || req.InstanceID != "" && req.InstanceID == "final" {
+
+		if len(JobOracCompany) == 0 || req.InstanceID == "final" {
 			fmt.Println("Job Done either second last run or last run ")
-			var final []models.OracLifecycle
-
-			var res models.OracLifecycle
-
-			res.CompanyURL = "final"
-			final = append(final, res)
+			final := []models.OracLifecycle{{CompanyURL: "final"}}
 			payload, err := json.Marshal(final)
 			if err != nil {
 				log.Println(err)
 				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
 				return
 			}
-			numberof := strconv.Itoa(req.NumberAccounts)
-			if req.InstanceID == "gcp" {
-
-			}
-			filepath := "/home/ubuntu/sendoracgcp.py"
-
-			if req.InstanceID == "oci" {
-				filepath = "/home/ubuntu/sendoracoci.py"
-			}
-			cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-			cmd.Stdin = bytes.NewReader(payload)
-			cmd.Stdout = os.Stdout
-			cmd.Stderr = os.Stderr
-
-			if err := cmd.Start(); err != nil {
-				log.Println(err)
+			if err := runSendScript(oracFinalScript(req.InstanceID), payload, req); err != nil {
 				http.Error(w, "failed to start job", http.StatusInternalServerError)
 				return
 			}
-			go func() {
-				if err := cmd.Wait(); err != nil {
-					log.Printf("filepath (%s) (%s) exited with error: %v", "sendoracgcp", req.InstanceID, err)
-				}
-			}()
+			w.WriteHeader(http.StatusOK)
 			return
 		}
+
 		payload, err := json.Marshal(JobOracCompany)
 		if err != nil {
 			log.Println(err)
 			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
 			return
 		}
-
-		filepath := "/home/ubuntu/sendorac.py"
-		if req.InstanceID == "gcp" {
-			filepath = "/home/ubuntu/sendoracgcp.py"
-		}
-		if req.InstanceID == "oci" {
-			filepath = "/home/ubuntu/sendoracoci.py"
-		}
-		numberof := strconv.Itoa(req.NumberAccounts)
-		cmd := exec.Command("/venv/bin/python3", filepath, numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
-		cmd.Stdin = bytes.NewReader(payload)
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-
-		if err := cmd.Start(); err != nil {
-			log.Println(err)
+		if err := runSendScript(oracScript(req.InstanceID), payload, req); err != nil {
 			http.Error(w, "failed to start job", http.StatusInternalServerError)
 			return
 		}
-		go func() {
-			if err := cmd.Wait(); err != nil {
-				log.Printf("filepath (%s) (%s) exited with error: %v", filepath, req.InstanceID, err)
-			}
-		}()
 	}
 
 	w.WriteHeader(http.StatusOK)
+}
+
+// runSendScript starts the send script with the payload on stdin and doesn't wait for it.
+func runSendScript(filepath string, payload []byte, req BlastRequest) error {
+	cmd := exec.Command("/venv/bin/python3", filepath,
+		strconv.Itoa(req.NumberAccounts), strconv.FormatBool(req.FirstRun), req.InstanceID)
+	cmd.Stdin = bytes.NewReader(payload)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Start(); err != nil {
+		log.Println(err)
+		return err
+	}
+	go func() {
+		if err := cmd.Wait(); err != nil {
+			log.Printf("filepath (%s) (%s) exited with error: %v", filepath, req.InstanceID, err)
+		}
+	}()
+	return nil
 }
 
 func (h *Handler) SendOracJd(w http.ResponseWriter, r *http.Request) {
