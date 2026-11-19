@@ -75,5 +75,5 @@ for i in range(0, len(bodies), QUEUE_BATCH):
     resp = queue.put_messages(QUEUE_ID, oci.queue.models.PutMessagesDetails(
         messages=[oci.queue.models.PutMessagesDetailsEntry(content=json.dumps(b)) for b in batch]))
     for sent in resp.data.messages:
-        print(f"Sent message {sent.id}")
+        print(f"Sent message oci {sent.id}")
 print(f"run_id {RUN_ID}")
