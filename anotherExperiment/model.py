@@ -1979,12 +1979,163 @@ def create_tables(conn) -> None:
                 FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_TAILOR (workflow_id) ON DELETE CASCADE
         );                    
         """)
+
+        ##################################################
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS PERS_COMPANIES_ATHENA (
+                    company      text PRIMARY KEY,
+                    example_id   text,
+                    careers_url  text,
+                    api_url      text,
+                    urls         integer,
+                    first_seen   timestamp,
+                    last_seen    timestamp,
+                    visited      boolean NOT NULL DEFAULT false,
+                    mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        ##################################################
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS PIN_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,
+                example_id   text,
+                careers_url  text,
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+            );
+        """)
+
+        ####################################################
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS ICIM_COMPANIES_ATHENA (
+                    company      text PRIMARY KEY,
+                    example_id   text,
+                    careers_url  text,
+                    api_url      text,
+                    urls         integer,
+                    first_seen   timestamp,
+                    last_seen    timestamp,
+                    visited      boolean NOT NULL DEFAULT false,
+                    mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        #####################################################
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS VITE_COMPANIES_ATHENA (
+                    company      text PRIMARY KEY,
+                    example_id   text,
+                    careers_url  text,
+                    api_url      text,
+                    urls         integer,
+                    first_seen   timestamp,
+                    last_seen    timestamp,
+                    visited      boolean NOT NULL DEFAULT false,
+                    mid_run      boolean NOT NULL DEFAULT false
+                );
+        """)
+
+        #####################################################
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JAZZ_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,
+                example_id   text,
+                careers_url  text,
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+            );
+            """)
+
+        ####################################################
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS BOB_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,
+                example_id   text,
+                careers_url  text,
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+            );
+            """)
+        ####################################################
+
+        cur.execute("""
+                    CREATE TABLE IF NOT EXISTS HOMERUN_COMPANIES_ATHENA (
+                        company      text PRIMARY KEY,
+                        example_id   text,
+                        careers_url  text,
+                        api_url      text,
+                        urls         integer,
+                        first_seen   timestamp,
+                        last_seen    timestamp,
+                        visited      boolean NOT NULL DEFAULT false,
+                        mid_run      boolean NOT NULL DEFAULT false
+                        );
+        """)
+        ####################################################
+
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS GEM_COMPANIES_ATHENA (
+                    company      text PRIMARY KEY,
+                    example_id   text,
+                    careers_url  text,
+                    api_url      text,
+                    urls         integer,
+                    first_seen   timestamp,
+                    last_seen    timestamp,
+                    visited      boolean NOT NULL DEFAULT false,
+                    mid_run      boolean NOT NULL DEFAULT false
+                    );
+            """)
+
+        #####################################################
+        
+        cur.execute("""
+                CREATE TABLE IF NOT EXISTS DOVER_COMPANIES_ATHENA (
+                    company      text PRIMARY KEY,
+                    example_id   text,
+                    careers_url  text,
+                    api_url      text,
+                    urls         integer,
+                    first_seen   timestamp,
+                    last_seen    timestamp,
+                    visited      boolean NOT NULL DEFAULT false,
+                    mid_run      boolean NOT NULL DEFAULT false
+                    );
+            """)
+
+        ####################################################
+
+        cur.execute("""                
+                CREATE TABLE IF NOT EXISTS ZOHO_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,
+                example_id   text,
+                careers_url  text,
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+            """)
+        
         
 
-
-
-
-        
         cur.execute("""
             CREATE TABLE redirect_link (
                 job_id        BIGINT PRIMARY KEY REFERENCES JOB_METADATA(job_id),
@@ -1994,6 +2145,9 @@ def create_tables(conn) -> None:
                             CHECK (status_ash IN ('pending', 'in_progress', 'done', 'failed'))
             );
         """)
+
+       
+
 
         
       
