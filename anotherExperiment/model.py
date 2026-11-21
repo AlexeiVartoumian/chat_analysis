@@ -2133,6 +2133,23 @@ def create_tables(conn) -> None:
                 mid_run      boolean NOT NULL DEFAULT false
                 );
             """)
+
+         ####################################################
+        
+        cur.execute("""                
+                CREATE TABLE IF NOT EXISTS SF_COMPANIES_ATHENA (
+                company      text PRIMARY KEY,
+                example_id   text,
+                careers_url  text,
+                api_url      text,
+                urls         integer,
+                first_seen   timestamp,
+                last_seen    timestamp,
+                visited      boolean NOT NULL DEFAULT false,
+                mid_run      boolean NOT NULL DEFAULT false
+                );
+            """)
+                
         
         
 
