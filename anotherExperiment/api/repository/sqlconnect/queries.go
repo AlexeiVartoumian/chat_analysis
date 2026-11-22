@@ -3269,7 +3269,7 @@ func (s *PostgresStore) SendTailorCompanyQuery(first_run bool, number_accounts i
 				`UPDATE TAILOR_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
 				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
 			}
-
+			log.Printf("got row: %+v", res)
 			results = append(results, res)
 		}
 		rows.Close()

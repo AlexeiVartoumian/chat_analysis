@@ -3630,6 +3630,7 @@ func (h *Handler) SendTailor(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			payload, _ := json.Marshal(Urls)
+			log.Printf("err=%v len=%d isNil=%v Urls=%+v", err, len(Urls), Urls == nil, Urls)
 
 			cmd := exec.Command("python3", "/home/ubuntu/sendtailor.py", "1", firstRunStr, "")
 			cmd.Stdin = bytes.NewReader(payload)
