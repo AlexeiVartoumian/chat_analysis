@@ -218,3 +218,48 @@ output "coordinator_rip_sqs_queue_name" {
     description = "sqs_queue_name"
     value = aws_sqs_queue.sqs_hub_requests_rip.name
 }
+
+output "coordinator_pin_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_pin.arn   
+}
+
+output "coordinator_pin_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_pin.id  
+}
+
+output "coordinator_pin_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_pin.name
+}
+
+output "coordinator_zoho_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_zoho.arn   
+}
+
+output "coordinator_zoho_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_zoho.id  
+}
+
+output "coordinator_zoho_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_zoho.name
+}
+
+output "coordinator_jazz_sqs_queue_arn" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_jazz.arn   
+}
+
+output "coordinator_jazz_sqs_queue_id" {
+    description = "sqs arn"
+    value = aws_sqs_queue.sqs_hub_requests_jazz.id  
+}
+
+output "coordinator_jazz_sqs_queue_name" {
+    description = "sqs_queue_name"
+    value = aws_sqs_queue.sqs_hub_requests_jazz.name
+}

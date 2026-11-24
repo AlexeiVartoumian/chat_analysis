@@ -151,3 +151,27 @@ resource "aws_s3_bucket" "output_store_tailor_cache" {
 resource "aws_s3_bucket" "output_store_tailor_store" {
     bucket = "${local.s3_bucket_name_output_tailor_store }-${data.aws_caller_identity.current.account_id}"
 }
+
+resource "aws_s3_bucket" "output_store_pin_cache" {
+    bucket = "${local.s3_bucket_name_output_pin_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_pin_store" {
+    bucket = "${local.s3_bucket_name_output_pin_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_zoho_cache" {
+    bucket = "${local.s3_bucket_name_output_zoho_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_zoho_store" {
+    bucket = "${local.s3_bucket_name_output_zoho_store }-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_jazz_cache" {
+    bucket = "${local.s3_bucket_name_output_jazz_cache}-${data.aws_caller_identity.current.account_id}"
+}
+
+resource "aws_s3_bucket" "output_store_jazz_store" {
+    bucket = "${local.s3_bucket_name_output_jazz_store }-${data.aws_caller_identity.current.account_id}"
+}

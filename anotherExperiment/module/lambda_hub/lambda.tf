@@ -122,6 +122,25 @@ data "archive_file" "seek_rip_posts" {
     output_path = "${path.root}/module/sources/seek_rip_posts/seek_rip_posts.zip"
 }
 
+data "archive_file" "seek_pin_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_pin_posts/seek_pin_posts.py"
+    output_path = "${path.root}/module/sources/seek_pin_posts/seek_pin_posts.zip"
+}
+
+data "archive_file" "seek_zoho_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_zoho_posts/seek_zoho_posts.py"
+    output_path = "${path.root}/module/sources/seek_zoho_posts/seek_zoho_posts.zip"
+}
+
+data "archive_file" "seek_jazz_posts" {
+    type = "zip"
+    source_file = "${path.root}/module/sources/seek_jazz_posts/seek_jazz_posts.py"
+    output_path = "${path.root}/module/sources/seek_jazz_posts/seek_jazz_posts.zip"
+}
+
+
 
 resource "aws_lambda_layer_version" "requests_hub_layer" {
 
@@ -563,6 +582,69 @@ resource "aws_lambda_function" "seek_rip_posts" {
     #depends_on = [aws_cloudwatch_log_group.processor]
 }
 
+resource "aws_lambda_function" "seek_pin_posts" {
+    filename = data.archive_file.seek_pin_posts.output_path
+    source_code_hash = data.archive_file.seek_pin_posts.output_base64sha256
+    function_name = "seek_pin_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_pin_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_pin_cache_name
+            sqs_queue_id = var.sqs_coordinator_pin_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
+resource "aws_lambda_function" "seek_zoho_posts" {
+    filename = data.archive_file.seek_zoho_posts.output_path
+    source_code_hash = data.archive_file.seek_zoho_posts.output_base64sha256
+    function_name = "seek_zoho_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_zoho_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_zoho_cache_name
+            sqs_queue_id = var.sqs_coordinator_zoho_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
+resource "aws_lambda_function" "seek_jazz_posts" {
+    filename = data.archive_file.seek_jazz_posts.output_path
+    source_code_hash = data.archive_file.seek_jazz_posts.output_base64sha256
+    function_name = "seek_jazz_posts"
+    role = var.aws_iam_role_main_arn
+    handler = "seek_jazz_posts.lambda_handler"
+    runtime = "python3.13" 
+    timeout     = 900
+    layers = [aws_lambda_layer_version.requests_hub_layer.arn]
+    memory_size = 356
+    environment {
+        variables = {
+            RoleArn = var.aws_iam_role_main_arn
+            output_bucket= var.s3_output_bucket_jazz_cache_name
+            sqs_queue_id = var.sqs_coordinator_jazz_sqs_queue_id
+            //TODO : if sqs_deadletter_arn = var.sqs_deadletter_arn it means parsing has gone wrong
+        }
+    }
+    #depends_on = [aws_cloudwatch_log_group.processor]
+}
+
 resource "aws_lambda_permission" "allow_sqs_request_deed" {
   statement_id  = "AllowExecutionFromSqs"
   action        = "lambda:InvokeFunction"
@@ -794,4 +876,42 @@ resource "aws_lambda_event_source_mapping" "processor_trigger_rip" {
   batch_size       = 10
   enabled          = var.polling_enabled
   depends_on = [aws_lambda_function.seek_rip_posts]
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_pin" {
+  event_source_arn = var.sqs_cordinator_pin_arn
+  function_name    = aws_lambda_function.seek_pin_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_pin_posts]
+}
+resource "aws_lambda_permission" "allow_sqs_request_pin" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_pin_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_pin_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_zoho" {
+  event_source_arn = var.sqs_cordinator_zoho_arn
+  function_name    = aws_lambda_function.seek_zoho_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_zoho_posts]
+}
+resource "aws_lambda_permission" "allow_sqs_request_zoho" {
+  statement_id  = "AllowExecutionFromSqs"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.seek_zoho_posts.function_name
+  principal     = "sqs.amazonaws.com"
+  source_arn    = var.sqs_cordinator_zoho_arn
+}
+
+resource "aws_lambda_event_source_mapping" "processor_trigger_jazz" {
+  event_source_arn = var.sqs_cordinator_jazz_arn
+  function_name    = aws_lambda_function.seek_jazz_posts.arn
+  batch_size       = 10
+  enabled          = var.polling_enabled
+  depends_on = [aws_lambda_function.seek_jazz_posts]
 }

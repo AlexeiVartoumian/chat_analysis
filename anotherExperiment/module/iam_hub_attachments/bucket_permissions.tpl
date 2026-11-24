@@ -70,7 +70,19 @@
                 "${s3_output_bucket_rip_cache_arn}",
                 "${s3_output_bucket_rip_cache_arn}/*",
                 "${s3_output_bucket_rip_store_arn}",
-                "${s3_output_bucket_rip_store_arn}/*"    
+                "${s3_output_bucket_rip_store_arn}/*",
+                "${s3_output_bucket_pin_cache_arn}",
+                "${s3_output_bucket_pin_cache_arn}/*",
+                "${s3_output_bucket_pin_store_arn}",
+                "${s3_output_bucket_pin_store_arn}/*",
+                "${s3_output_bucket_zoho_cache_arn}",
+                "${s3_output_bucket_zoho_cache_arn}/*",
+                "${s3_output_bucket_zoho_store_arn}",
+                "${s3_output_bucket_zoho_store_arn}/*",       
+                "${s3_output_bucket_jazz_cache_arn}",
+                "${s3_output_bucket_jazz_cache_arn}/*",
+                "${s3_output_bucket_jazz_store_arn}",
+                "${s3_output_bucket_jazz_store_arn}/*"   
             ]
         }
     ]

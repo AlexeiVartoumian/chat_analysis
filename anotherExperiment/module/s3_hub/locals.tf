@@ -45,4 +45,13 @@ locals{
 
     s3_bucket_name_output_tailor_cache = var.s3_bucket_name_output_tailor_cache
     s3_bucket_name_output_tailor_store = var.s3_bucket_name_output_tailor_store
+
+    s3_bucket_name_output_pin_cache = var.s3_bucket_name_output_pin_cache
+    s3_bucket_name_output_pin_store = var.s3_bucket_name_output_pin_store
+
+    s3_bucket_name_output_zoho_cache = var.s3_bucket_name_output_zoho_cache
+    s3_bucket_name_output_zoho_store = var.s3_bucket_name_output_zoho_store
+
+    s3_bucket_name_output_jazz_cache = var.s3_bucket_name_output_jazz_cache
+    s3_bucket_name_output_jazz_store = var.s3_bucket_name_output_jazz_store
 }

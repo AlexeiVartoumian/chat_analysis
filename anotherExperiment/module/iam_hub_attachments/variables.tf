@@ -122,6 +122,19 @@ variable sqs_coordinator_arn_rip {
     type = string
 }
 
+variable sqs_coordinator_arn_pin {
+    type = string
+}
+
+variable sqs_coordinator_arn_zoho {
+    type = string
+}
+
+variable sqs_coordinator_arn_jazz {
+    type = string
+}
+
+
 variable s3_output_bucket_ash_cache_arn {
     type =string
 }
@@ -256,5 +269,32 @@ variable s3_output_bucket_tailor_cache_arn {
 
  
  variable s3_output_bucket_rip_store_arn{
+    type = string
+ }
+
+ variable s3_output_bucket_pin_cache_arn {
+    type = string
+}
+
+ 
+ variable s3_output_bucket_pin_store_arn{
+    type = string
+ }
+
+  variable s3_output_bucket_zoho_cache_arn {
+    type = string
+}
+
+ 
+ variable s3_output_bucket_zoho_store_arn{
+    type = string
+ }
+
+   variable s3_output_bucket_jazz_cache_arn {
+    type = string
+}
+
+ 
+ variable s3_output_bucket_jazz_store_arn{
     type = string
  }

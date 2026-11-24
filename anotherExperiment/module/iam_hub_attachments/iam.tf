@@ -152,6 +152,12 @@ resource "aws_iam_policy" "bucket_permissions" {
     s3_output_bucket_tailor_store_arn = var.s3_output_bucket_tailor_store_arn
     s3_output_bucket_rip_cache_arn = var.s3_output_bucket_rip_cache_arn
     s3_output_bucket_rip_store_arn = var.s3_output_bucket_rip_store_arn
+    s3_output_bucket_pin_cache_arn = var.s3_output_bucket_pin_cache_arn
+    s3_output_bucket_pin_store_arn = var.s3_output_bucket_pin_store_arn
+    s3_output_bucket_zoho_cache_arn = var.s3_output_bucket_zoho_cache_arn
+    s3_output_bucket_zoho_store_arn = var.s3_output_bucket_zoho_store_arn
+    s3_output_bucket_jazz_cache_arn = var.s3_output_bucket_jazz_cache_arn
+    s3_output_bucket_jazz_store_arn = var.s3_output_bucket_jazz_store_arn
   })
 }
 resource "aws_iam_role_policy_attachment" "db_permissions" {
@@ -216,7 +222,11 @@ resource "aws_iam_policy" "sqs_coordinator_permissions" {
           "sqs:SendMessage",
           "sqs:ChangeMessageVisibility"
         ]
-        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed , var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green , var.sqs_coordinator_arn_ash, var.sqs_coordinator_arn_brez , var.sqs_coordinator_arn_recruit, var.sqs_coordinator_arn_tailor, var.sqs_coordinator_arn_rip]  # pass the actual SQS ARN directly
+        Resource = [ var.sqs_coordinator_arn_orac,var.sqs_coordinator_arn , var.sqs_deadletter_arn , var.sqs_coordinator_arn_deed ,
+         var.sqs_coordinator_arn_work , var.sqs_coordinator_arn_lev , var.sqs_coordinator_arn_smart ,var.sqs_coordinator_arn_bambi , 
+         var.sqs_coordinator_arn_workaworka ,var.sqs_coordinator_arn_green , var.sqs_coordinator_arn_ash, 
+         var.sqs_coordinator_arn_brez , var.sqs_coordinator_arn_recruit, var.sqs_coordinator_arn_tailor, var.sqs_coordinator_arn_rip , 
+         var.sqs_coordinator_arn_pin , var.sqs_coordinator_arn_zoho , var.sqs_coordinator_arn_jazz]  # pass the actual SQS ARN directly
       }
     ]
   })

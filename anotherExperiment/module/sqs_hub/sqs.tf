@@ -179,6 +179,43 @@ resource "aws_sqs_queue" "sqs_hub_requests_rip" {
   }
 }
 
+resource "aws_sqs_queue" "sqs_hub_requests_pin" {
+  name                      = "workflow-cordinator-pin"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+
+resource "aws_sqs_queue" "sqs_hub_requests_zoho" {
+  name                      = "workflow-cordinator-zoho"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+
+resource "aws_sqs_queue" "sqs_hub_requests_jazz" {
+  name                      = "workflow-cordinator-jazz"
+  delay_seconds             = 90
+  max_message_size          = 2048
+  message_retention_seconds = 86400
+  receive_wait_time_seconds = 10
+  visibility_timeout_seconds = 1500
+  tags = {
+    Environment = "production"
+  }
+}
+
+
 
 
 resource "aws_sqs_queue_policy" "sqs_hub_requests"{
@@ -300,5 +337,28 @@ resource "aws_sqs_queue_policy" "sqs_hub_requests_rip"{
     policy = templatefile("${path.module}/sqs_access.tpl" ,{
         aws_account  = data.aws_caller_identity.current.account_id
         sqs_queuename  = aws_sqs_queue.sqs_hub_requests_rip.name
+    })
+}
+resource "aws_sqs_queue_policy" "sqs_hub_requests_pin"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_pin.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_pin.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_zoho"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_zoho.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_zoho.name
+    })
+}
+
+resource "aws_sqs_queue_policy" "sqs_hub_requests_jazz"{
+    queue_url = aws_sqs_queue.sqs_hub_requests_jazz.id
+    policy = templatefile("${path.module}/sqs_access.tpl" ,{
+        aws_account  = data.aws_caller_identity.current.account_id
+        sqs_queuename  = aws_sqs_queue.sqs_hub_requests_jazz.name
     })
 }

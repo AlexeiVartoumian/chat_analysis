@@ -73,6 +73,29 @@ variable "sqs_coordinator_rip_sqs_queue_id" {
     type = string 
 }
 
+variable "sqs_cordinator_pin_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_pin_sqs_queue_id" {
+    type = string 
+}
+
+variable "sqs_cordinator_zoho_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_zoho_sqs_queue_id" {
+    type = string 
+}
+
+variable "sqs_cordinator_jazz_arn" {
+    type =string
+}
+
+variable "sqs_coordinator_jazz_sqs_queue_id" {
+    type = string 
+}
 
 variable "account_pool_table"{
     type = string
@@ -174,6 +197,18 @@ variable "s3_output_bucket_tailor_cache_name" {
     type = string
 }
 variable "s3_output_bucket_rip_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_pin_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_zoho_cache_name" {
+    type = string
+}
+
+variable "s3_output_bucket_jazz_cache_name" {
     type = string
 }
 

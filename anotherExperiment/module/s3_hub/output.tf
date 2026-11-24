@@ -445,3 +445,91 @@ output "s3_bucket_output_rip_store_name" {
     description = "s3 bucket file"
     value = aws_s3_bucket.output_store_rip_store.bucket
 }
+
+
+output "s3_bucket_output_pin_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_cache.arn
+}
+output "s3_bucket_output_pin_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_cache.id
+}
+
+output "s3_bucket_output_pin_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_cache.bucket
+}
+
+
+output "s3_bucket_output_pin_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_store.arn
+}
+output "s3_bucket_output_pin_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_store.id
+}
+
+output "s3_bucket_output_pin_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_pin_store.bucket
+}
+
+output "s3_bucket_output_zoho_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_cache.arn
+}
+output "s3_bucket_output_zoho_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_cache.id
+}
+
+output "s3_bucket_output_zoho_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_cache.bucket
+}
+
+
+output "s3_bucket_output_zoho_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_store.arn
+}
+output "s3_bucket_output_zoho_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_store.id
+}
+
+output "s3_bucket_output_zoho_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_zoho_store.bucket
+}
+
+output "s3_bucket_output_jazz_cache_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_cache.arn
+}
+output "s3_bucket_output_jazz_cache_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_cache.id
+}
+
+output "s3_bucket_output_jazz_cache_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_cache.bucket
+}
+
+
+output "s3_bucket_output_jazz_store_arn" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_store.arn
+}
+output "s3_bucket_output_jazz_store_id" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_store.id
+}
+
+output "s3_bucket_output_jazz_store_name" {
+    description = "s3 bucket file"
+    value = aws_s3_bucket.output_store_jazz_store.bucket
+}

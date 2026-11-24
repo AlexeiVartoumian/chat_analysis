@@ -184,3 +184,39 @@ variable "s3_bucket_name_output_tailor_store" {
     description = "name of bucket"
     default = "output-store-tailor-store"
 }
+
+variable "s3_bucket_name_output_pin_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-pin-cache"
+}
+
+variable "s3_bucket_name_output_pin_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-pin-store"
+}
+
+variable "s3_bucket_name_output_zoho_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-zoho-cache"
+}
+
+variable "s3_bucket_name_output_zoho_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-zoho-store"
+}
+
+variable "s3_bucket_name_output_jazz_cache" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-jazz-cache"
+}
+
+variable "s3_bucket_name_output_jazz_store" {
+    type = string
+    description = "name of bucket"
+    default = "output-store-jazz-store"
+}
