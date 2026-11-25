@@ -3522,3 +3522,357 @@ func (s *PostgresStore) SeekTailorLifecycle(firstrun bool) ([]models.TailorLifec
 
 	return output, nil
 }
+
+func (s *PostgresStore) SendZohoCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_ZOHO, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from ZOHO_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_ZOHO
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_ZOHO
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE ZOHO_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			log.Printf("got row: %+v", res)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE ZOHO_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from ZOHO_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_ZOHO
+
+		var res models.JOB_SEARCH_TERM_ZOHO
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE ZOHO_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SeekZohoLifecycle(firstrun bool) ([]models.ZohoLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_ZOHO SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_zoho c
+		JOIN jobs_zoho j ON j.company_id = c.company_id
+		JOIN job_lifecycle_zoho l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek zoho company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.ZohoLifecycle
+
+	for rows.Next() {
+		var res models.ZohoLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_zoho SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_zoho visited")
+		}
+	}
+
+	return output, nil
+}
+
+func (s *PostgresStore) SendJazzCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_JAZZ, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from JAZZ_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_JAZZ
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_JAZZ
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE JAZZ_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			log.Printf("got row: %+v", res)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE JAZZ_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from JAZZ_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_JAZZ
+
+		var res models.JOB_SEARCH_TERM_JAZZ
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE JAZZ_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SeekJazzLifecycle(firstrun bool) ([]models.JazzLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_JAZZ SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_jazz c
+		JOIN jobs_jazz j ON j.company_id = c.company_id
+		JOIN job_lifecycle_jazz l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek jazz company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.JazzLifecycle
+
+	for rows.Next() {
+		var res models.JazzLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_jazz SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_zoho visited")
+		}
+	}
+
+	return output, nil
+}
+
+func (s *PostgresStore) SendPinCompanyQuery(first_run bool, number_accounts int, companyname string) ([]models.JOB_SEARCH_TERM_PIN, error) {
+
+	if first_run == true {
+
+		rows, err := s.db.Query(`select company , careers_url from PIN_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;`)
+
+		if err != nil {
+			return nil, utils.ErrorHandler(err, "yep yep but no")
+		}
+		defer rows.Close()
+
+		var results []models.JOB_SEARCH_TERM_PIN
+
+		for rows.Next() {
+
+			var res models.JOB_SEARCH_TERM_PIN
+
+			rows.Scan(&res.CompanyName, &res.Workflow_id)
+
+			if _, err := s.db.Exec(
+				`UPDATE PIN_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on first run in GetSearchTerms function")
+			}
+			log.Printf("got row: %+v", res)
+			results = append(results, res)
+		}
+		rows.Close()
+		return results, nil
+	} else {
+		if number_accounts != -1 { // backoff file will send -1 since they already updated table
+
+			if _, err := s.db.Exec(
+				`UPDATE PIN_COMPANIES_ATHENA SET visited = TRUE, mid_run = FALSE WHERE company = $1`, companyname); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error on auto in GetSearchTerms function")
+			}
+		}
+
+		query := "select company , careers_url from PIN_COMPANIES_ATHENA WHERE visited = FALSE AND mid_run = FALSE LIMIT 1;"
+
+		row := s.db.QueryRow(query)
+
+		var results []models.JOB_SEARCH_TERM_PIN
+
+		var res models.JOB_SEARCH_TERM_PIN
+
+		err := row.Scan(&res.CompanyName, &res.Workflow_id)
+		if err == sql.ErrNoRows {
+			//at n last runs will be True for mid_run but have min count not equal to max which will return no rows
+			fmt.Println("job done , waiting for remaining jobs to complete ")
+			return nil, nil
+		} else if err != nil {
+			fmt.Println("something unexpected happened ")
+			return nil, err
+		} else {
+
+			if _, err := s.db.Exec(
+				`UPDATE PIN_COMPANIES_ATHENA SET mid_run = TRUE WHERE company = $1`, res.CompanyName); err != nil {
+				return nil, utils.ErrorHandler(err, "Update error claiming next job in GetSearchTerms function")
+			}
+		}
+		results = append(results, res)
+		return results, nil
+	}
+}
+
+func (s *PostgresStore) SeekPinLifecycle(firstrun bool) ([]models.PinLifecycle, error) {
+
+	if firstrun == true {
+		_, err := s.db.Exec(`
+		UPDATE COMPANY_PIN SET visited = FALSE`)
+		if err != nil {
+			return nil, utils.ErrorHandler(err, " first run errored on db output")
+		}
+	}
+	rows, err := s.db.Query(`
+		SELECT c.company_id,
+		       c.company_apply_url,
+		       array_agg(j.job_id::text) AS job_ids
+		FROM company_pin c
+		JOIN jobs_pin j ON j.company_id = c.company_id
+		JOIN job_lifecycle_pin l ON l.job_id = j.job_id
+		WHERE l.job_state = TRUE
+		  AND c.visited = FALSE
+		GROUP BY c.company_id, c.company_apply_url, c.last_scanned_at
+		ORDER BY c.last_scanned_at ASC NULLS FIRST
+		LIMIT 1;
+	`)
+	if err != nil {
+		return nil, utils.ErrorHandler(err, "seek jazz company query failed")
+	}
+	defer rows.Close()
+
+	var output []models.PinLifecycle
+
+	for rows.Next() {
+		var res models.PinLifecycle
+
+		if err := rows.Scan(&res.CompanyId, &res.CompanyURL, pq.Array(&res.JobIDs)); err != nil {
+			return nil, utils.ErrorHandler(err, "seek work company scan failed")
+		}
+		output = append(output, res)
+
+	}
+	if err := rows.Err(); err != nil {
+		return nil, utils.ErrorHandler(err, "seek work company rows failed")
+	}
+	for _, greenLifecycle := range output {
+		if _, err := s.db.Exec(
+			`UPDATE company_pin SET visited = TRUE, last_scanned_at = now() WHERE company_id = $1`,
+			greenLifecycle.CompanyId,
+		); err != nil {
+			return nil, utils.ErrorHandler(err, "update error on company_zoho visited")
+		}
+	}
+
+	return output, nil
+}

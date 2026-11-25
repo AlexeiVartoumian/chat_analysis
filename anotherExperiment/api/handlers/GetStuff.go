@@ -4051,3 +4051,507 @@ func (h *Handler) SendBrezLifecycle(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *Handler) SendZoho(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendZohoCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+			log.Printf("err=%v len=%d isNil=%v Urls=%+v", err, len(Urls), Urls == nil, Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendzoho.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendZohoCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendzoho.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendZohoLifecycle(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobZohoCompany []models.ZohoLifecycle
+			var err error
+			if index == 0 {
+				JobZohoCompany, err = h.Store.SeekZohoLifecycle(true)
+			} else {
+				JobZohoCompany, err = h.Store.SeekZohoLifecycle(false)
+			}
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobZohoCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendzoho.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendzoho.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
+		}
+	} else {
+		JobZohoCompany, err := h.Store.SeekZohoLifecycle(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobZohoCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobZohoCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/sendzoho.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendzoho.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) SendJazz(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendJazzCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+			log.Printf("err=%v len=%d isNil=%v Urls=%+v", err, len(Urls), Urls == nil, Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendjazz.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendJazzCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendjazz.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendJazzLifecycle(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobJazzCompany []models.JazzLifecycle
+			var err error
+			if index == 0 {
+				JobJazzCompany, err = h.Store.SeekJazzLifecycle(true)
+			} else {
+				JobJazzCompany, err = h.Store.SeekJazzLifecycle(false)
+			}
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobJazzCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendjazz.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendjazz.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
+		}
+	} else {
+		JobJazzCompany, err := h.Store.SeekJazzLifecycle(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobJazzCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobJazzCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/sendjazz.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendjazz.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) SendPin(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		http.Error(w, r.Method, http.StatusBadRequest)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+
+	var req BlastRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+
+		log.Println(err)
+		http.Error(w, "INvalid req body", http.StatusBadRequest)
+	}
+	defer r.Body.Close()
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	}
+
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			Urls, err := h.Store.SendPinCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+			if err != nil {
+				http.Error(w, "Internal server error", http.StatusInternalServerError)
+				return
+			}
+			payload, _ := json.Marshal(Urls)
+			log.Printf("err=%v len=%d isNil=%v Urls=%+v", err, len(Urls), Urls == nil, Urls)
+
+			cmd := exec.Command("python3", "/home/ubuntu/sendpin.py", "1", firstRunStr, "")
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Run(); err != nil {
+				log.Printf("details.py failed %v", err)
+			}
+			time.Sleep(3 * time.Second)
+			fmt.Println("blasted the spot", len(payload))
+		}
+	} else {
+		Urls, err := h.Store.SendPinCompanyQuery(req.FirstRun, req.NumberAccounts, req.InstanceID)
+
+		if err != nil {
+			http.Error(w, "Internal server error", http.StatusInternalServerError)
+			return
+		}
+		payload, _ := json.Marshal(Urls)
+
+		cmd := exec.Command("python3", "/home/ubuntu/sendpin.py", "1", firstRunStr, req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		if err := cmd.Run(); err != nil {
+			log.Printf("details.py failed %v", err)
+		}
+
+	}
+	w.Header().Set("Content-Type", "application/json")
+
+	response := struct {
+		Status     string `json:"status"`
+		StatusCode int
+	}{
+		Status:     fmt.Sprintf(" Successfully blasted jds. have a good day"),
+		StatusCode: 200,
+	}
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *Handler) SendPinLifecycle(w http.ResponseWriter, r *http.Request) {
+	// no need to check method — mux pattern "POST /seekAshLead" already enforces this
+
+	var req BlastRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Println(err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	firstRunStr := "false"
+	if req.FirstRun {
+		firstRunStr = "true"
+	} //wtf
+	if firstRunStr == "true" {
+		for index := range req.NumberAccounts {
+			fmt.Println(index)
+			var JobPinCompany []models.PinLifecycle
+			var err error
+			if index == 0 {
+				JobPinCompany, err = h.Store.SeekPinLifecycle(true)
+			} else {
+				JobPinCompany, err = h.Store.SeekPinLifecycle(false)
+			}
+
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+				return
+			}
+
+			payload, err := json.Marshal(JobPinCompany)
+			if err != nil {
+				log.Println(err)
+				http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+				return
+			}
+
+			numberof := strconv.Itoa(req.NumberAccounts)
+			cmd := exec.Command("python3", "/home/ubuntu/sendpin.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+			cmd.Stdin = bytes.NewReader(payload)
+			cmd.Stdout = os.Stdout
+			cmd.Stderr = os.Stderr
+
+			if err := cmd.Start(); err != nil {
+				log.Println(err)
+				http.Error(w, "failed to start job", http.StatusInternalServerError)
+				return
+			}
+			go func() {
+				if err := cmd.Wait(); err != nil {
+					log.Printf("sendpin.py (%s) exited with error: %v", req.InstanceID, err)
+				}
+			}()
+		}
+	} else {
+		JobPinCompany, err := h.Store.SeekPinLifecycle(false)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "problem reading from db, could be unexpected format", http.StatusInternalServerError)
+			return
+		}
+		if len(JobPinCompany) == 0 {
+			fmt.Println("Job Done either second last run or last run ")
+			return
+		}
+		payload, err := json.Marshal(JobPinCompany)
+		if err != nil {
+			log.Println(err)
+			http.Error(w, "failed to marshal job data", http.StatusInternalServerError)
+			return
+		}
+
+		numberof := strconv.Itoa(req.NumberAccounts)
+		cmd := exec.Command("python3", "/home/ubuntu/sendpin.py", numberof, strconv.FormatBool(req.FirstRun), req.InstanceID)
+		cmd.Stdin = bytes.NewReader(payload)
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+
+		if err := cmd.Start(); err != nil {
+			log.Println(err)
+			http.Error(w, "failed to start job", http.StatusInternalServerError)
+			return
+		}
+		go func() {
+			if err := cmd.Wait(); err != nil {
+				log.Printf("sendpin.py (%s) exited with error: %v", req.InstanceID, err)
+			}
+		}()
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

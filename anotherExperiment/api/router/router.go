@@ -244,5 +244,26 @@ func MainRouter(authMiddleware *auth.AuthMiddleware, h *handlers.Handler) *http.
 		http.HandlerFunc(h.SendTailorLifecycle),
 	))
 
+	mux.Handle("POST /seekzoho", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendZoho),
+	))
+	mux.Handle("POST /sendzoholifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendZohoLifecycle),
+	))
+
+	mux.Handle("POST /seekjazz", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendJazz),
+	))
+	mux.Handle("POST /sendJazzlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendJazzLifecycle),
+	))
+
+	mux.Handle("POST /seekpin", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendPin),
+	))
+	mux.Handle("POST /sendpinlifecycle", authMiddleware.Authenticate(models.ScopeAdmin)(
+		http.HandlerFunc(h.SendPinLifecycle),
+	))
+
 	return mux
 }
