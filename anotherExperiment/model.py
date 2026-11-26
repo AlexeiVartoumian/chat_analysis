@@ -2058,7 +2058,7 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_PIN (company_id)
                     ON DELETE CASCADE
-                    )
+                    );
             """)
 
         cur.execute("""
@@ -2208,7 +2208,7 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_JAZZ (company_id)
                     ON DELETE CASCADE
-                    )
+                    );
             """)
 
         cur.execute("""
