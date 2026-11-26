@@ -2373,7 +2373,7 @@ def create_tables(conn) -> None:
                     FOREIGN KEY (company_id)
                     REFERENCES COMPANY_ZOHO (company_id)
                     ON DELETE CASCADE
-                    )
+                    );
             """)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_ZOHO (
