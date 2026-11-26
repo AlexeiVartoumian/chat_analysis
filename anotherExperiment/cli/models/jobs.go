@@ -189,6 +189,24 @@ type JOBS_RIP struct {
 	PublishedDate  sql.NullString `json:"published_date" db:"published_date"` // ISO string
 }
 
+type JOBS_PIN struct {
+	JobID          string         `json:"job_id" db:"job_id"`
+	PostingID      sql.NullString `json:"posting_id" db:"posting_id"`
+	Slug           string         `json:"slug" db:"slug"` // also resolved to company_id
+	Title          string         `json:"title" db:"title"`
+	CompanyID      int            `db:"company_id"`
+	DepartmentID   sql.NullInt64  `db:"department_id"` // needs the column, see ALTER below
+	Department     sql.NullString `json:"department" db:"department"`
+	CompanyName    string         `json:"company_name" db:"company_name"`
+	JobUrl         string         `json:"job_url" db:"job_url"`
+	EmploymentType sql.NullString `json:"employment_type" db:"employment_type"`
+	WorkplaceType  sql.NullString `json:"workplace_type" db:"workplace_type"`
+	Location       sql.NullString `json:"location" db:"location"`             // JSON text
+	Salary         sql.NullString `json:"salary" db:"salary"`                 // JSON text
+	PublishedDate  sql.NullString `json:"published_date" db:"published_date"` // ISO string
+	Deadline       sql.NullString `json:"deadline" db:"deadline"`             // ISO string
+}
+
 type JOBS_TAILOR struct {
 	JobID          string         `json:"job_id" db:"job_id"`
 	Slug           string         `json:"slug"` // resolved to company_id

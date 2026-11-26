@@ -143,12 +143,25 @@ type JOB_SEARCH_TERM_RIP struct {
 	Is_new_job  bool   `db:"is_new_job"`
 }
 
+type JOB_SEARCH_TERM_PIN struct {
+	Job_id      string `db:"job_id"`
+	Workflow_id string `db:"workflow_id"`
+	Is_new_job  bool   `db:"is_new_job"`
+}
+
 type File_key struct {
 	//search term id generated
 	File_name string `json:"file_name,omitempty" db:"file_name"`
 }
 
 type SearchWorkflowRip struct {
+	Workflow_id      string    `db:"workflow_id"`
+	Run_at           time.Time `db:"run_at"`
+	Total_jobs_found int       `db:"total_jobs_found"`
+	Net_new_found    int       `db:"net_new_jobs"`
+}
+
+type SearchWorkflowPin struct {
 	Workflow_id      string    `db:"workflow_id"`
 	Run_at           time.Time `db:"run_at"`
 	Total_jobs_found int       `db:"total_jobs_found"`

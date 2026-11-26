@@ -134,6 +134,21 @@ func CsvFile(filepath string, tablename string) error {
 		return nil
 	}
 
+	if tablename == "FILE_KEYS_PIN" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
+	if tablename == "FILE_KEYS_ZOHO" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
+	if tablename == "FILE_KEYS_JAZZ" {
+		InsertNewKeys(filepath, tablename)
+		return nil
+	}
+
 	file, err := os.Open(filepath)
 	if err != nil {
 		//return ErrorHandler(err, ""), jobModel
@@ -292,6 +307,21 @@ func CsvFile(filepath string, tablename string) error {
 	}
 
 	if tablename == "COMPANY_RIP" && len(records) > 0 {
+		Company_Rip(records, tablename)
+		return nil
+	}
+
+	if tablename == "COMPANY_PIN" && len(records) > 0 {
+		Company_Pin(records, tablename)
+		return nil
+	}
+
+	if tablename == "COMPANY_ZOHO" && len(records) > 0 {
+		Company_Rip(records, tablename)
+		return nil
+	}
+
+	if tablename == "COMPANY_JAZZ" && len(records) > 0 {
 		Company_Rip(records, tablename)
 		return nil
 	}
@@ -5034,6 +5064,260 @@ func DeadLinks_Rip(records []map[string]string, filepath string) {
 	}
 }
 
+func Company_PinLoader(record map[string]string) (models.COMPANY_PIN, error) {
+	v := models.COMPANY_PIN{
+		Slug:         strings.TrimSpace(record["slug"]),
+		CompanyName:  strings.TrimSpace(record["company_name"]),
+		CompanyAbout: record["company_about"],
+		CompanyUrl:   record["company_url"],
+		PublicUrl:    record["job_board_public_url"],
+	}
+	if v.Slug == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("company row missing slug or company_name: %v", record)
+	}
+	return v, nil
+}
+
+func Company_Pin(records []map[string]string, tablename string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	for _, record := range records {
+		value, err := Company_PinLoader(record)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "company loader"))
+			continue
+		}
+		// was company_rip.company_about -> "missing FROM-clause entry for table company_rip"
+		_, err = db.Exec(`
+			INSERT INTO company_pin (slug, company_name, company_about, company_url, job_board_public_url)
+			VALUES ($1, $2, $3, $4, $5)
+			ON CONFLICT (slug) DO UPDATE SET
+				company_name         = EXCLUDED.company_name,
+				company_about        = COALESCE(EXCLUDED.company_about, company_pin.company_about),
+				company_url          = EXCLUDED.company_url,
+				job_board_public_url = EXCLUDED.job_board_public_url,
+				last_scanned_at      = NOW()`,
+			value.Slug, value.CompanyName, ns(value.CompanyAbout),
+			ns(value.CompanyUrl), ns(value.PublicUrl))
+		if err != nil {
+			fmt.Println("failed to insert company", value.Slug, ErrorHandler(err, "company insert"))
+			continue
+		}
+	}
+}
+
+func GetCompanyPinID(db *sql.DB, slug string) (int, error) {
+	var id int
+	err := db.QueryRow(`SELECT company_id FROM company_pin WHERE slug = $1`, slug).Scan(&id)
+	return id, err
+}
+
+func Department_PinLoader(record map[string]string, companyID int) (models.DEPARTMENT_PIN, error) {
+	v := models.DEPARTMENT_PIN{
+		Slug:           strings.TrimSpace(record["slug"]),
+		CompanyID:      companyID,
+		DepartmentName: strings.TrimSpace(record["department_name"]),
+		DepartmentTree: record["department_tree"],
+	}
+	if v.DepartmentName == "" {
+		return v, fmt.Errorf("department row missing department_name: %v", record)
+	}
+	return v, nil
+}
+
+func Department_Pin(records []map[string]string) {
+	db, err := ConnectDb()
+	if err != nil {
+		fmt.Println("db conn error ")
+		return
+	}
+	defer db.Close()
+
+	companyIDs := map[string]int{}
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyPinID(db, slug)
+			if err != nil {
+				fmt.Println("could not find company for department at index", index, slug, err)
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+		value, err := Department_PinLoader(record, companyID)
+		if err != nil {
+			fmt.Println(ErrorHandler(err, "department loader"))
+			continue
+		}
+		// slug now written too; no ::jsonb cast (department_tree is TEXT; the JSON is
+		// already validated by nsJSON). The job loader may have created the row first
+		// with no tree/slug, so fill those in on conflict.
+		_, err = db.Exec(`
+			INSERT INTO department_pin (company_id, slug, department_name, department_tree)
+			VALUES ($1, $2, $3, $4)
+			ON CONFLICT (company_id, department_name) DO UPDATE SET
+				slug            = COALESCE(department_pin.slug, EXCLUDED.slug),
+				department_tree = COALESCE(EXCLUDED.department_tree, department_pin.department_tree)`,
+			value.CompanyID, ns(value.Slug), value.DepartmentName,
+			nsJSON(value.DepartmentTree, "department_tree", value.DepartmentName))
+		if err != nil {
+			fmt.Println("failed to insert department", value.DepartmentName, ErrorHandler(err, "department insert"))
+		}
+	}
+}
+
+// was returning models.JOBS_RIP
+func JobLoaderPin(record map[string]string, companyID int, deptID sql.NullInt64) (models.JOBS_PIN, error) {
+	id := strings.ToLower(strings.TrimSpace(record["job_id"])) // lambda compares lowercase UUIDs
+	v := models.JOBS_PIN{
+		JobID:          id,
+		PostingID:      ns(record["posting_id"]),
+		Slug:           strings.TrimSpace(record["slug"]),
+		Title:          strings.TrimSpace(record["title"]),
+		CompanyID:      companyID,
+		DepartmentID:   deptID,
+		Department:     ns(record["department"]),
+		CompanyName:    strings.TrimSpace(record["company_name"]),
+		JobUrl:         strings.TrimSpace(record["job_url"]),
+		EmploymentType: ns(record["employment_type"]),
+		WorkplaceType:  ns(record["workplace_type"]),
+		Location:       nsJSON(record["location"], "location", id),
+		Salary:         nsJSON(record["salary"], "salary", id),
+		PublishedDate:  ns(record["published_date"]),
+		Deadline:       ns(record["deadline"]),
+	}
+	if v.JobID == "" || v.Title == "" || v.JobUrl == "" || v.CompanyName == "" {
+		return v, fmt.Errorf("job row missing job_id/title/job_url/company_name: %v", record)
+	}
+	return v, nil
+}
+
+func insertDepartmentPin(db *sql.DB, companyID int, slug, name string) (sql.NullInt64, error) {
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return sql.NullInt64{}, nil
+	}
+	var id int64
+	// the no-op update is there so RETURNING gives the id on conflict too
+	err := db.QueryRow(`
+		INSERT INTO department_pin (company_id, slug, department_name)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (company_id, department_name)
+		DO UPDATE SET department_name = EXCLUDED.department_name
+		RETURNING department_id`, companyID, ns(slug), name).Scan(&id)
+	if err != nil {
+		return sql.NullInt64{}, err
+	}
+	return sql.NullInt64{Int64: id, Valid: true}, nil
+}
+
+func Job_and_search_loader_pin(records []map[string]string, tablename string, filepath string) error {
+	db, err := ConnectDb()
+	if err != nil {
+		return ErrorHandler(err, "db conn error")
+	}
+	defer db.Close()
+
+	workflowID, ts, err := parseFilename(filepath) // renamed from `uuid`: shadows the package if imported
+	if err != nil {
+		fmt.Println("error:", err)
+		return err
+	}
+	timestamp, err := parseTimestamp(ts)
+	if err != nil {
+		fmt.Println("bad timestamp parse")
+		return err
+	}
+
+	SearchWorkflow := models.SearchWorkflowPin{
+		Workflow_id:      workflowID,
+		Run_at:           timestamp,
+		Total_jobs_found: 0,
+		Net_new_found:    0,
+	}
+	if _, err = AddNewRow(SearchWorkflow, "SEARCH_WORKFLOW_PIN"); err != nil {
+		fmt.Println("workflow insert failed:", err)
+		return err
+	}
+
+	FailedCount := 0
+	LinkFailedCount := 0
+	DuplicateCount := 0
+	companyIDs := map[string]int{} // one board per file usually: avoid a lookup per row
+
+	for index, record := range records {
+		slug := strings.TrimSpace(record["slug"])
+		companyID, ok := companyIDs[slug]
+		if !ok {
+			companyID, err = GetCompanyPinID(db, slug)
+			if err != nil {
+				fmt.Println("could not find companyId at index", index, slug, err)
+				FailedCount++
+				continue
+			}
+			companyIDs[slug] = companyID
+		}
+
+		deptID, err := insertDepartmentPin(db, companyID, slug, record["department"])
+		if err != nil {
+			fmt.Println("failed to insert department at index", index, err)
+			FailedCount++
+			continue
+		}
+
+		value, err := JobLoaderPin(record, companyID, deptID)
+		if err != nil {
+			fmt.Println("record not saved at index", index, ErrorHandler(err, "loader error"))
+			FailedCount++
+			continue
+		}
+
+		jobExisted, err := AddNewRow(value, "JOBS_PIN")
+		if err != nil {
+			fmt.Println("job insert failed", value.JobID, ErrorHandler(err, "insert error"))
+			FailedCount++
+			continue
+		}
+
+		if jobExisted == 0 {
+			lifecycle := models.JobLifeCyclePin{
+				JobId:            value.JobID,
+				Job_state:        true,
+				FirstSeenAt:      timestamp, // when the scrape ran (from the filename)
+				LastSeenListedAt: timestamp,
+			}
+			if _, err := AddNewRow(lifecycle, "JOB_LIFECYCLE_PIN"); err != nil {
+				log.Printf("lifecycle insert failed job=%s: %v", value.JobID, err)
+			}
+		} else {
+			DuplicateCount++
+		}
+
+		JobSearchWorkflow := models.JOB_SEARCH_TERM_PIN{
+			Job_id:      value.JobID,
+			Workflow_id: workflowID,
+			Is_new_job:  jobExisted == 0,
+		}
+		if _, err = AddNewRow(JobSearchWorkflow, "JOB_SEARCH_TERM_PIN"); err != nil {
+			LinkFailedCount++
+			log.Printf("LINK INSERT FAILED workflow=%s job=%s: %v", workflowID, value.JobID, err)
+		}
+	}
+
+	log.Printf("workflow %s: %d records, %d duplicates, %d failed, %d link inserts failed",
+		workflowID, len(records), DuplicateCount, FailedCount, LinkFailedCount)
+
+	if err := RecountSearchWorkflow(db, "search_workflow_pin", "job_search_term_pin", workflowID); err != nil {
+		return ErrorHandler(err, "recount failed")
+	}
+	return nil
+}
 func Company_TailorLoader(record map[string]string) (models.COMPANY_TAILOR, error) {
 	v := models.COMPANY_TAILOR{
 		Slug:        strings.TrimSpace(record["slug"]),
