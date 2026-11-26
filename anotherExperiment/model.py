@@ -2010,6 +2010,106 @@ def create_tables(conn) -> None:
             );
         """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_PIN (
+                company_id            SERIAL        PRIMARY KEY,
+                slug                  TEXT          NOT NULL UNIQUE,
+                company_name          VARCHAR(128)  NOT NULL,
+                company_about         TEXT,
+                last_scanned_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                company_url           TEXT,
+                job_board_public_url  TEXT,
+                visited               BOOLEAN       NOT NULL DEFAULT FALSE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_PIN (
+                department_id    SERIAL  PRIMARY KEY,
+                company_id       INT     NOT NULL REFERENCES COMPANY_PIN (company_id) ON DELETE CASCADE,
+                slug             TEXT,
+                department_name  TEXT    NOT NULL,
+                department_tree  TEXT,
+                UNIQUE (company_id, department_name)
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_PIN (
+                job_id                  TEXT            PRIMARY KEY, 
+                title                   TEXT            NOT NULL,
+                company_id              BIGINT          NOT NULL,
+                posting_id              TEXT,
+                slug                    TEXT,
+                jazz_job_id             TEXT,
+                location                JSONB,          
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                workplace_type          TEXT,
+                department              TEXT,
+                employment_type         TEXT,
+                experience              TEXT,
+                salary                  JSONB,
+                published_date          TIMESTAMPTZ,
+                deadline                TIMESTAMPTZ,
+            
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_PIN (company_id)
+                    ON DELETE CASCADE
+                    )
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_PIN (
+                job_id            TEXT        PRIMARY KEY,
+                description_html  TEXT,
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_PIN(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_PIN (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_PIN (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_PIN (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_PIN(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_PIN(job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_PIN (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
+
         ####################################################
 
         cur.execute("""
@@ -2056,7 +2156,109 @@ def create_tables(conn) -> None:
                 mid_run      boolean NOT NULL DEFAULT false
             );
             """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_JAZZ (
+                company_id              SERIAL          PRIMARY KEY,
+                slug                    TEXT          NOT NULL UNIQUE,
+                customer_id             TEXT, 
+                company_name            VARCHAR(128)    NOT NULL,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+            );
+        """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS DEPARTMENT_JAZZ (
+                department_id        SERIAL       NOT NULL,   -- OrganizationId
+                department_name      TEXT,
+                department_tree      TEXT,
+                slug                 TEXT,
+                company_id           INT       NOT NULL,
+                
+                PRIMARY KEY (company_id, department_id),
+                UNIQUE (company_id, department_name),
+                CONSTRAINT fk_department_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_JAZZ (company_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_JAZZ (
+                job_id                  TEXT            PRIMARY KEY, 
+                title                   TEXT            NOT NULL,
+                company_id              INT          NOT NULL,
+                slug                    TEXT,
+                jazz_job_id             TEXT,
+                location                JSONB,          
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                job_type                TEXT,
+                department              TEXT,
+                employment_type         TEXT,
+                experience              TEXT,
+                salary                  JSONB,
+                published_date          TIMESTAMPTZ,
+            
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_JAZZ (company_id)
+                    ON DELETE CASCADE
+                    )
+            """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_JAZZ (
+                job_id            TEXT        PRIMARY KEY,
+                description_html  TEXT,
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_JAZZ(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_JAZZ (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_JAZZ (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_JAZZ (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_JAZZ(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_JAZZ(job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_JAZZ (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
         ####################################################
         cur.execute("""
             CREATE TABLE IF NOT EXISTS BOB_COMPANIES_ATHENA (
@@ -2134,6 +2336,93 @@ def create_tables(conn) -> None:
                 );
             """)
 
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS COMPANY_ZOHO (
+                company_id              SERIAL          PRIMARY KEY,
+                slug                    TEXT            NOT NULL UNIQUE,
+                company_name            VARCHAR(128)    NOT NULL,
+                company_about           TEXT ,
+                last_scanned_at         TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                company_url             TEXT,
+                job_board_public_url    TEXT,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOBS_ZOHO (
+                job_id                  TEXT            PRIMARY KEY, 
+                title                   TEXT            NOT NULL,
+                company_id              INT          NOT NULL,
+                extra_fields            JSONB,          
+                company_name            VARCHAR(128)    NOT NULL,    
+                job_url                 TEXT            NOT NULL,
+                api_endpoint            TEXT,
+                job_type                TEXT,
+                industry                TEXT,
+                city                    TEXT,
+                state                   TEXT,
+                country                 TEXT,
+                zip_code                 TEXT,  
+                salary                  TEXT,
+                remote                  TEXT,
+                published_date          TIMESTAMPTZ,
+                
+                
+                CONSTRAINT fk_jobs_company
+                    FOREIGN KEY (company_id)
+                    REFERENCES COMPANY_ZOHO (company_id)
+                    ON DELETE CASCADE
+                    )
+            """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_DESCRIPTIONS_ZOHO (
+                job_id            TEXT        PRIMARY KEY,
+                description_html  TEXT,
+                CONSTRAINT fk_description_job
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_ZOHO(job_id)
+                    ON DELETE CASCADE
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_LIFECYCLE_ZOHO (
+                job_id               TEXT            PRIMARY KEY,
+                job_state            BOOLEAN         NOT NULL DEFAULT TRUE,
+                first_seen_at        TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                last_seen_listed_at  TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+                first_seen_closed_at TIMESTAMPTZ,
+                next_scan_at         TIMESTAMPTZ,
+                visited              BOOLEAN         NOT NULL DEFAULT FALSE,
+                CONSTRAINT fk_job_lifecycle_jobs
+                    FOREIGN KEY (job_id)
+                    REFERENCES JOBS_ZOHO (job_id)
+                    ON DELETE CASCADE
+                    );
+                """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS SEARCH_WORKFLOW_ZOHO (
+                workflow_id         UUID      PRIMARY KEY,
+                run_at              TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
+                total_jobs_found    INTEGER     NOT NULL,
+                net_new_jobs        INTEGER     NOT NULL
+            );
+        """)
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS JOB_SEARCH_TERM_ZOHO(
+                job_id              TEXT         NOT NULL,
+                workflow_id         UUID        NOT NULL,
+                is_new_job          BOOLEAN     NOT NULL DEFAULT false,
+                PRIMARY KEY (job_id, workflow_id),
+                CONSTRAINT fk_jst_job
+                    FOREIGN KEY (job_id) REFERENCES JOBS_ZOHO(job_id) ON DELETE CASCADE,
+                CONSTRAINT fk_jst_workflow
+                    FOREIGN KEY (workflow_id) REFERENCES SEARCH_WORKFLOW_ZOHO (workflow_id) ON DELETE CASCADE
+            );                    
+        """)
          ####################################################
         
         cur.execute("""                
